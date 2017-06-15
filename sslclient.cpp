@@ -21,9 +21,10 @@ using namespace std;
 #define SERVER_PORT "4433"
 
 
-SSLClient::SSLClient(){
+SSLClient::SSLClient(Seggio * s){
     //this->hostname = IP_PV;
-
+    this->seggioChiamante = s;
+    outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
 }
 
@@ -59,98 +60,16 @@ void SSLClient::init_openssl_library() {
 
 }
 
-void SSLClient::connectToStop(SSL * ssl,const char* hostname){
-
+void SSLClient::stopServer(const char* hostname){
+    //questa funzione contatta il server, ma non deve fare alcuna operazione se non quella
+    //di sbloccare il server dallo stato di attesa di una nuova connessione, così da indurrlo
+    //a ricontrollare la condizione del while che se falsa, porta
+    //all'interruzione del thread chiamante
     const char * port = SERVER_PORT;
+    create_socket(hostname, port);
 
-    const SSL_METHOD *method;
+    cout << "Client: ho staccato la spina al server! :D" << endl;
 
-
-    /* ---------------------------------------------------------- *
- * Function that initialize openssl for correct work.		  *
- * ---------------------------------------------------------- */
-    this->init_openssl_library();
-
-    /* ---------------------------------------------------------- *
- * Create the Input/Output BIO's.                             *
- * ---------------------------------------------------------- */
-
-
-    /* ---------------------------------------------------------- *
- * Set SSLv2 client hello, also announce SSLv3 and TLSv1      *
- * ---------------------------------------------------------- */
-    //method = SSLv23_client_method();
-    method = TLSv1_2_client_method();
-
-    /* ---------------------------------------------------------- *
- * Try to create a new SSL context                            *
- * ---------------------------------------------------------- */
-    if ((this->ctx = SSL_CTX_new(method)) == NULL)
-        BIO_printf(this->outbio, "Unable to create a new SSL context structure.\n");
-
-    /* ---------------------------------------------------------- *
- * Disabling SSLv2 and SSLv3 will leave TSLv1 for negotiation    *
- * ---------------------------------------------------------- */
-    SSL_CTX_set_options(this->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-
-    char certFile[] = "/home/giuseppe/myCA/intermediate/certs/client.cert.pem";
-    char keyFile[] = "/home/giuseppe/myCA/intermediate/private/client.key.pem";
-    char chainFile[] =
-            "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
-
-    this->configure_context(certFile, keyFile, chainFile);
-    //cout << "Cert and key configured" << endl;
-
-    /* ---------------------------------------------------------- *
- * Create new SSL connection state object                     *
- * ---------------------------------------------------------- */
-
-    ssl = SSL_new(this->ctx);
-    //cout << "ConnectTo - ssl pointer: " << ssl << endl;
-    /* ---------------------------------------------------------- *
- * Make the underlying TCP socket connection                  *
- * ---------------------------------------------------------- */
-
-
-    int res = create_socket(hostname,port);
-    if (res == 0){
-        BIO_printf(this->outbio,
-                   "Successfully create the socket for TCP connection to: %s.\n",
-                   hostname);
-    }
-    else {
-        BIO_printf(this->outbio,
-                   "Unable to create the socket for TCP connection to: %s.\n",
-                   hostname);
-    }
-
-    /* ---------------------------------------------------------- *
- * Attach the SSL session to the socket descriptor            *
- * ---------------------------------------------------------- */
-
-    if (SSL_set_fd(ssl, this->server_sock) != 1) {
-        BIO_printf(this->outbio, "Error: Connection to %s failed", hostname);
-    }
-    else
-        BIO_printf(this->outbio, "Ok: Connection to %s ", hostname);
-    /* ---------------------------------------------------------- *
- * Try to SSL-connect here, returns 1 for success             *
- * ---------------------------------------------------------- */
-    if (SSL_connect(ssl) != 1) //SSL handshake
-        BIO_printf(this->outbio, "Error: Could not build a SSL session to: %s.\n",
-                   hostname);
-    else
-        BIO_printf(this->outbio, "Successfully enabled SSL/TLS session to: %s.\n",
-                   hostname);
-    ShowCerts(ssl);
-    verify_ServerCert(hostname,ssl);
-    //SSL_set_connect_state(ssl);
-    SSL_shutdown(ssl);
-    close(this->server_sock);
-    SSL_free(ssl);
-    BIO_printf(this->outbio, "Finished SSL/TLS connection with server: %s.\n",
-               hostname);
-    BIO_free_all(this->outbio);
 }
 int SSLClient::create_socket(const char * hostname,const char * port) {
     /* ---------------------------------------------------------- *
@@ -169,11 +88,10 @@ int SSLClient::create_socket(const char * hostname,const char * port) {
         BIO_printf(this->outbio, "Error: Cannot resolve hostname %s.\n", hostname);
         abort();
     }
-
     /* ---------------------------------------------------------- *
      * create the basic TCP socket                                *
      * ---------------------------------------------------------- */
-    server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    this->server_sock = socket(AF_INET, SOCK_STREAM, 0);
 
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(portCod);
@@ -189,8 +107,14 @@ int SSLClient::create_socket(const char * hostname,const char * port) {
 
     /* ---------------------------------------------------------- *
      * Try to make the host connect here                          *
-     * ---------------------------------------------------------- */
-    int res = connect(server_sock, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr));
+
+ * ---------------------------------------------------------- */
+    cout << "marker 2" << endl;
+
+    int res = connect(this->server_sock, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr));
+    cout << "marker 3: res:" << res << endl;
+
+    seggioChiamante->mutex_stdout.lock();
     if (res  == -1) {
         BIO_printf(this->outbio, "Error: Cannot connect to host %s [%s] on port %d.\n",
                    hostname, tmp_ptr, portCod);
@@ -199,8 +123,12 @@ int SSLClient::create_socket(const char * hostname,const char * port) {
                    hostname, tmp_ptr, portCod);
 
     }
+    seggioChiamante->mutex_stdout.unlock();
 
-    cout << "Descrittore socket: "<< server_sock << endl;
+    seggioChiamante->mutex_stdout.lock();
+    cout << "Client: Descrittore socket: "<< this->server_sock << endl;
+    seggioChiamante->mutex_stdout.unlock();
+
     return res;
 }
 
@@ -374,19 +302,19 @@ int SSLClient::myssl_getFile(SSL * ssl){
 
         //creo un buffer della dimensione del file che sto per ricevere
         buffer[bytes] = 0;
-        cout << "Bytes to read: " << buffer << endl;
+        cout << "Client: Bytes to read: " << buffer << endl;
         char buffer2[atoi(buffer)];
         if (bytes > 0) {
             ofstream outf("./file_ricevuto.cbc", ios::out);
             if (!outf) {
 
-                cout << "unable to open file for output\n";
+                cout << "Client: unable to open file for output\n";
                 exit(1);
             } else {
-                cout << "ricevo il file" << endl;
+                cout << "Client: ricevo il file" << endl;
                 SSL_read(ssl, buffer2, sizeof(buffer2));
 
-                cout << "Testo ricevuto: " << buffer2 << endl;
+                cout << "Client: Testo ricevuto: " << buffer2 << endl;
                 outf.write(buffer2, sizeof(buffer2));
                 outf.close();
                 // release dynamically-allocated memory

@@ -24,9 +24,11 @@ class Seggio;
 class SSLServer
 {
 public:
+
     SSLServer(Seggio * s);
     ~SSLServer();
     void ascoltoNuovoStatoPV();
+    void setStopServer(bool b);
 
     enum servizi {
         aggiornamentoPV,
@@ -34,10 +36,10 @@ public:
     };
 
     //mutex per l'accesso al vettore
-    mutex mtx_vector;
-    vector <AggiornamentoStatoPV*> aggiornamentiVector;
-    queue<thread> threads_q;
-    void stopServer();
+    //mutex mtx_vector;
+    //vector <AggiornamentoStatoPV*> aggiornamentiVector;
+    //queue<thread> threads_q;
+
 private:
 
     //std::thread test_thread;
@@ -45,7 +47,7 @@ private:
     SSL_CTX *ctx;
     int server_sock;
     Seggio * seggioChiamante;
-    bool stop;
+    bool stopServer;
 
     void init_openssl_library();
     void configure_context(char* CertFile, char* KeyFile,char* ChainFile);

@@ -21,6 +21,7 @@
 
 class SSLServer;
 class MainWindowSeggio;
+class SSLClient;
 
 class Seggio {
     //allo stato attuale un seggio prevede una composizione di 3 postazioni di voto e 4 hardware token attivi

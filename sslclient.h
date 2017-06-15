@@ -6,6 +6,9 @@
 #include <openssl/ssl.h>
 #include <openssl/conf.h>
 
+#include "seggio.h"
+
+class Seggio;
 class SSLClient
 {
 private:
@@ -22,12 +25,12 @@ private:
     void verify_ServerCert(const char * hostname,SSL *ssl);
     int myssl_getFile(SSL *ssl);
 public:
-    SSLClient();
+    SSLClient(Seggio * s);
     ~SSLClient();
 
 
-
-    void connectToStop(SSL *ssl, const char * hostname);
+    Seggio *seggioChiamante;
+    void stopServer(const char * hostname);
     unsigned int getStatoPV();
 };
 
