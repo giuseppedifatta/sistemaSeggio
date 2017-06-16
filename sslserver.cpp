@@ -52,7 +52,7 @@ SSLServer::SSLServer(Seggio *s){
 
     cout << "Server: Cert and key configured" << endl;
 
-    this->server_sock = this->openListener(atoi(PORT));
+    this->listen_sock = this->openListener(atoi(PORT));
     this->outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
 
@@ -61,7 +61,7 @@ SSLServer::SSLServer(Seggio *s){
 SSLServer::~SSLServer(){
     //nel distruttore
     BIO_free_all(outbio);
-    close(server_sock);
+    close(listen_sock);
     SSL_CTX_free(this->ctx);
     cleanup_openssl();
 }
@@ -79,7 +79,7 @@ void SSLServer::ascoltoNuovoStatoPV(){
     seggioChiamante->mutex_stdout.unlock();
 
     // accept restituisce un valore negativo in caso di insuccesso
-    int client_sock = accept(this->server_sock, (struct sockaddr*) &client_addr,
+    int client_sock = accept(this->listen_sock, (struct sockaddr*) &client_addr,
                              &len);
 
     if (client_sock < 0) {
@@ -99,7 +99,7 @@ void SSLServer::ascoltoNuovoStatoPV(){
 
     if(!(this->stopServer)){
         ssl = SSL_new(ctx);
-        //se non è stata settata l'interruzione del thread lancia il thread per servire la richiesta
+        //se non è stata settata l'interruzione del server, lancia il thread per servire la richiesta
         thread t (&SSLServer::Servlet,this, ssl, client_sock, servizi::aggiornamentoPV);
         t.detach();
         seggioChiamante->mutex_stdout.lock();
@@ -112,6 +112,14 @@ void SSLServer::ascoltoNuovoStatoPV(){
         seggioChiamante->mutex_stdout.lock();
         cout << "Server: interruzione del server in corso...client?... ora attaccati a sto cazzo :P" << endl;
         seggioChiamante->mutex_stdout.unlock();
+        int ab = close(client_sock);
+        if(ab ==0){
+            cout << "successo chiusura socket per il client" << endl;
+        }
+        ab = close(this->listen_sock);
+        if(ab ==0){
+            cout << "successo chiusura socket del listener" << endl;
+        }
         return;
     }
 

@@ -20,7 +20,6 @@ using namespace std;
 
 #define SERVER_PORT "4433"
 
-
 SSLClient::SSLClient(Seggio * s){
     //this->hostname = IP_PV;
     this->seggioChiamante = s;
@@ -68,9 +67,10 @@ void SSLClient::stopServer(const char* hostname){
     const char * port = SERVER_PORT;
     create_socket(hostname, port);
 
-    cout << "Client: ho staccato la spina al server! :D" << endl;
-
+    cout << "Client: niente da fare qui..." << endl;
+    close(this->server_sock);
 }
+
 int SSLClient::create_socket(const char * hostname,const char * port) {
     /* ---------------------------------------------------------- *
      * create_socket() creates the socket & TCP-connect to server *
@@ -107,12 +107,8 @@ int SSLClient::create_socket(const char * hostname,const char * port) {
 
     /* ---------------------------------------------------------- *
      * Try to make the host connect here                          *
-
- * ---------------------------------------------------------- */
-    cout << "marker 2" << endl;
-
+    * ---------------------------------------------------------- */
     int res = connect(this->server_sock, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr));
-    cout << "marker 3: res:" << res << endl;
 
     seggioChiamante->mutex_stdout.lock();
     if (res  == -1) {
@@ -131,7 +127,6 @@ int SSLClient::create_socket(const char * hostname,const char * port) {
 
     return res;
 }
-
 
 void SSLClient::ShowCerts(SSL * ssl) {
     X509 *peer_cert;
@@ -272,7 +267,6 @@ void SSLClient::verify_ServerCert(const char * hostname,SSL *ssl) {
     BIO_free_all(certbio);
 
 }
-
 
 int SSLClient::myssl_getFile(SSL * ssl){
     //richiede ed ottiene lo stato della Postazione di voto a cui è connesso

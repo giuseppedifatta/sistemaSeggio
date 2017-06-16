@@ -45,7 +45,7 @@ private:
     //std::thread test_thread;
     BIO* outbio;
     SSL_CTX *ctx;
-    int server_sock;
+    int listen_sock;
     Seggio * seggioChiamante;
     bool stopServer;
 

@@ -60,12 +60,16 @@ Seggio::Seggio(MainWindowSeggio * m)
 }
 
 Seggio::~Seggio(){
-
-    //thread_server.join();
+    cout << "join del thread_server" << endl;
+    thread_server.join();
     //thread_1.join();
     //thread_2.join();
     //thread_3.join();
 
+}
+
+void Seggio::setStopThreads(bool b) {
+    this->stopThreads = b;
 }
 
 void Seggio::setBusyHT_PV(){
@@ -292,7 +296,7 @@ void Seggio::runServerUpdatePV(){
     cout << "avvio del seggio_server per ricevere gli update dello stato delle Postazioni di Voto" << endl;
     this->mutex_stdout.unlock();
 
-    while(!this->stopThreads){//se stopThreads ha valore vero il while termina
+    while(!(this->stopThreads)){//se stopThreads ha valore vero il while termina
 
         //attesa di una richiesta
         this->seggio_server->ascoltoNuovoStatoPV();
@@ -306,8 +310,8 @@ void Seggio::runServerUpdatePV(){
 
     // il thread che eseguiva la funzione termina se la funzione arriva alla fine
     return;
-
 }
+
 
 void Seggio::stopServerUpdatePV(){
     //creo client per contattare il server
@@ -322,6 +326,6 @@ void Seggio::stopServerUpdatePV(){
 
     //mi connetto al server locale per sbloccare l'ascolto e indurre la terminazione della funzione eseguita dal thread che funge da serve in ascolto
     this->seggio_client->stopServer("localhost");
-
+    //this->seggio_server->~SSLServer();
 
 }

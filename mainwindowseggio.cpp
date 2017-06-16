@@ -63,7 +63,7 @@ void MainWindowSeggio::initGestioneSeggio(){
 
 MainWindowSeggio::~MainWindowSeggio()
 {
-    //this->thread_1.join();
+
     delete ui;
 }
 
@@ -240,11 +240,15 @@ void MainWindowSeggio::on_gestisci_HT_button_clicked()
 
 void MainWindowSeggio::on_logout_button_clicked()
 {
-    seggio->stopThreads=true;
+
     this->logged=false;
     ui->stackedWidget->setCurrentIndex(loginSeggio);
+    //setto il seggio affinchè vengano fermati i thread alla successiva esecuzione del costrutto while in essi contenuto
+    seggio->setStopThreads(true);
 
+    //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
     seggio->stopServerUpdatePV();
+
 
 }
 
@@ -309,10 +313,9 @@ void MainWindowSeggio::initTableRV(){
 
 void MainWindowSeggio::on_logoutCS_button_clicked()
 {
-    seggio->stopThreads=true;
     this->logged=false;
-    seggio->~Seggio();
     ui->stackedWidget->setCurrentIndex(loginSeggio);
+    seggio->stopServerUpdatePV();
 }
 
 void MainWindowSeggio::on_annullaAssociazione_button_clicked()
@@ -468,11 +471,9 @@ void MainWindowSeggio::on_schedaSuccessiva_button_clicked()
 
 void MainWindowSeggio::on_logout2_button_clicked()
 {
-    seggio->stopThreads=true;
     this->logged=false;
-    seggio->~Seggio();
     ui->stackedWidget->setCurrentIndex(loginSeggio);
-
+    seggio->stopServerUpdatePV();
 }
 
 void MainWindowSeggio::on_sostituisci_button_clicked()

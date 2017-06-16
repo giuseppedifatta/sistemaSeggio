@@ -74,7 +74,7 @@ public:
         offline
     };
     std::array <std::string,6> patternSS;
-    bool stopThreads;
+
 
     std::mutex mutex_stati;
     std::mutex mutex_stdout;
@@ -82,7 +82,9 @@ public:
     //questa funzione verrà chiamata dal thread che si mette in ascolto di aggiornamenti delle postazioni di voto
     void runServerUpdatePV();
     void stopServerUpdatePV();
+    void setStopThreads(bool b);
 private:
+
     //questi due arrey tengono traccia delle postazioni di voto e degli hardaware token attualmente impegnati in associazioni PV_HT
     std::array <bool,4> busyHT;
     std::array <bool,3> busyPV;
@@ -104,6 +106,7 @@ private:
 
     SSLServer * seggio_server;
     std::thread thread_server;
+    bool stopThreads;
     //std::thread thread_1;
     //std::thread thread_2;
     //std::thread thread_3;
