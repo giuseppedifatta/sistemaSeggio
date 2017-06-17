@@ -59,19 +59,19 @@ void SSLClient::init_openssl_library() {
 
 }
 
-void SSLClient::stopServer(const char* hostname){
-    //questa funzione contatta il server, ma non deve fare alcuna operazione se non quella
-    //di sbloccare il server dallo stato di attesa di una nuova connessione, così da indurrlo
-    //a ricontrollare la condizione del while che se falsa, porta
+void SSLClient::stopLocalServer(const char* hostIP/*hostname*/){
+    //questa funzione contatta il server locale, ma non deve fare alcuna operazione se non quella
+    //di sbloccare il server locale dallo stato di attesa di una nuova connessione, così da portare
+    //al ricontrollo della condizione del while che se falsa, porta
     //all'interruzione del thread chiamante
     const char * port = SERVER_PORT;
-    create_socket(hostname, port);
+    create_socket(hostIP/*hostname*/, port);
 
     cout << "Client: niente da fare qui..." << endl;
     close(this->server_sock);
 }
 
-int SSLClient::create_socket(const char * hostname,const char * port) {
+int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) {
     /* ---------------------------------------------------------- *
      * create_socket() creates the socket & TCP-connect to server *
      * ---------------------------------------------------------- */
@@ -79,15 +79,18 @@ int SSLClient::create_socket(const char * hostname,const char * port) {
 
     char *tmp_ptr = NULL;
     //int port;
-    struct hostent *host;
+    /* decomentare per usare l'hostname
+     * struct hostent *host;
+     */
     struct sockaddr_in dest_addr;
 
     unsigned int portCod = atoi(port);
-
+    /* decommentare la sezione se si passa alla funzione l'hostname invece dell'ip dell'host
     if ((host = gethostbyname(hostname)) == NULL) {
         BIO_printf(this->outbio, "Error: Cannot resolve hostname %s.\n", hostname);
         abort();
     }
+    */
     /* ---------------------------------------------------------- *
      * create the basic TCP socket                                *
      * ---------------------------------------------------------- */
@@ -95,8 +98,12 @@ int SSLClient::create_socket(const char * hostname,const char * port) {
 
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(portCod);
+    /* decommentare la sezione se si passa alla funzione l'hostname invece dell'ip dell'host
     dest_addr.sin_addr.s_addr = *(long*) (host->h_addr);
-    //dest_addr.sin_addr.s_addr = inet_addr("string_ip_address");
+    */
+
+    // commentare la riga sotto se non si vuole usare l'ip dell'host, ma l'hostname
+    dest_addr.sin_addr.s_addr = inet_addr(hostIP);
 
     /* ---------------------------------------------------------- *
      * Zeroing the rest of the struct                             *
@@ -113,10 +120,10 @@ int SSLClient::create_socket(const char * hostname,const char * port) {
     seggioChiamante->mutex_stdout.lock();
     if (res  == -1) {
         BIO_printf(this->outbio, "Error: Cannot connect to host %s [%s] on port %d.\n",
-                   hostname, tmp_ptr, portCod);
+                   hostIP/*hostname*/, tmp_ptr, portCod);
     } else {
         BIO_printf(this->outbio, "Successfully connect to host %s [%s] on port %d.\n",
-                   hostname, tmp_ptr, portCod);
+                   hostIP/*hostname*/, tmp_ptr, portCod);
 
     }
     seggioChiamante->mutex_stdout.unlock();
@@ -173,7 +180,7 @@ void SSLClient::configure_context(char* CertFile, char* KeyFile, char * ChainFil
 
 }
 
-void SSLClient::verify_ServerCert(const char * hostname,SSL *ssl) {
+void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/,SSL *ssl) {
 
 
     // Declare X509 structure
@@ -196,10 +203,10 @@ void SSLClient::verify_ServerCert(const char * hostname,SSL *ssl) {
     peer_cert = SSL_get_peer_certificate(ssl);
     if (peer_cert == NULL)
         BIO_printf(this->outbio, "Error: Could not get a certificate from: %s.\n",
-                   hostname);
+                   hostIP/*hostname*/);
     else
         BIO_printf(this->outbio, "Retrieved the server's certificate from: %s.\n",
-                   hostname);
+                   hostIP/*hostname*/);
 
 
     // extract various certificate information

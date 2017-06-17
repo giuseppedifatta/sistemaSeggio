@@ -2,6 +2,10 @@
 
 #include <iostream>
 #include <thread>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <netdb.h>
 #include <unistd.h>
 #include "sslclient.h"
 #include "sslserver.h"
@@ -83,12 +87,17 @@ void Seggio::setBusyHT_PV(){
         }
     }
     this->PV_lastUsedHT[idPV-1]=idHT;
-    //lock_guard<std::mutex> guard(this->mutex_stdout);
+    this->mutex_stdout.lock();
     cout << "Hardware token: " << idHT << ", ultimo utilizzo su PV: " << idPV << endl;
+    this->mutex_stdout.unlock();
+
     this->busyPV[idPV-1]=true;
 
+    //TODO comunicare alla postazione di competenza la nuova associazione
+    this->calcolaIP_PVbyID(idPV);
+
     if(!this->anyPostazioneLibera()){
-        mainWindow->updateCreaAssociazioneButton();
+        mainWindow->disableCreaAssociazioneButton();
     }
 
 }
@@ -324,8 +333,55 @@ void Seggio::stopServerUpdatePV(){
     cout << "il server sta per essere fermato" << endl;
     this->mutex_stdout.unlock();
 
-    //mi connetto al server locale per sbloccare l'ascolto e indurre la terminazione della funzione eseguita dal thread che funge da serve in ascolto
-    this->seggio_client->stopServer("localhost");
+    //mi connetto al server locale per sbloccare l'ascolto e portare alla terminazione della funzione eseguita dal thread che funge da serve in ascolto
+    const char * localhost = "127.0.0.1";
+    this->seggio_client->stopLocalServer(localhost);
     //this->seggio_server->~SSLServer();
 
+}
+
+const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
+    struct hostent *host;
+    host = gethostbyname("localhost");
+    struct sockaddr_in local_address;
+    local_address.sin_family = AF_INET;
+    local_address.sin_addr.s_addr = *(long*) (host->h_addr);
+    /* ---------------------------------------------------------- *
+     * Zeroing the rest of the struct                             *
+     * ---------------------------------------------------------- */
+    memset(&(local_address.sin_zero), '\0', 8);
+
+    const char * address_printable = inet_ntoa(local_address.sin_addr);
+    cout << "IP locale della PV: " << address_printable << endl;
+
+
+    struct ifaddrs * ifAddrStruct=NULL;
+    struct ifaddrs * ifa=NULL;
+    void * tmpAddrPtr=NULL;
+
+    int ret = getifaddrs(&ifAddrStruct);
+    if (ret == 0){
+        cout << "getifaddrs success"<< endl;
+    }
+    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr) {
+            continue;
+        }
+        if (ifa->ifa_addr->sa_family == AF_INET) { // check it is IP4
+            // is a valid IP4 Address
+            tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+            char addressBuffer[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
+        } else if (ifa->ifa_addr->sa_family == AF_INET6) { // check it is IP6
+            // is a valid IP6 Address
+            tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+            char addressBuffer[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
+        }
+    }
+    if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+
+    return address_printable;
 }

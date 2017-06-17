@@ -30,7 +30,7 @@ public:
 
 
     Seggio *seggioChiamante;
-    void stopServer(const char * hostname);
+    void stopLocalServer(const char * hostname);
     unsigned int getStatoPV();
 };
 

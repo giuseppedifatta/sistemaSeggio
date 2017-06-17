@@ -23,7 +23,7 @@ public:
     Ui::MainWindowSeggio* getUiPointer();
     bool logged;
     void updatePVbuttons();
-    void updateCreaAssociazioneButton();
+    void disableCreaAssociazioneButton();
 
 private slots:
     void on_loginCS_button_clicked();

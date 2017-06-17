@@ -214,11 +214,8 @@ void MainWindowSeggio::updatePVbuttons(){
         std::cout <<"view: executed the function to update the PV states "<< endl;
 }
 
-void MainWindowSeggio::updateCreaAssociazioneButton(){
-    if (!(seggio->anyPostazioneLibera()))
+void MainWindowSeggio::disableCreaAssociazioneButton(){
         ui->creaAssociazioneHTPV_button->setEnabled(false);
-    else
-        ui->creaAssociazioneHTPV_button->setEnabled(true);
 }
 
 void MainWindowSeggio::on_gestisci_HT_button_clicked()

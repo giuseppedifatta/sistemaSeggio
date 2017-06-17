@@ -115,6 +115,8 @@ private:
 
     MainWindowSeggio *mainWindow;
 
+    const char * calcolaIP_PVbyID(unsigned int idPV);
+
 };
 
 #endif /* SEGGIO_H_ */
