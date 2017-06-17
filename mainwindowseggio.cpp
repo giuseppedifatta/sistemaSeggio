@@ -317,6 +317,7 @@ void MainWindowSeggio::on_logoutCS_button_clicked()
 
 void MainWindowSeggio::on_annullaAssociazione_button_clicked()
 {
+    ui->gestisci_HT_button->setEnabled(true);
 
     ui->annullaAssociazione_button->hide();
     ui->associazioneDisponibile_label->hide();
@@ -329,6 +330,7 @@ void MainWindowSeggio::on_annullaAssociazione_button_clicked()
 void MainWindowSeggio::on_creaAssociazioneHTPV_button_clicked()
 {
     ui->creaAssociazioneHTPV_button->setEnabled(false);
+    ui->gestisci_HT_button->setEnabled(false);
     seggio->createAssociazioneHT_PV();
 
     unsigned int ht = seggio->getNuovaAssociazione()->getIdHT();
@@ -345,6 +347,8 @@ void MainWindowSeggio::on_creaAssociazioneHTPV_button_clicked()
 
 void MainWindowSeggio::on_confermaAssociazione_button_clicked()
 {
+    ui->gestisci_HT_button->setEnabled(true);
+
     //completare associazione HT-PV
     seggio->addAssociazioneHT_PV();
     seggio->eliminaNuovaAssociazione();
