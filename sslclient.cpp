@@ -119,10 +119,10 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
 
     seggioChiamante->mutex_stdout.lock();
     if (res  == -1) {
-        BIO_printf(this->outbio, "Error: Cannot connect to host %s [%s] on port %d.\n",
+        BIO_printf(this->outbio, "Client: Error: Cannot connect to host %s [%s] on port %d.\n",
                    hostIP/*hostname*/, tmp_ptr, portCod);
     } else {
-        BIO_printf(this->outbio, "Successfully connect to host %s [%s] on port %d.\n",
+        BIO_printf(this->outbio, "Client: Successfully connect to host %s [%s] on port %d.\n",
                    hostIP/*hostname*/, tmp_ptr, portCod);
 
     }

@@ -56,7 +56,7 @@ background-color: white;
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="loginSeggio_page">
        <property name="sizePolicy">
@@ -724,6 +724,9 @@ font-size: 10pt;</string>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <property name="spacing">
+             <number>50</number>
+            </property>
             <item>
              <widget class="QPushButton" name="goBackToGestioneSeggio_button">
               <property name="text">

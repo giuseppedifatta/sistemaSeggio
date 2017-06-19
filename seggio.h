@@ -107,9 +107,6 @@ private:
     SSLServer * seggio_server;
     std::thread thread_server;
     bool stopThreads;
-    //std::thread thread_1;
-    //std::thread thread_2;
-    //std::thread thread_3;
 
     SSLClient * seggio_client;
 

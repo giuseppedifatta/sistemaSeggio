@@ -111,15 +111,16 @@ void SSLServer::ascoltoNuovoStatoPV(){
         //termina l'ascolto
         seggioChiamante->mutex_stdout.lock();
         cout << "Server: interruzione del server in corso...client?... ora attaccati a sto cazzo :P" << endl;
+
+        int success = close(client_sock);
+        if(success == 0){
+            cout << "Server: successo chiusura socket del client" << endl;
+        }
+        success = close(this->listen_sock);
+        if(success == 0){
+            cout << "Server: successo chiusura socket del listener" << endl;
+        }
         seggioChiamante->mutex_stdout.unlock();
-        int ab = close(client_sock);
-        if(ab ==0){
-            cout << "successo chiusura socket per il client" << endl;
-        }
-        ab = close(this->listen_sock);
-        if(ab ==0){
-            cout << "successo chiusura socket del listener" << endl;
-        }
         return;
     }
 

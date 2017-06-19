@@ -26,6 +26,10 @@ Seggio::Seggio(MainWindowSeggio * m)
     dataChiusuraSessione.tm_year = 2017;
     dataChiusuraSessione.tm_hour = 17;
 
+
+    //solo per test, gli ht attivi per un certo seggio saranno impostati all'atto della creazione del seggio
+    //non può essere il seggio a decidere, al momento dell'avvio del seggio stesso, quali sono gli HT attivi e quale quello di riserva
+    //prevedere
     idHTAttivi[0]=1;
     idHTAttivi[1]=2;
     idHTAttivi[2]=3;
@@ -61,6 +65,12 @@ Seggio::Seggio(MainWindowSeggio * m)
     patternSS[statiPV::votazione_completata] = " width:180; height:120; border:7px solid red; background-color:rgb(85,255,0);color:black;font-size:18px;";
     patternSS[statiPV::votazione_in_corso] = "width:180; height:120;border: 7px solid red;background-color:white;color:black;font-size:18px;";
     patternSS[statiPV::errore] = "width:180; height:120;border: 7px solid red;background-color:white;color:black;font-size:18px;";
+
+    //TODO calcolare usando come indirizzo base l'IP pubblico del seggio
+    IP_PV[idPostazioniVoto[0]-1] = "192.168.56.101";
+    IP_PV[idPostazioniVoto[1]-1] = "192.168.56.102";
+    IP_PV[idPostazioniVoto[2]-1] = "127.0.0.1";
+
 }
 
 Seggio::~Seggio(){
@@ -373,13 +383,14 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
             char addressBuffer[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
             printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-        } else if (ifa->ifa_addr->sa_family == AF_INET6) { // check it is IP6
+        }
+        /*else if (ifa->ifa_addr->sa_family == AF_INET6) { // check it is IP6
             // is a valid IP6 Address
             tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
             char addressBuffer[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
             printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-        }
+        }*/
     }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
 
