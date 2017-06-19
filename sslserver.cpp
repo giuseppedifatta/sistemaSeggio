@@ -81,21 +81,17 @@ void SSLServer::ascoltoNuovoStatoPV(){
     // accept restituisce un valore negativo in caso di insuccesso
     int client_sock = accept(this->listen_sock, (struct sockaddr*) &client_addr,
                              &len);
-
+    cout << "Server: accept superata" << endl;
     if (client_sock < 0) {
         perror("Unable to accept");
         exit(EXIT_FAILURE);
     }
     else{
+        seggioChiamante->mutex_stdout.lock();
         cout << "Server: Un client ha iniziato la connessione su una socket con fd:" << client_sock << endl;
+        cout<<"Server: Client's Port assegnata: "<< ntohs(client_addr.sin_port)<< endl;
+        seggioChiamante->mutex_stdout.unlock();
     }
-
-    seggioChiamante->mutex_stdout.lock();
-    cout<<"Server: Client's Port assegnata: "<< ntohs(client_addr.sin_port)<< endl;
-    seggioChiamante->mutex_stdout.unlock();
-
-
-
 
     if(!(this->stopServer)){
         ssl = SSL_new(ctx);
@@ -110,7 +106,7 @@ void SSLServer::ascoltoNuovoStatoPV(){
     else{
         //termina l'ascolto
         seggioChiamante->mutex_stdout.lock();
-        cout << "Server: interruzione del server in corso...client?... ora attaccati a sto cazzo :P" << endl;
+        cout << "Server: interruzione del server in corso.." << endl;
 
         int success = close(client_sock);
         if(success == 0){
@@ -146,6 +142,7 @@ void SSLServer::Servlet(SSL * ssl,int client_sock ,servizi servizio) {/* Serve t
         seggioChiamante->mutex_stdout.unlock();
         this->ShowCerts(ssl);
         this->verify_ClientCert(ssl);
+        //ottenere un valore di ritorno e bloccare la comunicazione se la verifica del certificato ha avuto esito negativo
 
         seggioChiamante->mutex_stdout.lock();
         cout << "Server: service starting..." << endl;
@@ -270,6 +267,12 @@ int SSLServer::openListener(int s_port) {
 
     struct sockaddr_in sa_serv;
     listen_sock = socket(PF_INET, SOCK_STREAM, 0);
+
+    //allow reuse of port without dealy for TIME_WAIT
+    int iSetOption = 1;
+    setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&iSetOption,
+            sizeof(iSetOption));
+
     if (listen_sock <= 0) {
         perror("Unable to create socket");
         abort();
@@ -651,8 +654,7 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
 
     ret = X509_STORE_load_locations(store, chainFile, NULL);
     if (ret != 1){
-        //lock_guard<std::mutex> guard6(seggioChiamante->mutex_stdout);
-        BIO_printf(outbio, "Server: Error loading CA cert or chain file\n");
+         BIO_printf(outbio, "Server: Error loading CA cert or chain file\n");
     }
     /* ---------------------------------------------------------- *
      * Initialize the ctx structure for a verification operation: *
@@ -667,11 +669,9 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
      * for trouble with the ctx object (i.e. missing certificate) *
      * ---------------------------------------------------------- */
     ret = X509_verify_cert(vrfy_ctx);
-    //lock_guard<std::mutex> guard7(seggioChiamante->mutex_stdout);
     BIO_printf(outbio, "Server: Verification return code: %d\n", ret);
 
     if (ret == 0 || ret == 1){
-        //lock_guard<std::mutex> guard8(seggioChiamante->mutex_stdout);
         BIO_printf(outbio, "Server: Verification result text: %s\n",
                    X509_verify_cert_error_string(vrfy_ctx->error));
     }
@@ -684,10 +684,8 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
         error_cert = X509_STORE_CTX_get_current_cert(vrfy_ctx);
         certsubject = X509_NAME_new();
         certsubject = X509_get_subject_name(error_cert);
-        //lock_guard<std::mutex> guard9(seggioChiamante->mutex_stdout);
         BIO_printf(outbio, "Server: Verification failed cert:\n");
         X509_NAME_print_ex(outbio, certsubject, 0, XN_FLAG_MULTILINE);
-        //lock_guard<std::mutex> guard10(seggioChiamante->mutex_stdout);
         BIO_printf(outbio, "\n");
     }
 
@@ -755,5 +753,10 @@ int SSLServer::myssl_fwrite(SSL *ssl, const char * infile) {
 
 void SSLServer::setStopServer(bool b){
     this->stopServer=b;
+}
+
+
+int SSLServer::getListenSocketFD(){
+    return this->listen_sock;
 }
 

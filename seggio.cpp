@@ -333,6 +333,7 @@ void Seggio::runServerUpdatePV(){
 
 
 void Seggio::stopServerUpdatePV(){
+
     //creo client per contattare il server
     this->seggio_client = new SSLClient(this);
 

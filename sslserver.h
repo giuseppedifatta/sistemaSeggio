@@ -40,6 +40,7 @@ public:
     //vector <AggiornamentoStatoPV*> aggiornamentiVector;
     //queue<thread> threads_q;
 
+    int getListenSocketFD();
 private:
 
     //std::thread test_thread;

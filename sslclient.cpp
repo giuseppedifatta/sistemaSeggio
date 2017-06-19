@@ -67,7 +67,7 @@ void SSLClient::stopLocalServer(const char* hostIP/*hostname*/){
     const char * port = SERVER_PORT;
     create_socket(hostIP/*hostname*/, port);
 
-    cout << "Client: niente da fare qui..." << endl;
+    cout << "Client: niente da fare qui...chiudo la socket per il server" << endl;
     close(this->server_sock);
 }
 
