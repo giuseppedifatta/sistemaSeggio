@@ -19,53 +19,33 @@
 using namespace std;
 
 #define SERVER_PORT "4433"
+#define LOCALHOST "127.0.0.1"
 
 SSLClient::SSLClient(Seggio * s){
     //this->hostname = IP_PV;
     this->seggioChiamante = s;
     outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
+
+    //strutture ssl inizializzate dal seggio
 }
 
 SSLClient::~SSLClient(){
     /* ---------------------------------------------------------- *
      * Free the structures we don't need anymore                  *
      * -----------------------------------------------------------*/
+    BIO_free_all(this->outbio);
 
-    SSL_CTX_free(this->ctx);
-
-
-}
-
-void SSLClient::init_openssl_library() {
-    /* https://www.openssl.org/docs/ssl/SSL_library_init.html */
-    SSL_library_init();
-    /* Cannot fail (always returns success) ??? */
-
-    /* https://www.openssl.org/docs/crypto/ERR_load_crypto_strings.html */
-    SSL_load_error_strings();
-    /* Cannot fail ??? */
-
-    ERR_load_BIO_strings();
-    /* SSL_load_error_strings loads both libssl and libcrypto strings */
-    //ERR_load_crypto_strings();
-    /* Cannot fail ??? */
-
-    /* OpenSSL_config may or may not be called internally, based on */
-    /*  some #defines and internal gyrations. Explicitly call it    */
-    /*  *IF* you need something from openssl.cfg, such as a         */
-    /*  dynamically configured ENGINE.                              */
-    OPENSSL_config(NULL);
 
 }
 
-void SSLClient::stopLocalServer(const char* hostIP/*hostname*/){
+void SSLClient::stopLocalServer(const char* localhost/*hostname*/){
     //questa funzione contatta il server locale, ma non deve fare alcuna operazione se non quella
     //di sbloccare il server locale dallo stato di attesa di una nuova connessione, così da portare
     //al ricontrollo della condizione del while che se falsa, porta
     //all'interruzione del thread chiamante
     const char * port = SERVER_PORT;
-    create_socket(hostIP/*hostname*/, port);
+    create_socket(localhost/*hostname*/, port);
 
     cout << "Client: niente da fare qui...chiudo la socket per il server" << endl;
     close(this->server_sock);
@@ -75,10 +55,9 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
     /* ---------------------------------------------------------- *
      * create_socket() creates the socket & TCP-connect to server *
      * ---------------------------------------------------------- */
-    //int sockfd;
 
-    char *tmp_ptr = NULL;
-    //int port;
+    const char *address_printable = NULL;
+
     /* decomentare per usare l'hostname
      * struct hostent *host;
      */
@@ -91,10 +70,7 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
         abort();
     }
     */
-    /* ---------------------------------------------------------- *
-     * create the basic TCP socket                                *
-     * ---------------------------------------------------------- */
-    this->server_sock = socket(AF_INET, SOCK_STREAM, 0);
+
 
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(portCod);
@@ -106,11 +82,15 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
     dest_addr.sin_addr.s_addr = inet_addr(hostIP);
 
     /* ---------------------------------------------------------- *
+     * create the basic TCP socket                                *
+     * ---------------------------------------------------------- */
+    this->server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    /* ---------------------------------------------------------- *
      * Zeroing the rest of the struct                             *
      * ---------------------------------------------------------- */
     memset(&(dest_addr.sin_zero), '\0', 8);
 
-    tmp_ptr = inet_ntoa(dest_addr.sin_addr);
+    address_printable = inet_ntoa(dest_addr.sin_addr);
 
     /* ---------------------------------------------------------- *
      * Try to make the host connect here                          *
@@ -120,10 +100,10 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
     seggioChiamante->mutex_stdout.lock();
     if (res  == -1) {
         BIO_printf(this->outbio, "Client: Error: Cannot connect to host %s [%s] on port %d.\n",
-                   hostIP/*hostname*/, tmp_ptr, portCod);
+                   hostIP/*hostname*/, address_printable, portCod);
     } else {
         BIO_printf(this->outbio, "Client: Successfully connect to host %s [%s] on port %d.\n",
-                   hostIP/*hostname*/, tmp_ptr, portCod);
+                   hostIP/*hostname*/, address_printable, portCod);
 
     }
     seggioChiamante->mutex_stdout.unlock();
@@ -133,6 +113,58 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
     seggioChiamante->mutex_stdout.unlock();
 
     return res;
+}
+
+SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
+
+    const char * port = SERVER_PORT;
+
+    /* ---------------------------------------------------------- *
+     * Create new SSL connection state object                     *
+     * ---------------------------------------------------------- */
+
+    this->ssl = SSL_new(seggioChiamante->getCTX());
+
+    cout << "ConnectTo - ssl pointer: " << this->ssl << endl;
+    /* ---------------------------------------------------------- *
+     * Make the underlying TCP socket connection                  *
+     * ---------------------------------------------------------- */
+
+
+    int res = create_socket(hostIP /*hostname*/,port);
+    if (res == 0){
+        BIO_printf(this->outbio,
+                   "Successfully create the socket for TCP connection to: %s.\n",
+                   hostIP /*hostname*/);
+    }
+    else {
+        BIO_printf(this->outbio,
+                   "Unable to create the socket for TCP connection to: %s.\n",
+                   hostIP /*hostname*/);
+    }
+
+    /* ---------------------------------------------------------- *
+     * Attach the SSL session to the socket descriptor            *
+     * ---------------------------------------------------------- */
+
+    if (SSL_set_fd(this->ssl, this->server_sock) != 1) {
+        BIO_printf(this->outbio, "Error: Connection to %s failed", hostIP /*hostname*/);
+    }
+    else
+        BIO_printf(this->outbio, "Ok: Connection to %s ", hostIP /*hostname*/);
+    /* ---------------------------------------------------------- *
+     * Try to SSL-connect here, returns 1 for success             *
+     * ---------------------------------------------------------- */
+    if (SSL_connect(this->ssl) != 1) //SSL handshake
+        BIO_printf(this->outbio, "Error: Could not build a SSL session to: %s.\n",
+                   hostIP /*hostname*/);
+    else
+        BIO_printf(this->outbio, "Successfully enabled SSL/TLS session to: %s.\n",
+                   hostIP /*hostname*/);
+    ShowCerts(this->ssl);
+    verify_ServerCert(hostIP /*hostname*/,this->ssl);
+    //SSL_set_connect_state(ssl);
+    return this->ssl;
 }
 
 void SSLClient::ShowCerts(SSL * ssl) {
@@ -153,31 +185,6 @@ void SSLClient::ShowCerts(SSL * ssl) {
         X509_free(peer_cert);
     } else
         printf("No certificates.\n");
-}
-
-void SSLClient::configure_context(char* CertFile, char* KeyFile, char * ChainFile) {
-    SSL_CTX_set_ecdh_auto(this->ctx, 1);
-
-    //---il chainfile dovrà essere ricevuto dal peer che si connette? non so se è necessario su entrambi i peer----
-    SSL_CTX_load_verify_locations(this->ctx,ChainFile, NULL);
-    //SSL_CTX_use_certificate_chain_file(ctx,"/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem");
-    /*The final step of configuring the context is to specify the certificate and private key to use.*/
-    /* Set the key and cert */
-    if (SSL_CTX_use_certificate_file(this->ctx, CertFile, SSL_FILETYPE_PEM) < 0) {
-        //ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    if (SSL_CTX_use_PrivateKey_file(this->ctx, KeyFile, SSL_FILETYPE_PEM) < 0) {
-        //ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    if (!SSL_CTX_check_private_key(this->ctx)) {
-        fprintf(stderr, "Private key does not match the public certificate\n");
-        abort();
-    }
-
 }
 
 void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/,SSL *ssl) {
@@ -327,4 +334,5 @@ int SSLClient::myssl_getFile(SSL * ssl){
 
     return 0;
 }
+
 

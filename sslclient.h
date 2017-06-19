@@ -13,25 +13,25 @@ class SSLClient
 {
 private:
     //membri privati
-    SSL_CTX *ctx;
+
     int server_sock;
     BIO *outbio;
 
     //metodi privati
-    void init_openssl_library();
-    int create_socket(const char *hostname, const char * port);
     void ShowCerts(SSL *ssl);
-    void configure_context(char* CertFile, char* KeyFile, char * ChainFile);
-    void verify_ServerCert(const char * hostname,SSL *ssl);
+
+    void verify_ServerCert(const char * hostIP /*hostname*/,SSL *ssl);
     int myssl_getFile(SSL *ssl);
 public:
     SSLClient(Seggio * s);
     ~SSLClient();
-
+    SSL * ssl;
 
     Seggio *seggioChiamante;
-    void stopLocalServer(const char * hostname);
+    void stopLocalServer(const char * localhost);
     unsigned int getStatoPV();
+    int create_socket(const char * hostIP/*hostname*/,const char * port);
+    SSL* connectTo(const char* hostIP/*hostname*/);
 };
 
 

@@ -36,39 +36,20 @@ using namespace std;
 SSLServer::SSLServer(Seggio *s){
     this->setStopServer(false);
     this->seggioChiamante = s;
-
-    this->init_openssl_library();
-    this->create_context();
-
-    char certFile[] =
-            "/home/giuseppe/myCA/intermediate/certs/localhost.cert.pem";
-    char keyFile[] =
-            "/home/giuseppe/myCA/intermediate/private/localhost.key.pem";
-    char chainFile[] =
-            "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
-
-    configure_context(certFile, keyFile, chainFile);
-
-
-    cout << "Server: Cert and key configured" << endl;
-
     this->listen_sock = this->openListener(atoi(PORT));
     this->outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
-
-
+    this->ssl = nullptr;
 }
 
 SSLServer::~SSLServer(){
-    //nel distruttore
-    BIO_free_all(outbio);
-    close(listen_sock);
-    SSL_CTX_free(this->ctx);
-    cleanup_openssl();
+
+    BIO_free_all(this->outbio);
+    //close(this->listen_sock);
+
 }
 
 void SSLServer::ascoltoNuovoStatoPV(){
     /* Handle connections */
-    SSL * ssl = nullptr;
 
     //inizializza una socket per il client
     struct sockaddr_in client_addr;
@@ -89,14 +70,14 @@ void SSLServer::ascoltoNuovoStatoPV(){
     else{
         seggioChiamante->mutex_stdout.lock();
         cout << "Server: Un client ha iniziato la connessione su una socket con fd:" << client_sock << endl;
-        cout<<"Server: Client's Port assegnata: "<< ntohs(client_addr.sin_port)<< endl;
+        cout << "Server: Client's Port assegnata: "<< ntohs(client_addr.sin_port)<< endl;
         seggioChiamante->mutex_stdout.unlock();
     }
 
     if(!(this->stopServer)){
-        ssl = SSL_new(ctx);
+        this->ssl = SSL_new(seggioChiamante->getCTX());
         //se non è stata settata l'interruzione del server, lancia il thread per servire la richiesta
-        thread t (&SSLServer::Servlet,this, ssl, client_sock, servizi::aggiornamentoPV);
+        thread t (&SSLServer::Servlet,this, this->ssl, client_sock, servizi::aggiornamentoPV);
         t.detach();
         seggioChiamante->mutex_stdout.lock();
         cout << "Server: Server: start a thread..." << endl;
@@ -122,7 +103,7 @@ void SSLServer::ascoltoNuovoStatoPV(){
 
 }
 
-void SSLServer::Servlet(SSL * ssl,int client_sock ,servizi servizio) {/* Serve the connection -- threadable */
+void SSLServer::Servlet(SSL * ssl, int client_sock, servizi servizio) {/* Serve the connection -- threadable */
     seggioChiamante->mutex_stdout.lock();
     cout << "Server: Servlet: inizio servlet" << endl;
     seggioChiamante->mutex_stdout.unlock();
@@ -173,7 +154,6 @@ void SSLServer::service(SSL *ssl, servizi servizio) {
     int bytes;
 
     switch (servizio) {
-
 
     case servizi::aggiornamentoPV:{
         unsigned int idPV;
@@ -235,11 +215,9 @@ void SSLServer::service(SSL *ssl, servizi servizio) {
             memset(reply, '\0', sizeof(reply));
             sprintf(reply, HTMLecho, buf);   // construct reply
             SSL_write(ssl, reply, strlen(reply));  //send reply
-        } else
+        } else{
             ERR_print_errors_fp(stderr);
-
-
-
+        }
         break;
     }
         //richiesta file
@@ -271,7 +249,7 @@ int SSLServer::openListener(int s_port) {
     //allow reuse of port without dealy for TIME_WAIT
     int iSetOption = 1;
     setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&iSetOption,
-            sizeof(iSetOption));
+               sizeof(iSetOption));
 
     if (listen_sock <= 0) {
         perror("Unable to create socket");
@@ -300,79 +278,7 @@ int SSLServer::openListener(int s_port) {
     return listen_sock;
 }
 
-void SSLServer::create_context() {
-    const SSL_METHOD *method;
 
-
-    //method = SSLv23_server_method();
-    method = TLSv1_2_server_method();
-
-    this->ctx = SSL_CTX_new(method);
-    if (!this->ctx) {
-        perror("Unable to create SSL context");
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    //https://www.openssl.org/docs/man1.1.0/ssl/SSL_CTX_set_options.html
-    const long flags = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3
-            | SSL_OP_NO_COMPRESSION;
-    long old_opts = SSL_CTX_set_options(this->ctx, flags);
-    seggioChiamante->mutex_stdout.lock();
-    cout << "Server: bitmask options: " << old_opts << endl;
-    seggioChiamante->mutex_stdout.unlock();
-    //    return ctx;
-}
-
-void SSLServer::configure_context(char* CertFile, char* KeyFile, char* ChainFile) {
-    SSL_CTX_set_ecdh_auto(this->ctx, 1);
-
-    SSL_CTX_load_verify_locations(this->ctx, ChainFile, ChainFile);
-    //SSL_CTX_use_certificate_chain_file(ctx,"/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem");
-
-    /*The final step of configuring the context is to specify the certificate and private key to use.*/
-    /* Set the key and cert */
-    if (SSL_CTX_use_certificate_file(this->ctx, CertFile, SSL_FILETYPE_PEM) < 0) {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    if (SSL_CTX_use_PrivateKey_file(this->ctx, KeyFile, SSL_FILETYPE_PEM) < 0) {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    //SSL_CTX_set_default_passwd_cb(ctx,"password"); // cercare funzionamento con reference
-
-    if (!SSL_CTX_check_private_key(this->ctx)) {
-        fprintf(stderr, "Private key does not match the public certificate\n");
-        abort();
-    }
-    //substitute NULL with the name of the specific verify_callback
-    SSL_CTX_set_verify(this->ctx, SSL_VERIFY_PEER, NULL);
-
-}
-
-void SSLServer::init_openssl_library() {
-    /* https://www.openssl.org/docs/ssl/SSL_library_init.html */
-    SSL_library_init();
-    /* Cannot fail (always returns success) ??? */
-
-    /* https://www.openssl.org/docs/crypto/ERR_load_crypto_strings.html */
-    SSL_load_error_strings();
-    /* Cannot fail ??? */
-
-    /* SSL_load_error_strings loads both libssl and libcrypto strings */
-    ERR_load_crypto_strings();
-    /* Cannot fail ??? */
-
-    /* OpenSSL_config may or may not be called internally, based on */
-    /*  some #defines and internal gyrations. Explicitly call it    */
-    /*  *IF* you need something from openssl.cfg, such as a         */
-    /*  dynamically configured ENGINE.                              */
-    OPENSSL_config(NULL);
-
-}
 
 void SSLServer::print_cn_name(const char* label, X509_NAME* const name) {
     int idx = -1, success = 0;
@@ -553,9 +459,7 @@ void SSLServer::print_error_string(unsigned long err, const char* const label) {
         fprintf(stderr, "%s failed: %lu (0x%lx)\n", label, err, err);
 }
 
-void SSLServer::cleanup_openssl() {
-    EVP_cleanup();
-}
+
 
 void SSLServer::ShowCerts(SSL *ssl) {
     BIO * outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
@@ -654,7 +558,7 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
 
     ret = X509_STORE_load_locations(store, chainFile, NULL);
     if (ret != 1){
-         BIO_printf(outbio, "Server: Error loading CA cert or chain file\n");
+        BIO_printf(outbio, "Server: Error loading CA cert or chain file\n");
     }
     /* ---------------------------------------------------------- *
      * Initialize the ctx structure for a verification operation: *

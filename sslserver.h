@@ -31,8 +31,7 @@ public:
     void setStopServer(bool b);
 
     enum servizi {
-        aggiornamentoPV,
-        terminaServerSeggio
+        aggiornamentoPV
     };
 
     //mutex per l'accesso al vettore
@@ -45,17 +44,12 @@ private:
 
     //std::thread test_thread;
     BIO* outbio;
-    SSL_CTX *ctx;
+    SSL * ssl;
     int listen_sock;
     Seggio * seggioChiamante;
     bool stopServer;
 
-    void init_openssl_library();
-    void configure_context(char* CertFile, char* KeyFile,char* ChainFile);
-    void create_context();
     int openListener(int s_port);
-    void cleanup_openssl();
-
     void ShowCerts(SSL *ssl);
     void verify_ClientCert(SSL *ssl);
     void Servlet(SSL *ssl, int client_sock, servizi servizio);
@@ -66,10 +60,6 @@ private:
     int verify_callback(int preverify, X509_STORE_CTX* x509_ctx);
     void print_san_name(const char* label, X509* const cert);
     void print_cn_name(const char* label, X509_NAME* const name);
-
-
-
-
 
 };
 
