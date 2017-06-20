@@ -9,9 +9,7 @@
 *.so
 *.dll
 *.dylib
-*.pro
-*.pro.user
-*.user
+sistemaSeggio.pro.user
 
 # Qt-es
 
