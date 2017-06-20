@@ -9,6 +9,9 @@
 *.so
 *.dll
 *.dylib
+*.pro
+*.pro.user
+*.user
 
 # Qt-es
 
