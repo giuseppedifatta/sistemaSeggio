@@ -24,10 +24,27 @@ using namespace std;
 SSLClient::SSLClient(Seggio * s){
     //this->hostname = IP_PV;
     this->seggioChiamante = s;
+
+    /* ---------------------------------------------------------- *
+     * Create the Input/Output BIO's.                             *
+     * ---------------------------------------------------------- */
     outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
+    ssl = nullptr;
 
+    /* ---------------------------------------------------------- *
+     * Function that initialize openssl for correct work.		  *
+     * ---------------------------------------------------------- */
+    this->init_openssl_library();
 
-    //strutture ssl inizializzate dal seggio
+    createClientContext();
+
+    char certFile[] = "/home/giuseppe/myCA/intermediate/certs/client.cert.pem";
+    char keyFile[] = "/home/giuseppe/myCA/intermediate/private/client.key.pem";
+    char chainFile[] =
+            "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
+
+    this->configure_context(certFile, keyFile, chainFile);
+    cout << "Cert and key configured" << endl;
 }
 
 SSLClient::~SSLClient(){
@@ -35,7 +52,8 @@ SSLClient::~SSLClient(){
      * Free the structures we don't need anymore                  *
      * -----------------------------------------------------------*/
     BIO_free_all(this->outbio);
-
+    SSL_CTX_free(this->ctx);
+    this->cleanup_openssl();
 
 }
 
@@ -70,7 +88,6 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
         abort();
     }
     */
-
 
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(portCod);
@@ -123,7 +140,7 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
      * Create new SSL connection state object                     *
      * ---------------------------------------------------------- */
 
-    this->ssl = SSL_new(seggioChiamante->getCTX());
+    this->ssl = SSL_new(this->ctx);
 
     cout << "ConnectTo - ssl pointer: " << this->ssl << endl;
     /* ---------------------------------------------------------- *
@@ -161,17 +178,17 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
     else
         BIO_printf(this->outbio, "Successfully enabled SSL/TLS session to: %s.\n",
                    hostIP /*hostname*/);
-    ShowCerts(this->ssl);
-    verify_ServerCert(hostIP /*hostname*/,this->ssl);
+    ShowCerts();
+    verify_ServerCert(hostIP /*hostname*/);
     //SSL_set_connect_state(ssl);
     return this->ssl;
 }
 
-void SSLClient::ShowCerts(SSL * ssl) {
+void SSLClient::ShowCerts() {
     X509 *peer_cert;
     char *line;
 
-    peer_cert = SSL_get_peer_certificate(ssl); /* Get certificates (if available) */
+    peer_cert = SSL_get_peer_certificate(this->ssl); /* Get certificates (if available) */
 
     //ERR_print_errors_fp(stderr);
     if (peer_cert != NULL) {
@@ -187,11 +204,8 @@ void SSLClient::ShowCerts(SSL * ssl) {
         printf("No certificates.\n");
 }
 
-void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/,SSL *ssl) {
-
-
+void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/) {
     // Declare X509 structure
-
     X509 *error_cert = NULL;
     X509 *peer_cert = NULL;
     X509_NAME *certsubject = NULL;
@@ -199,15 +213,13 @@ void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/,SSL *ssl) {
     X509_STORE_CTX *vrfy_ctx = NULL;
     X509_NAME *certname = NULL;
     int ret;
-    //BIO *outbio = NULL;
-    BIO *certbio = NULL;
-    this->outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
-    certbio = BIO_new(BIO_s_file());
+    //BIO *certbio = NULL;
+    //certbio = BIO_new(BIO_s_file());
 
 
     // Get the remote certificate into the X509 structure
 
-    peer_cert = SSL_get_peer_certificate(ssl);
+    peer_cert = SSL_get_peer_certificate(this->ssl);
     if (peer_cert == NULL)
         BIO_printf(this->outbio, "Error: Could not get a certificate from: %s.\n",
                    hostIP/*hostname*/);
@@ -256,6 +268,7 @@ void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/,SSL *ssl) {
      * Returns 1 on success, 0 on verification failures, and -1   *
      * for trouble with the ctx object (i.e. missing certificate) */
     ret = X509_verify_cert(vrfy_ctx);
+
     BIO_printf(this->outbio, "Verification return code: %d\n", ret);
 
     if (ret == 0 || ret == 1)
@@ -278,11 +291,11 @@ void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/,SSL *ssl) {
     X509_STORE_CTX_free(vrfy_ctx);
     X509_STORE_free(store);
     X509_free(peer_cert);
-    BIO_free_all(certbio);
+    //BIO_free_all(certbio);
 
 }
 
-int SSLClient::myssl_getFile(SSL * ssl){
+int SSLClient::myssl_getFile(){
     //richiede ed ottiene lo stato della Postazione di voto a cui è connesso
     char buffer[1024];
     //memset(buffer, '\0', sizeof(buffer));
@@ -335,4 +348,69 @@ int SSLClient::myssl_getFile(SSL * ssl){
     return 0;
 }
 
+void SSLClient::init_openssl_library() {
+    /* https://www.openssl.org/docs/ssl/SSL_library_init.html */
+    SSL_library_init();
+    /* Cannot fail (always returns success) ??? */
 
+    /* https://www.openssl.org/docs/crypto/ERR_load_crypto_strings.html */
+    SSL_load_error_strings();
+    /* Cannot fail ??? */
+
+    ERR_load_BIO_strings();
+    /* SSL_load_error_strings loads both libssl and libcrypto strings */
+    //ERR_load_crypto_strings();
+    /* Cannot fail ??? */
+
+    /* OpenSSL_config may or may not be called internally, based on */
+    /*  some #defines and internal gyrations. Explicitly call it    */
+    /*  *IF* you need something from openssl.cfg, such as a         */
+    /*  dynamically configured ENGINE.                              */
+    OPENSSL_config(NULL);
+
+}
+
+void SSLClient::createClientContext(){
+    const SSL_METHOD *method;
+    method = TLSv1_2_client_method();
+
+    /* ---------------------------------------------------------- *
+     * Try to create a new SSL context                            *
+     * ---------------------------------------------------------- */
+    if ((this->ctx = SSL_CTX_new(method)) == NULL)
+        BIO_printf(this->outbio, "Unable to create a new SSL context structure.\n");
+
+    /* ---------------------------------------------------------- *
+     * Disabling SSLv2 and SSLv3 will leave TSLv1 for negotiation    *
+     * ---------------------------------------------------------- */
+    SSL_CTX_set_options(this->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+}
+
+void SSLClient::configure_context(char* CertFile, char* KeyFile, char * ChainFile) {
+    SSL_CTX_set_ecdh_auto(this->ctx, 1);
+
+    //---il chainfile dovrà essere ricevuto dal peer che si connette? non so se è necessario su entrambi i peer----
+    SSL_CTX_load_verify_locations(this->ctx,ChainFile, NULL);
+    //SSL_CTX_use_certificate_chain_file(ctx,"/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem");
+    /*The final step of configuring the context is to specify the certificate and private key to use.*/
+    /* Set the key and cert */
+    if (SSL_CTX_use_certificate_file(this->ctx, CertFile, SSL_FILETYPE_PEM) < 0) {
+        //ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+
+    if (SSL_CTX_use_PrivateKey_file(this->ctx, KeyFile, SSL_FILETYPE_PEM) < 0) {
+        //ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+
+    if (!SSL_CTX_check_private_key(this->ctx)) {
+        fprintf(stderr, "Private key does not match the public certificate\n");
+        abort();
+    }
+
+}
+
+void SSLClient::cleanup_openssl() {
+    EVP_cleanup();
+}

@@ -92,13 +92,13 @@ private:
     void runServerUpdatePV();
     //strutture condivisibili di SSL
 
-    SSL_CTX *ctx;
-    BIO* outbio;
+
 
     SSLServer * seggio_server;
     std::thread thread_server;
     bool stopThreads;
     SSLClient * seggio_client;
+
     MainWindowSeggio *mainWindow;
 
     //questi due arrey tengono traccia delle postazioni di voto e degli hardaware token attualmente impegnati in associazioni PV_HT
@@ -130,11 +130,7 @@ private:
 
     const char * calcolaIP_PVbyID(unsigned int idPV);
 
-    //funzioni per l'inizializzazione di SSL e la configurazione del contesto SSL
-    void init_openssl_library();
-    void cleanup_openssl();
-    void create_context();
-    void configure_context(char* CertFile, char* KeyFile, char * ChainFile);
+
 
 };
 

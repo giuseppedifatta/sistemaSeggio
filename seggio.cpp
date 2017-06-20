@@ -6,6 +6,8 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <netdb.h>
 #include <unistd.h>
 #include "sslclient.h"
@@ -74,46 +76,10 @@ Seggio::Seggio(MainWindowSeggio * m)
     IP_PV[idPostazioniVoto[1]-1] = "192.168.56.102";
     IP_PV[idPostazioniVoto[2]-1] = "192.168.56.103";
 
-
-    const SSL_METHOD *method;
-
-    /* ---------------------------------------------------------- *
-     * Function that initialize openssl for correct work.		  *
-     * ---------------------------------------------------------- */
-    this->init_openssl_library();
-
-    /* ---------------------------------------------------------- *
-     * Set SSLv2 client hello, also announce SSLv3 and TLSv1      *
-     * ---------------------------------------------------------- */
-
-    method = TLSv1_2_client_method();
-
-    this->outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
-
-    /* ---------------------------------------------------------- *
-     * Try to create a new SSL context                            *
-     * ---------------------------------------------------------- */
-    if ((this->ctx = SSL_CTX_new(method)) == NULL)
-        BIO_printf(this->outbio, "Unable to create a new SSL context structure.\n");
-
-    /* ---------------------------------------------------------- *
-     * Disabling SSLv2 and SSLv3 will leave TSLv1 for negotiation    *
-     * ---------------------------------------------------------- */
-    SSL_CTX_set_options(this->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-
-    char certFile[] = "/home/giuseppe/myCA/intermediate/certs/client.cert.pem";
-    char keyFile[] = "/home/giuseppe/myCA/intermediate/private/client.key.pem";
-    char chainFile[] =
-            "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
-
-    this->configure_context(certFile, keyFile, chainFile);
-    cout << "Cert and key configured" << endl;
-
 }
 
 Seggio::~Seggio(){
-    this->cleanup_openssl();
-    SSL_CTX_free(this->ctx);
+
     cout << "join del thread_server" << endl;
     thread_server.join();
 
@@ -145,7 +111,7 @@ void Seggio::setBusyHT_PV(){
     //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
     const char* ip_pv = this->IP_PV[idPV-1];
 
-    supplyAssociationToPV(ip_pv,idHT);
+    pushAssociationToPV(ip_pv,idHT);
 
     if(!this->anyPostazioneLibera()){
         mainWindow->disableCreaAssociazioneButton();
@@ -451,77 +417,4 @@ void Seggio::pushAssociationToPV(const char *ip_pv, unsigned int idHT){
 
 }
 
-SSL_CTX * Seggio::getCTX(){
-    return this->ctx;
-}
 
-void Seggio::configure_context(char* CertFile, char* KeyFile, char * ChainFile) {
-    SSL_CTX_set_ecdh_auto(this->ctx, 1);
-
-    //---il chainfile dovrà essere ricevuto dal peer che si connette? non so se è necessario su entrambi i peer----
-    SSL_CTX_load_verify_locations(this->ctx,ChainFile, NULL);
-    //SSL_CTX_use_certificate_chain_file(ctx,"/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem");
-    /*The final step of configuring the context is to specify the certificate and private key to use.*/
-    /* Set the key and cert */
-    if (SSL_CTX_use_certificate_file(this->ctx, CertFile, SSL_FILETYPE_PEM) < 0) {
-        //ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    if (SSL_CTX_use_PrivateKey_file(this->ctx, KeyFile, SSL_FILETYPE_PEM) < 0) {
-        //ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    if (!SSL_CTX_check_private_key(this->ctx)) {
-        fprintf(stderr, "Private key does not match the public certificate\n");
-        abort();
-    }
-
-}
-
-void Seggio::create_context() {
-    const SSL_METHOD *method;
-    method = TLSv1_2_server_method();
-
-    this->ctx = SSL_CTX_new(method);
-    if (!this->ctx) {
-        perror("Seggio: Unable to create SSL context");
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    //https://www.openssl.org/docs/man1.1.0/ssl/SSL_CTX_set_options.html
-    const long flags = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3
-            | SSL_OP_NO_COMPRESSION;
-    long old_opts = SSL_CTX_set_options(this->ctx, flags);
-    this->mutex_stdout.lock();
-    cout << "Seggio: bitmask options: " << old_opts << endl;
-    this->mutex_stdout.unlock();
-    //    return ctx;
-}
-
-void Seggio::init_openssl_library() {
-    /* https://www.openssl.org/docs/ssl/SSL_library_init.html */
-    SSL_library_init();
-    /* Cannot fail (always returns success) ??? */
-
-    /* https://www.openssl.org/docs/crypto/ERR_load_crypto_strings.html */
-    SSL_load_error_strings();
-    /* Cannot fail ??? */
-
-    /* SSL_load_error_strings loads both libssl and libcrypto strings */
-    ERR_load_crypto_strings();
-    /* Cannot fail ??? */
-
-    /* OpenSSL_config may or may not be called internally, based on */
-    /*  some #defines and internal gyrations. Explicitly call it    */
-    /*  *IF* you need something from openssl.cfg, such as a         */
-    /*  dynamically configured ENGINE.                              */
-    OPENSSL_config(NULL);
-
-}
-
-void Seggio::cleanup_openssl() {
-    EVP_cleanup();
-}

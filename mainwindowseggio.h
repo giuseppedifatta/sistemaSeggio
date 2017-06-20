@@ -76,7 +76,7 @@ private:
         sessioneConclusa,
         risultatiVoto
     };
-    //std::thread thread_1;
+
 protected:
     //void initTableHT();
     void initTableRV();

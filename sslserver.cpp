@@ -1,10 +1,4 @@
 #include "sslserver.h"
-/*
- * server.h
- *
- *  Created on: 02/apr/2017
- *      Author: giuseppe
- */
 
 #include <iostream>
 #include <fstream>
@@ -36,20 +30,38 @@ using namespace std;
 SSLServer::SSLServer(Seggio *s){
     this->setStopServer(false);
     this->seggioChiamante = s;
+
+    this->init_openssl_library();
+    this->createServerContext();
+
+    char certFile[] =
+            "/home/giuseppe/myCA/intermediate/certs/localhost.cert.pem";
+    char keyFile[] =
+            "/home/giuseppe/myCA/intermediate/private/localhost.key.pem";
+    char chainFile[] =
+            "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
+
+    configure_context(certFile, keyFile, chainFile);
+
+
+    cout << "Server: Cert and key configured" << endl;
+
     this->listen_sock = this->openListener(atoi(PORT));
     this->outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
-    this->ssl = nullptr;
+
 }
 
 SSLServer::~SSLServer(){
-
+    //nel distruttore
     BIO_free_all(this->outbio);
-    //close(this->listen_sock);
+    SSL_CTX_free(this->ctx);
+    this->cleanup_openssl();
+
+    close(listen_sock);
 
 }
 
 void SSLServer::ascoltoNuovoStatoPV(){
-    /* Handle connections */
 
     //inizializza una socket per il client
     struct sockaddr_in client_addr;
@@ -60,9 +72,8 @@ void SSLServer::ascoltoNuovoStatoPV(){
     seggioChiamante->mutex_stdout.unlock();
 
     // accept restituisce un valore negativo in caso di insuccesso
-    int client_sock = accept(this->listen_sock, (struct sockaddr*) &client_addr,
-                             &len);
-    cout << "Server: accept superata" << endl;
+    int client_sock = accept(this->listen_sock, (struct sockaddr*) &client_addr, &len);
+
     if (client_sock < 0) {
         perror("Unable to accept");
         exit(EXIT_FAILURE);
@@ -70,49 +81,48 @@ void SSLServer::ascoltoNuovoStatoPV(){
     else{
         seggioChiamante->mutex_stdout.lock();
         cout << "Server: Un client ha iniziato la connessione su una socket con fd:" << client_sock << endl;
-        cout << "Server: Client's Port assegnata: "<< ntohs(client_addr.sin_port)<< endl;
+        cout<<"Server: Client's Port assegnata: "<< ntohs(client_addr.sin_port)<< endl;
         seggioChiamante->mutex_stdout.unlock();
+
     }
 
     if(!(this->stopServer)){
-        this->ssl = SSL_new(seggioChiamante->getCTX());
+        ssl = SSL_new(ctx);
         //se non è stata settata l'interruzione del server, lancia il thread per servire la richiesta
-        thread t (&SSLServer::Servlet,this, this->ssl, client_sock, servizi::aggiornamentoPV);
+        thread t (&SSLServer::Servlet, this, client_sock, servizi::aggiornamentoPV);
         t.detach();
         seggioChiamante->mutex_stdout.lock();
-        cout << "Server: Server: start a thread..." << endl;
+        cout << "Server: start a thread..." << endl;
         seggioChiamante->mutex_stdout.unlock();
-
     }
     else{
         //termina l'ascolto
         seggioChiamante->mutex_stdout.lock();
-        cout << "Server: interruzione del server in corso.." << endl;
-
-        int success = close(client_sock);
-        if(success == 0){
-            cout << "Server: successo chiusura socket del client" << endl;
-        }
-        success = close(this->listen_sock);
-        if(success == 0){
-            cout << "Server: successo chiusura socket del listener" << endl;
-        }
+        cout << "Server: interruzione del server in corso...client?... ora attaccati a sto cazzo :P" << endl;
         seggioChiamante->mutex_stdout.unlock();
+        int ab = close(client_sock);
+        if(ab ==0){
+            cout << "successo chiusura socket per il client" << endl;
+        }
+        ab = close(this->listen_sock);
+        if(ab ==0){
+            cout << "successo chiusura socket del listener" << endl;
+        }
         return;
     }
 
 }
 
-void SSLServer::Servlet(SSL * ssl, int client_sock, servizi servizio) {/* Serve the connection -- threadable */
+void SSLServer::Servlet(int client_sock ,servizi servizio) {/* Serve the connection -- threadable */
     seggioChiamante->mutex_stdout.lock();
     cout << "Server: Servlet: inizio servlet" << endl;
     seggioChiamante->mutex_stdout.unlock();
     //cout << ssl << endl;
     //configurara ssl per collegarsi sulla socket indicata
-    SSL_set_fd(ssl, client_sock);
-    int sd;
+    SSL_set_fd(this->ssl, client_sock);
 
-    if (SSL_accept(ssl) <= 0) {/* do SSL-protocol handshake */
+
+    if (SSL_accept(this->ssl) <= 0) {/* do SSL-protocol handshake */
         cout << "Server: error in handshake" << endl;
         ERR_print_errors_fp(stderr);
 
@@ -121,20 +131,19 @@ void SSLServer::Servlet(SSL * ssl, int client_sock, servizi servizio) {/* Serve 
         seggioChiamante->mutex_stdout.lock();
         cout << "Server: handshake ok!" << endl;
         seggioChiamante->mutex_stdout.unlock();
-        this->ShowCerts(ssl);
-        this->verify_ClientCert(ssl);
-        //ottenere un valore di ritorno e bloccare la comunicazione se la verifica del certificato ha avuto esito negativo
+        this->ShowCerts();
+        this->verify_ClientCert();
 
         seggioChiamante->mutex_stdout.lock();
         cout << "Server: service starting..." << endl;
         seggioChiamante->mutex_stdout.unlock();
-        this->service(ssl,servizio);
+        this->service(servizio);
     }
-
-    sd = SSL_get_fd(ssl); /* get socket connection */
+    int sd;
+    sd = SSL_get_fd(this->ssl); /* get socket connection */
     //cout << "Server: What's up?" << endl;
     close(sd); /* close connection */
-    SSL_free(ssl);
+    SSL_free(this->ssl);
 
     seggioChiamante->mutex_stdout.lock();
     cout << "Server: fine servlet" << endl;
@@ -142,7 +151,7 @@ void SSLServer::Servlet(SSL * ssl, int client_sock, servizi servizio) {/* Serve 
     close(client_sock);
 }
 
-void SSLServer::service(SSL *ssl, servizi servizio) {
+void SSLServer::service(servizi servizio) {
     seggioChiamante->mutex_stdout.lock();
     cout << "Server: Seggio Server: service started: " << servizio << endl;
     seggioChiamante->mutex_stdout.unlock();
@@ -215,15 +224,17 @@ void SSLServer::service(SSL *ssl, servizi servizio) {
             memset(reply, '\0', sizeof(reply));
             sprintf(reply, HTMLecho, buf);   // construct reply
             SSL_write(ssl, reply, strlen(reply));  //send reply
-        } else{
+        } else
             ERR_print_errors_fp(stderr);
-        }
+
+
+
         break;
     }
         //richiesta file
     case 'b':
     case 'B': {
-        myssl_fwrite(ssl,"cifrato.cbc");
+        myssl_fwrite("cifrato.cbc");
         break;
 
     }
@@ -233,7 +244,6 @@ void SSLServer::service(SSL *ssl, servizi servizio) {
         seggioChiamante->mutex_stdout.unlock();
     }
 
-
     return;
 
 }
@@ -241,17 +251,17 @@ void SSLServer::service(SSL *ssl, servizi servizio) {
 int SSLServer::openListener(int s_port) {
 
     // non è specifico per openssl, crea una socket in ascolto su una porta passata come argomento
-    int listen_sock, r;
+    int  r;
 
     struct sockaddr_in sa_serv;
-    listen_sock = socket(PF_INET, SOCK_STREAM, 0);
+    this->listen_sock = socket(PF_INET, SOCK_STREAM, 0);
 
     //allow reuse of port without dealy for TIME_WAIT
     int iSetOption = 1;
-    setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&iSetOption,
+    setsockopt(this->listen_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&iSetOption,
                sizeof(iSetOption));
 
-    if (listen_sock <= 0) {
+    if (this->listen_sock <= 0) {
         perror("Unable to create socket");
         abort();
     }
@@ -262,23 +272,92 @@ int SSLServer::openListener(int s_port) {
     sa_serv.sin_port = htons(s_port); /* Server Port number */
     cout<<"Server: Server's Port: "<< ntohs(sa_serv.sin_port)<<endl;
 
-    r = bind(listen_sock, (struct sockaddr*) &sa_serv, sizeof(sa_serv));
+    r = bind(this->listen_sock, (struct sockaddr*) &sa_serv, sizeof(sa_serv));
     if (r < 0) {
         perror("Unable to bind");
         exit(EXIT_FAILURE);
     }
 
     // Receive a TCP connection.
-    r = listen(listen_sock, 10);
+    r = listen(this->listen_sock, 10);
 
     if (r < 0) {
         perror("Unable to listen");
         exit(EXIT_FAILURE);
     }
-    return listen_sock;
+    return this->listen_sock;
 }
 
 
+void SSLServer::createServerContext() {
+    const SSL_METHOD *method;
+    method = TLSv1_2_server_method();
+
+    this->ctx = SSL_CTX_new(method);
+    if (!this->ctx) {
+        perror("Unable to create SSL context");
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+
+    //https://www.openssl.org/docs/man1.1.0/ssl/SSL_CTX_set_options.html
+    const long flags = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
+    long old_opts = SSL_CTX_set_options(this->ctx, flags);
+    seggioChiamante->mutex_stdout.lock();
+    cout << "Server: bitmask options: " << old_opts << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    //return ctx;
+}
+
+void SSLServer::configure_context(char* CertFile, char* KeyFile, char* ChainFile) {
+    SSL_CTX_set_ecdh_auto(this->ctx, 1);
+
+    SSL_CTX_load_verify_locations(this->ctx, ChainFile, ChainFile);
+    //SSL_CTX_use_certificate_chain_file(ctx,"/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem");
+
+    /*The final step of configuring the context is to specify the certificate and private key to use.*/
+    /* Set the key and cert */
+    if (SSL_CTX_use_certificate_file(this->ctx, CertFile, SSL_FILETYPE_PEM) < 0) {
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+
+    if (SSL_CTX_use_PrivateKey_file(this->ctx, KeyFile, SSL_FILETYPE_PEM) < 0) {
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+
+    //SSL_CTX_set_default_passwd_cb(ctx,"password"); // cercare funzionamento con reference
+
+    if (!SSL_CTX_check_private_key(this->ctx)) {
+        fprintf(stderr, "Private key does not match the public certificate\n");
+        abort();
+    }
+    //substitute NULL with the name of the specific verify_callback
+    SSL_CTX_set_verify(this->ctx, SSL_VERIFY_PEER, NULL);
+
+}
+
+void SSLServer::init_openssl_library() {
+    /* https://www.openssl.org/docs/ssl/SSL_library_init.html */
+    SSL_library_init();
+    /* Cannot fail (always returns success) ??? */
+
+    /* https://www.openssl.org/docs/crypto/ERR_load_crypto_strings.html */
+    SSL_load_error_strings();
+    /* Cannot fail ??? */
+
+    /* SSL_load_error_strings loads both libssl and libcrypto strings */
+    ERR_load_crypto_strings();
+    /* Cannot fail ??? */
+
+    /* OpenSSL_config may or may not be called internally, based on */
+    /*  some #defines and internal gyrations. Explicitly call it    */
+    /*  *IF* you need something from openssl.cfg, such as a         */
+    /*  dynamically configured ENGINE.                              */
+    OPENSSL_config(NULL);
+
+}
 
 void SSLServer::print_cn_name(const char* label, X509_NAME* const name) {
     int idx = -1, success = 0;
@@ -459,9 +538,11 @@ void SSLServer::print_error_string(unsigned long err, const char* const label) {
         fprintf(stderr, "%s failed: %lu (0x%lx)\n", label, err, err);
 }
 
+void SSLServer::cleanup_openssl() {
+    EVP_cleanup();
+}
 
-
-void SSLServer::ShowCerts(SSL *ssl) {
+void SSLServer::ShowCerts() {
     BIO * outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
     X509 *cert = NULL;
     char *line = NULL;
@@ -485,7 +566,7 @@ void SSLServer::ShowCerts(SSL *ssl) {
     BIO_free_all(outbio);
 }
 
-void SSLServer::verify_ClientCert(SSL *ssl) {
+void SSLServer::verify_ClientCert() {
 
     /* ---------------------------------------------------------- *
      * Declare X509 structure                                     *
@@ -558,6 +639,7 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
 
     ret = X509_STORE_load_locations(store, chainFile, NULL);
     if (ret != 1){
+        //lock_guard<std::mutex> guard6(seggioChiamante->mutex_stdout);
         BIO_printf(outbio, "Server: Error loading CA cert or chain file\n");
     }
     /* ---------------------------------------------------------- *
@@ -573,9 +655,11 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
      * for trouble with the ctx object (i.e. missing certificate) *
      * ---------------------------------------------------------- */
     ret = X509_verify_cert(vrfy_ctx);
+    //lock_guard<std::mutex> guard7(seggioChiamante->mutex_stdout);
     BIO_printf(outbio, "Server: Verification return code: %d\n", ret);
 
     if (ret == 0 || ret == 1){
+        //lock_guard<std::mutex> guard8(seggioChiamante->mutex_stdout);
         BIO_printf(outbio, "Server: Verification result text: %s\n",
                    X509_verify_cert_error_string(vrfy_ctx->error));
     }
@@ -588,8 +672,10 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
         error_cert = X509_STORE_CTX_get_current_cert(vrfy_ctx);
         certsubject = X509_NAME_new();
         certsubject = X509_get_subject_name(error_cert);
+        //lock_guard<std::mutex> guard9(seggioChiamante->mutex_stdout);
         BIO_printf(outbio, "Server: Verification failed cert:\n");
         X509_NAME_print_ex(outbio, certsubject, 0, XN_FLAG_MULTILINE);
+        //lock_guard<std::mutex> guard10(seggioChiamante->mutex_stdout);
         BIO_printf(outbio, "\n");
     }
 
@@ -606,7 +692,7 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
     seggioChiamante->mutex_stdout.unlock();
 }
 
-int SSLServer::myssl_fwrite(SSL *ssl, const char * infile) {
+int SSLServer::myssl_fwrite(const char * infile) {
     /* legge in modalità binaria il file e lo strasmette sulla socket aperta
      * una SSL_write per comunicare la lunghezza dello stream da inviare
      * una SSL_write per trasmettere il file binario della lunghezza calcolata
@@ -658,9 +744,3 @@ int SSLServer::myssl_fwrite(SSL *ssl, const char * infile) {
 void SSLServer::setStopServer(bool b){
     this->stopServer=b;
 }
-
-
-int SSLServer::getListenSocketFD(){
-    return this->listen_sock;
-}
-
