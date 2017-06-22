@@ -20,7 +20,6 @@ public:
     explicit MainWindowSeggio(QWidget *parent = 0);
     ~MainWindowSeggio();
     void sessioneDiVotoTerminata();
-    Ui::MainWindowSeggio* getUiPointer();
     bool logged;
     void updatePVbuttons();
     void disableCreaAssociazioneButton();

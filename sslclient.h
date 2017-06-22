@@ -18,7 +18,7 @@ private:
     BIO* outbio;
     int server_sock;
     SSL * ssl;
-
+    const char * PV_IPaddress;
     //metodi privati
     void ShowCerts();
 
@@ -39,6 +39,12 @@ public:
     void cleanup_openssl();
     void createClientContext();
     void configure_context(char* CertFile, char* KeyFile, char * ChainFile);
+
+    //richieste per le Postazioni di Voto
+    void querySetAssociation(unsigned int idHT);
+    void queryPullPVState();
+    void queryRemoveAssociation();
+    void queryFreePV();
 };
 
 

@@ -19,15 +19,11 @@
    <string>MainWindowSeggio</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(49, 149, 255);
-</string>
-  </property>
-  <widget class="QWidget" name="centralWidget">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">.QPushButton {
+   <string notr="true">QMainWindow {
+background-color: rgb(49, 149, 255);
+}
+
+.QPushButton {
 background-color:rgb(146, 134, 134);
 background-color: rgb(148, 140, 140);
 font-size: 24px bold sans serif;
@@ -36,6 +32,49 @@ vertical-align:middle;
 min-height:60px;
 color:black;
 }
+
+QPushButton#pv1_button{
+width:180; 
+height:120;
+border: 7px solid red;
+background-color:white;
+color:black;
+font-size:18px;
+
+}
+
+QPushButton#pv1_button[free = &quot;true&quot;] {
+border: 7px solid rgb(85,255,0);
+}
+
+
+QPushButton#pv2_button{
+width:180; 
+height:120;
+border: 7px solid red;
+background-color:white;
+color:black;
+font-size:18px;
+
+}
+
+
+QPushButton#pv3_button{
+width:180; 
+height:120;
+border: 7px solid red;
+background-color:white;
+color:black;
+font-size:18px;
+
+}</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">
 
 .QLabel {
 color: white;
@@ -56,7 +95,7 @@ background-color: white;
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="loginSeggio_page">
        <property name="sizePolicy">
@@ -296,8 +335,7 @@ background-color: white;
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">width:180; height:120;border: 7px solid red;background-color:white;color:black;font-size:18px;
-</string>
+               <string notr="true"/>
               </property>
               <property name="text">
                <string>Attivare postazione</string>
@@ -352,13 +390,7 @@ background-color: white;
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">width:180px;
-height:120px;
-border: 7px solid red;
-background-color:white;
-color:black;
-font-size:18px;
-</string>
+               <string notr="true"/>
               </property>
               <property name="text">
                <string>Attivare postazione</string>
@@ -413,7 +445,7 @@ font-size:18px;
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">font-size:18px; width:180; height:120; border:7px solid red; background-color:white;</string>
+               <string notr="true"/>
               </property>
               <property name="text">
                <string>Attivare postazione</string>

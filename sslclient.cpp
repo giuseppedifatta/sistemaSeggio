@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 using namespace std;
 
 #define SERVER_PORT "4433"
@@ -44,7 +45,9 @@ SSLClient::SSLClient(Seggio * s){
             "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
 
     this->configure_context(certFile, keyFile, chainFile);
+    s->mutex_stdout.lock();
     cout << "Cert and key configured" << endl;
+    s->mutex_stdout.unlock();
 }
 
 SSLClient::~SSLClient(){
@@ -64,8 +67,9 @@ void SSLClient::stopLocalServer(const char* localhost/*hostname*/){
     //all'interruzione del thread chiamante
     const char * port = SERVER_PORT;
     create_socket(localhost/*hostname*/, port);
-
+    seggioChiamante->mutex_stdout.lock();
     cout << "Client: niente da fare qui...chiudo la socket per il server" << endl;
+    seggioChiamante->mutex_stdout.unlock();
     close(this->server_sock);
 }
 
@@ -133,6 +137,7 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
 }
 
 SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
+    this->PV_IPaddress = hostIP;
 
     const char * port = SERVER_PORT;
 
@@ -141,8 +146,9 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
      * ---------------------------------------------------------- */
 
     this->ssl = SSL_new(this->ctx);
-
+seggioChiamante->mutex_stdout.lock();
     cout << "ConnectTo - ssl pointer: " << this->ssl << endl;
+    seggioChiamante->mutex_stdout.unlock();
     /* ---------------------------------------------------------- *
      * Make the underlying TCP socket connection                  *
      * ---------------------------------------------------------- */
@@ -413,4 +419,69 @@ void SSLClient::configure_context(char* CertFile, char* KeyFile, char * ChainFil
 
 void SSLClient::cleanup_openssl() {
     EVP_cleanup();
+}
+
+void SSLClient::querySetAssociation(unsigned int idHT){
+    //invia codice del servizio richiesto al PV_Server
+    //setAssociation : 0
+    int serviceCod = 0;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
+
+    //invio idHT da associare alla postazione di voto per l'avvio della funzionalità di abilitazione al voto
+    stringstream ssIdHT;
+    ssIdHT<< idHT;
+    string strIdHT = ssIdHT.str();
+    const char * charIdHT = strIdHT.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "Id Hardware token da associare alla PV: " << charIdHT << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charIdHT,strlen(charIdHT));
+
+
+    BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
+               this->PV_IPaddress);
+    close(this->server_sock);
+    SSL_shutdown(this->ssl);
+    SSL_free(this->ssl);
+}
+void SSLClient::queryPullPVState(){
+    //invia codice del servizio richiesto al PV_Server
+    //pullPVState: 1
+
+
+    BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
+               this->PV_IPaddress);
+    close(this->server_sock);
+    SSL_shutdown(this->ssl);
+    SSL_free(this->ssl);
+}
+void SSLClient::queryRemoveAssociation() {
+    //invia codice del servizio richiesto al PV_Server
+    //removeAssociation: 2
+
+
+    BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
+               this->PV_IPaddress);
+    close(this->server_sock);
+    SSL_shutdown(this->ssl);
+    SSL_free(this->ssl);
+}
+void SSLClient::queryFreePV(){
+    //invia codice del servizio richiesto al PV_Server
+    //freePV: 3
+
+
+
+    BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
+               this->PV_IPaddress);
+    close(this->server_sock);
+    SSL_shutdown(this->ssl);
+    SSL_free(this->ssl);
 }

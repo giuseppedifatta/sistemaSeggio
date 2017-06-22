@@ -51,9 +51,9 @@ Seggio::Seggio(MainWindowSeggio * m)
     }
     nuovaAssociazione = NULL;
 
-//    this->IP_PV[0] = "localhost";
-//    this->IP_PV[1] = "localhost";
-//    this->IP_PV[2] = "localhost";
+    //    this->IP_PV[0] = "localhost";
+    //    this->IP_PV[1] = "localhost";
+    //    this->IP_PV[2] = "localhost";
 
     //le postazioni devono essere attivate, quindi in fase di inizializzazione non sono disponibili per essere associate ad un hardware token
     this->statoPV[0] = statiPV::attesa_attivazione;
@@ -64,12 +64,12 @@ Seggio::Seggio(MainWindowSeggio * m)
     this->stopThreads = false;
     thread_server = std::thread(&Seggio::runServerUpdatePV, this);
 
-    patternSS[statiPV::attesa_attivazione] = "width:180; height:120;border: 7px solid red;background-color:white;color:black;font-size:18px;";
-    patternSS[statiPV::attesa_abilitazione] = "width:180; height:120;border: 7px solid red;background-color:white;color:black;font-size:18px;";
-    patternSS[statiPV::libera] = "width:180; height:120;border: 7px solid rgb(85,255,0);background-color:white;color:black;font-size:18px;";
-    patternSS[statiPV::votazione_in_corso] = "width:180; height:120;border: 7px solid red;background-color:white;color:black;font-size:18px;";
-    patternSS[statiPV::votazione_completata] = " width:180; height:120; border:7px solid red; background-color:rgb(85,255,0);color:black;font-size:18px;";
-    patternSS[statiPV::errore] = "width:180; height:120;border: 7px solid red;background-color:white;color:black;font-size:18px;";
+    patternSS[statiPV::attesa_attivazione] = "width:180; height:120; border: 7px solid red; background-color:white; color:black; font-size:18px";
+    patternSS[statiPV::attesa_abilitazione] = "width:180; height:120; border: 7px solid red; background-color:white; color:black; font-size:18px";
+    patternSS[statiPV::libera] = "width:180; height:120; border: 7px solid rgb(85,255,0); background-color:white; color:black; font-size:18px";
+    patternSS[statiPV::votazione_in_corso] = "width:180; height:120; border: 7px solid red; background-color:white; color:black; font-size:18px";
+    patternSS[statiPV::votazione_completata] = "width:180; height:120; border:7px solid red; background-color:rgb(85,255,0); color:black; font-size:18px";
+    patternSS[statiPV::errore] = "width:180; height:120; border: 7px solid red; background-color:white; color:black; font-size:18px";
 
     //TODO calcolare usando come indirizzo base l'IP pubblico del seggio
     IP_PV[idPostazioniVoto[0]-1] = "192.168.56.101";
@@ -79,8 +79,10 @@ Seggio::Seggio(MainWindowSeggio * m)
 }
 
 Seggio::~Seggio(){
-
+    this->mutex_stdout.lock();
     cout << "join del thread_server" << endl;
+    this->mutex_stdout.unlock();
+
     thread_server.join();
 
 
@@ -125,7 +127,6 @@ bool Seggio::createAssociazioneHT_PV(){
     unsigned int idPV;
     unsigned int idHT;
     bool associationFound = false;
-    //cout << "e cazzo... size(busyPV): " << busyPV.size() <<endl;
     for(unsigned int indexPV = 0; indexPV < this->busyPV.size();indexPV++){
         if (associationFound==true){
             break;
@@ -135,8 +136,9 @@ bool Seggio::createAssociazioneHT_PV(){
             this->mutex_stati.lock();
             unsigned int pv_stato = this->stateInfoPV(indexPV+1);
             this->mutex_stati.unlock();
+            this->mutex_stdout.lock();
             cout << "PV " << indexPV+1 << " candidata alla associazione trovata" << endl;
-
+            this->mutex_stdout.unlock();
             if((!pv_occupata) && (pv_stato!=statiPV::attesa_attivazione) && (pv_stato==statiPV::libera)){ // se la postazione non è occupata
                 //sceglie una postazione voto libera e attivata (disponibile per una associazione)
 
@@ -198,7 +200,7 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
     unsigned int idHT = 0;
     for (unsigned int i = 0; this->listAssociazioni.size();i++){
         currentPV = this->listAssociazioni[i].getIdPV();
-        //lock_guard<std::mutex> guard(this->seggioMTX);
+
         //cout << currentPV << endl;
         if(currentPV==idPV){
             idHT = this->listAssociazioni[i].getIdHT();
@@ -209,14 +211,17 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
     }
     this->listAssociazioni.erase(this->listAssociazioni.begin()+index);
     this->busyPV[currentPV-1]=false;
-    //lock_guard<std::mutex> guard(this->seggioMTX);
+
+    this->mutex_stdout.lock();
     cout << "postazione: " << currentPV <<" -> liberata" << endl;
+    this->mutex_stdout.unlock();
 
     for(unsigned int index = 0; index < this->busyHT.size(); index++){
         if(this->idHTAttivi[index] == idHT){ //se l'idHTAttivo corrente corrisponde con l'id dell'HT da liberare
             this->busyHT[index] = false; //lo settiamo a libero nell'indice degli HT occupati
-            //lock_guard<std::mutex> guard(this->seggioMTX);
+            this->mutex_stdout.lock();
             cout << "token: " << idHT <<" -> liberato" << endl;
+            this->mutex_stdout.unlock();
             return;
         }
     }
@@ -280,10 +285,11 @@ void Seggio::disattivaHT(unsigned int tokenAttivo){
     for (unsigned int i = 0; i < this->idHTAttivi.size(); i++){
         if(this->idHTAttivi[i] == tokenAttivo){
             this->idHTAttivi[i] = temp;
-            lock_guard<std::mutex> guard(this->mutex_stdout);
+            this->mutex_stdout.lock();
             cout << "token: " << tokenAttivo << " -> disabilitato" <<endl;
 
             cout << "token: " << temp << " -> abilitato" <<endl;
+            this->mutex_stdout.unlock();
             break;
         }
     }
@@ -320,7 +326,7 @@ const char *Seggio::getIP_PV(unsigned int idPV){
 }
 
 void Seggio::runServerUpdatePV(){
-//funzione eseguita da un thread
+    //funzione eseguita da un thread
     this->seggio_server = new SSLServer(this);
     this->mutex_stdout.lock();
     cout << "avvio del seggio_server per ricevere gli update dello stato delle Postazioni di Voto" << endl;
@@ -374,6 +380,9 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
     memset(&(local_address.sin_zero), '\0', 8);
 
     const char * address_printable = inet_ntoa(local_address.sin_addr);
+
+
+    this->mutex_stdout.lock();
     cout << "IP locale della PV: " << address_printable << endl;
 
 
@@ -405,6 +414,8 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
         }*/
     }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+    this->mutex_stdout.unlock();
+
 
     return address_printable;
 }
@@ -412,6 +423,7 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
 void Seggio::pushAssociationToPV(const char *ip_pv, unsigned int idHT){
     seggio_client = new SSLClient(this);
     seggio_client->connectTo(ip_pv);
+    seggio_client->querySetAssociation(idHT);
 
 
 

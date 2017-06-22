@@ -31,8 +31,6 @@ public:
     Seggio(MainWindowSeggio * m);
     virtual ~Seggio();
 
-    //il contesto SSL è condivisibile
-    SSL_CTX * getCTX();
 
     void setNumeroSeggio(int number);
     Associazione *getNuovaAssociazione();
