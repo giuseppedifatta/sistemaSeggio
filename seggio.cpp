@@ -79,6 +79,8 @@ Seggio::Seggio(MainWindowSeggio * m)
 }
 
 Seggio::~Seggio(){
+
+    delete nuovaAssociazione;
     this->mutex_stdout.lock();
     cout << "join del thread_server" << endl;
     this->mutex_stdout.unlock();
@@ -171,7 +173,7 @@ void Seggio::addAssociazioneHT_PV(){
 }
 
 void Seggio::eliminaNuovaAssociazione(){
-    delete this->nuovaAssociazione;
+    //delete this->nuovaAssociazione;
     this->nuovaAssociazione = NULL;
 }
 
@@ -361,6 +363,8 @@ void Seggio::runServerUpdatePV(){
     cout << "runServerUpdatePV: exit!" << endl;
     this->mutex_stdout.unlock();
 
+
+    delete this->seggio_server;
     // il thread che eseguiva la funzione termina se la funzione arriva alla fine
     return;
 }
@@ -382,8 +386,8 @@ void Seggio::stopServerUpdatePV(){
     const char * localhost = "127.0.0.1";
     this->seggio_client->stopLocalServer(localhost);
 
+    delete[] localhost;
     delete this->seggio_client;
-    //this->seggio_server->~SSLServer();
 
 }
 
@@ -445,7 +449,7 @@ void Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT){
     seggio_client->connectTo(ip_pv);
     seggio_client->querySetAssociation(idHT);
 
-    delete seggio_client;
+   // delete seggio_client;
 
 }
 
@@ -454,7 +458,7 @@ bool Seggio::removeAssociationFromPV(unsigned int idPV){
     seggio_client = new SSLClient(this);
     seggio_client->connectTo(ip_pv);
     bool res = seggio_client->queryRemoveAssociation();
-    delete seggio_client;
+    //delete seggio_client;
     return res;
 }
 

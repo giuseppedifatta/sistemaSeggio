@@ -146,7 +146,7 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
      * ---------------------------------------------------------- */
 
     this->ssl = SSL_new(this->ctx);
-seggioChiamante->mutex_stdout.lock();
+    seggioChiamante->mutex_stdout.lock();
     cout << "ConnectTo - ssl pointer: " << this->ssl << endl;
     seggioChiamante->mutex_stdout.unlock();
     /* ---------------------------------------------------------- *
@@ -445,6 +445,8 @@ void SSLClient::querySetAssociation(unsigned int idHT){
     SSL_write(ssl,charIdHT,strlen(charIdHT));
 
 
+    delete [] charCod;
+    delete [] charIdHT;
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);
@@ -469,6 +471,7 @@ void SSLClient::queryPullPVState(){
 
     //end do stuff
 
+    delete [] charCod;
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);
@@ -510,6 +513,7 @@ bool SSLClient::queryRemoveAssociation() {
     }
 
     //chiusura connessione
+    delete [] charCod;
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);
@@ -536,7 +540,7 @@ void SSLClient::queryFreePV(){
 
     //end do stuff
 
-
+    delete [] charCod;
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);

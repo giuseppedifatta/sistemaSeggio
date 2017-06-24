@@ -53,6 +53,7 @@ SSLServer::SSLServer(Seggio *s){
 
 SSLServer::~SSLServer(){
     //nel distruttore
+
     BIO_free_all(this->outbio);
     SSL_CTX_free(this->ctx);
     this->cleanup_openssl();
@@ -307,6 +308,7 @@ void SSLServer::createServerContext() {
     cout << "Seggio_Server: bitmask options: " << old_opts << endl;
     seggioChiamante->mutex_stdout.unlock();
     //return ctx;
+
 }
 
 void SSLServer::configure_context(char* CertFile, char* KeyFile, char* ChainFile) {
@@ -732,7 +734,6 @@ int SSLServer::myssl_fwrite(const char * infile) {
         SSL_write(ssl, buffer, length);
         delete[] buffer;
         return 1;
-
     }
     else{
         //lock_guard<std::mutex> guard4(seggioChiamante->mutex_stdout);
