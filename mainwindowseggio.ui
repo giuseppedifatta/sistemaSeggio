@@ -47,6 +47,11 @@ QPushButton#pv1_button[free = &quot;true&quot;] {
 border: 7px solid rgb(85,255,0);
 }
 
+QPushButton#pv1_button[freeable = &quot;true&quot;] {
+background-color: rgb(85,255,0);
+}
+
+
 
 QPushButton#pv2_button{
 width:180; 
@@ -58,6 +63,10 @@ font-size:18px;
 
 }
 
+QPushButton#pv2_button[free = &quot;true&quot;] {
+border: 7px solid rgb(85,255,0);
+}
+
 
 QPushButton#pv3_button{
 width:180; 
@@ -67,6 +76,10 @@ background-color:white;
 color:black;
 font-size:18px;
 
+}
+
+QPushButton#pv3_button[free = &quot;true&quot;] {
+border: 7px solid rgb(85,255,0);
 }</string>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -95,7 +108,7 @@ background-color: white;
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="loginSeggio_page">
        <property name="sizePolicy">

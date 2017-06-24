@@ -124,8 +124,8 @@ private:
 
     //funzione che setta gli ht e le pv inmpegnate e chiama la funzione che comunica l'associazione alla postazione di voto relativa
     void setBusyHT_PV();
-    void pushAssociationToPV(const char *ip_pv, unsigned int idHT);
-
+    void pushAssociationToPV(unsigned int idPV, unsigned int idHT);
+    bool removeAssociationFromPV(unsigned int idPV);
     const char * calcolaIP_PVbyID(unsigned int idPV);
 
 

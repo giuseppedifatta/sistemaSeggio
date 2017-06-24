@@ -454,7 +454,20 @@ void SSLClient::querySetAssociation(unsigned int idHT){
 void SSLClient::queryPullPVState(){
     //invia codice del servizio richiesto al PV_Server
     //pullPVState: 1
+    int serviceCod = 1;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
 
+    //do stuff
+
+
+    //end do stuff
 
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
@@ -462,21 +475,66 @@ void SSLClient::queryPullPVState(){
     SSL_shutdown(this->ssl);
     SSL_free(this->ssl);
 }
-void SSLClient::queryRemoveAssociation() {
+
+bool SSLClient::queryRemoveAssociation() {
+    bool res = false;
     //invia codice del servizio richiesto al PV_Server
     //removeAssociation: 2
+    int serviceCod = 2;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
 
+    //ricevi esito dell'operazione
+    // 0 -> success
+    // -1 -> error
+    int bytes;
+    char buffer[8];
+    memset(buffer, '\0', sizeof(buffer));
+    bytes = SSL_read(ssl,buffer,sizeof(buffer));
+    if(bytes > 0){
+        buffer[bytes] = 0;
+        int result = atoi(buffer);
+        seggioChiamante->mutex_stdout.lock();
+        cout << "Risultato rimozione: " << result << endl;
+        seggioChiamante->mutex_stdout.unlock();
+        if (result == 0){
+            res = true;
+        }
 
+    }
+
+    //chiusura connessione
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);
     SSL_shutdown(this->ssl);
     SSL_free(this->ssl);
+
+    return res;
 }
 void SSLClient::queryFreePV(){
     //invia codice del servizio richiesto al PV_Server
     //freePV: 3
+    int serviceCod = 3;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
 
+    //do stuff
+
+
+    //end do stuff
 
 
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
