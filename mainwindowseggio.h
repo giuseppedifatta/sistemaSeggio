@@ -5,6 +5,7 @@
 #include "seggio.h"
 #include "associazione.h"
 #include <thread>
+#include <QObject>
 
 class Seggio;
 
@@ -15,14 +16,28 @@ class MainWindowSeggio;
 class MainWindowSeggio : public QMainWindow
 {
     Q_OBJECT
-
+private:
+    Ui::MainWindowSeggio *ui;
+    Seggio *seggio;
+    bool logged;
+    enum InterfaccieSeggio{
+        loginSeggio,
+        loginPassword,
+        gestioneSeggio,
+        gestioneHT,
+        sessioneConclusa,
+        risultatiVoto
+    };
 public:
     explicit MainWindowSeggio(QWidget *parent = 0);
     ~MainWindowSeggio();
     void sessioneDiVotoTerminata();
-    bool logged;
+
     void updatePVbuttons();
     void disableCreaAssociazioneButton();
+    //void initTableHT();
+    void initTableRV();
+    void initGestioneSeggio();
 
 private slots:
     void on_loginCS_button_clicked();
@@ -63,23 +78,6 @@ private slots:
 
     void on_goBackToGestioneSeggio_button_clicked();
 
-
-private:
-    Ui::MainWindowSeggio *ui;
-    Seggio *seggio;
-    enum InterfaccieSeggio{
-        loginSeggio,
-        loginPassword,
-        gestioneSeggio,
-        gestioneHT,
-        sessioneConclusa,
-        risultatiVoto
-    };
-
-protected:
-    //void initTableHT();
-    void initTableRV();
-    void initGestioneSeggio();
 };
 
 #endif // MAINWINDOWSEGGIO_H

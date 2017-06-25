@@ -26,6 +26,50 @@ class MainWindowSeggio;
 class SSLClient;
 
 class Seggio {
+
+private:
+
+    //strutture condivisibili di SSL
+
+
+
+    SSLServer * seggio_server;
+    std::thread thread_server;
+    bool stopThreads;
+    SSLClient * seggio_client;
+
+    MainWindowSeggio *mainWindow;
+
+    //questi due arrey tengono traccia delle postazioni di voto e degli hardaware token attualmente impegnati in associazioni PV_HT
+    std::array <bool,NUM_HT_ATTIVI> busyHT;
+    std::array <bool,NUM_PV> busyPV;
+
+    std::array <unsigned int, NUM_PV> statoPV; //usare mutex per accedere al dato, accedono stateInfoPV (per ottenere lo stato della singola postazione e il thread che aggiorna i valori con quelli che riceve dalla i-esima PV
+    std::array <const char *, NUM_PV> IP_PV;
+
+    //Dati da ottenere dall'urna centrale
+    unsigned int idProceduraVoto;
+    tm dataAperturaSessione;
+    tm dataChiusuraSessione;
+    //gli id degli HT non vanno da 1 a 5, ma sono relativi agli identificativi propri HT
+    std::array <unsigned int,NUM_HT_ATTIVI> idHTAttivi;
+    unsigned int idHTRiserva;
+    unsigned int numeroSeggio;
+
+    //idPostazioniVoto vanno da 1 in poi, al massimo 7
+
+    std::array <unsigned int,NUM_PV> idPostazioniVoto;
+    std::array <unsigned int,NUM_PV> PV_lastUsedHT;
+    std::vector< Associazione > listAssociazioni;
+    Associazione *nuovaAssociazione;
+
+    //funzione che setta gli ht e le pv inmpegnate e chiama la funzione che comunica l'associazione alla postazione di voto relativa
+    void setBusyHT_PV();
+    void pushAssociationToPV(unsigned int idPV, unsigned int idHT);
+    bool removeAssociationFromPV(unsigned int idPV);
+    const char * calcolaIP_PVbyID(unsigned int idPV);
+    void runServerUpdatePV();
+
     //allo stato attuale un seggio prevede una composizione di 3 postazioni di voto e 4 hardware token attivi
 public:
     Seggio(MainWindowSeggio * m);
@@ -86,48 +130,6 @@ public:
 
     void stopServerUpdatePV();
     void setStopThreads(bool b);
-private:
-    void runServerUpdatePV();
-    //strutture condivisibili di SSL
-
-
-
-    SSLServer * seggio_server;
-    std::thread thread_server;
-    bool stopThreads;
-    SSLClient * seggio_client;
-
-    MainWindowSeggio *mainWindow;
-
-    //questi due arrey tengono traccia delle postazioni di voto e degli hardaware token attualmente impegnati in associazioni PV_HT
-    std::array <bool,NUM_HT_ATTIVI> busyHT;
-    std::array <bool,NUM_PV> busyPV;
-
-    std::array <unsigned int, NUM_PV> statoPV; //usare mutex per accedere al dato, accedono stateInfoPV (per ottenere lo stato della singola postazione e il thread che aggiorna i valori con quelli che riceve dalla i-esima PV
-    std::array <const char *, NUM_PV> IP_PV;
-
-    //Dati da ottenere dall'urna centrale
-    unsigned int idProceduraVoto;
-    tm dataAperturaSessione;
-    tm dataChiusuraSessione;
-    //gli id degli HT non vanno da 1 a 5, ma sono relativi agli identificativi propri HT
-    std::array <unsigned int,NUM_HT_ATTIVI> idHTAttivi;
-    unsigned int idHTRiserva;
-    unsigned int numeroSeggio;
-
-    //idPostazioniVoto vanno da 1 in poi, al massimo 7
-
-    std::array <unsigned int,NUM_PV> idPostazioniVoto;
-    std::array <unsigned int,NUM_PV> PV_lastUsedHT;
-    std::vector< Associazione > listAssociazioni;
-    Associazione *nuovaAssociazione;
-
-    //funzione che setta gli ht e le pv inmpegnate e chiama la funzione che comunica l'associazione alla postazione di voto relativa
-    void setBusyHT_PV();
-    void pushAssociationToPV(unsigned int idPV, unsigned int idHT);
-    bool removeAssociationFromPV(unsigned int idPV);
-    const char * calcolaIP_PVbyID(unsigned int idPV);
-
 
 
 };

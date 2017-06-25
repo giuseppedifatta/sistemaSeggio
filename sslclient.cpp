@@ -67,10 +67,13 @@ void SSLClient::stopLocalServer(const char* localhost/*hostname*/){
     //all'interruzione del thread chiamante
     const char * port = SERVER_PORT;
     create_socket(localhost/*hostname*/, port);
+
     seggioChiamante->mutex_stdout.lock();
-    cout << "Client: niente da fare qui...chiudo la socket per il server" << endl;
+    cout << "Client: niente da fare... chiudo la socket per il server" << endl;
     seggioChiamante->mutex_stdout.unlock();
     close(this->server_sock);
+
+    //delete [] port;
 }
 
 int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) {
@@ -139,7 +142,7 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
 SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
     this->PV_IPaddress = hostIP;
 
-    const char * port = SERVER_PORT;
+    const char  port[] = SERVER_PORT;
 
     /* ---------------------------------------------------------- *
      * Create new SSL connection state object                     *
@@ -301,58 +304,58 @@ void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/) {
 
 }
 
-int SSLClient::myssl_getFile(){
-    //richiede ed ottiene lo stato della Postazione di voto a cui è connesso
-    char buffer[1024];
-    //memset(buffer, '\0', sizeof(buffer));
+//int SSLClient::myssl_getFile(){
+//    //richiede ed ottiene lo stato della Postazione di voto a cui è connesso
+//    char buffer[1024];
+//    //memset(buffer, '\0', sizeof(buffer));
 
-    //ricevo proposta dal server
-    //    int bytes = SSL_read(ssl, buffer, sizeof(buffer));
-    //    if (bytes > 0){
-    //        cout << buffer;
-    //    }
+//    //ricevo proposta dal server
+//    //    int bytes = SSL_read(ssl, buffer, sizeof(buffer));
+//    //    if (bytes > 0){
+//    //        cout << buffer;
+//    //    }
 
-    //
+//    //
 
-    char reply[] = "b";
-    cout << reply << endl;
-    SSL_write(ssl, reply, strlen(reply));
+//    char reply[] = "b";
+//    cout << reply << endl;
+//    SSL_write(ssl, reply, strlen(reply));
 
-    //SSL_write(ssl, reply, strlen(reply));
-    //inizio test
-    //char buffer[1024];
-    memset(buffer, '\0', sizeof(buffer));
+//    //SSL_write(ssl, reply, strlen(reply));
+//    //inizio test
+//    //char buffer[1024];
+//    memset(buffer, '\0', sizeof(buffer));
 
-    //lettura numero byte da ricevere
-    int bytes = SSL_read(ssl, buffer, sizeof(buffer));
-    if (bytes > 0) {
+//    //lettura numero byte da ricevere
+//    int bytes = SSL_read(ssl, buffer, sizeof(buffer));
+//    if (bytes > 0) {
 
-        //creo un buffer della dimensione del file che sto per ricevere
-        buffer[bytes] = 0;
-        cout << "Client: Bytes to read: " << buffer << endl;
-        char buffer2[atoi(buffer)];
-        if (bytes > 0) {
-            ofstream outf("./file_ricevuto.cbc", ios::out);
-            if (!outf) {
+//        //creo un buffer della dimensione del file che sto per ricevere
+//        buffer[bytes] = 0;
+//        cout << "Client: Bytes to read: " << buffer << endl;
+//        char buffer2[atoi(buffer)];
+//        if (bytes > 0) {
+//            ofstream outf("./file_ricevuto.cbc", ios::out);
+//            if (!outf) {
 
-                cout << "Client: unable to open file for output\n";
-                exit(1);
-            } else {
-                cout << "Client: ricevo il file" << endl;
-                SSL_read(ssl, buffer2, sizeof(buffer2));
+//                cout << "Client: unable to open file for output\n";
+//                exit(1);
+//            } else {
+//                cout << "Client: ricevo il file" << endl;
+//                SSL_read(ssl, buffer2, sizeof(buffer2));
 
-                cout << "Client: Testo ricevuto: " << buffer2 << endl;
-                outf.write(buffer2, sizeof(buffer2));
-                outf.close();
-                // release dynamically-allocated memory
-                //delete[] buffer2;
+//                cout << "Client: Testo ricevuto: " << buffer2 << endl;
+//                outf.write(buffer2, sizeof(buffer2));
+//                outf.close();
+//                // release dynamically-allocated memory
+//                //delete[] buffer2;
 
-            }
-        }
-    }
+//            }
+//        }
+//    }
 
-    return 0;
-}
+//    return 0;
+//}
 
 void SSLClient::init_openssl_library() {
     /* https://www.openssl.org/docs/ssl/SSL_library_init.html */
@@ -445,8 +448,7 @@ void SSLClient::querySetAssociation(unsigned int idHT){
     SSL_write(ssl,charIdHT,strlen(charIdHT));
 
 
-    delete [] charCod;
-    delete [] charIdHT;
+
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);
@@ -471,7 +473,7 @@ void SSLClient::queryPullPVState(){
 
     //end do stuff
 
-    delete [] charCod;
+
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);
@@ -513,7 +515,7 @@ bool SSLClient::queryRemoveAssociation() {
     }
 
     //chiusura connessione
-    delete [] charCod;
+
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);
@@ -540,7 +542,7 @@ void SSLClient::queryFreePV(){
 
     //end do stuff
 
-    delete [] charCod;
+
     BIO_printf(outbio, "Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
     close(this->server_sock);

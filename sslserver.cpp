@@ -166,7 +166,7 @@ void SSLServer::service(servizi servizio) {
     switch (servizio) {
 
     case servizi::aggiornamentoPV:{
-        unsigned int idPV;
+        unsigned int idPV = 0;
         bytes = SSL_read(ssl, buf, sizeof(buf));
         if (bytes > 0){
             buf[bytes] = 0;
@@ -192,7 +192,7 @@ void SSLServer::service(servizi servizio) {
 
         memset(buf, '\0', sizeof(buf));
 
-        unsigned int nuovoStato;
+        unsigned int nuovoStato = 0;
         SSL_read(ssl, buf, sizeof(buf));
         if (bytes>0){
             buf[bytes] = 0;

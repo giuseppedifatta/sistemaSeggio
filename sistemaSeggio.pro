@@ -3,6 +3,10 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+
+QMAKE_CXXFLAGS += -g \
+-O1
+
 TARGET = sistemaSeggio
 TEMPLATE = app
 
@@ -44,3 +48,5 @@ else:unix: LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/ -lssl
 
 INCLUDEPATH += $$PWD/../../../../usr/lib/x86_64-linux-gnu
 DEPENDPATH += $$PWD/../../../../usr/lib/x86_64-linux-gnu
+
+

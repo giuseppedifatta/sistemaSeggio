@@ -173,7 +173,7 @@ void Seggio::addAssociazioneHT_PV(){
 }
 
 void Seggio::eliminaNuovaAssociazione(){
-    //delete this->nuovaAssociazione;
+    delete this->nuovaAssociazione;
     this->nuovaAssociazione = NULL;
 }
 
@@ -198,7 +198,7 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
     //elimina un'associazione per la postazione di voto indicata
 
     unsigned int index = 0;
-    unsigned int currentPV;
+    unsigned int currentPV = 0;
     unsigned int idHT = 0;
     for (unsigned int i = 0; this->listAssociazioni.size();i++){
         currentPV = this->listAssociazioni[i].getIdPV();
@@ -364,7 +364,7 @@ void Seggio::runServerUpdatePV(){
     this->mutex_stdout.unlock();
 
 
-    delete this->seggio_server;
+    //delete this->seggio_server;
     // il thread che eseguiva la funzione termina se la funzione arriva alla fine
     return;
 }
@@ -386,12 +386,13 @@ void Seggio::stopServerUpdatePV(){
     const char * localhost = "127.0.0.1";
     this->seggio_client->stopLocalServer(localhost);
 
-    delete[] localhost;
-    delete this->seggio_client;
+    //delete[] localhost;
+    //delete this->seggio_client;
 
 }
 
 const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
+    cout << idPV << endl;
     struct hostent *host;
     host = gethostbyname("localhost");
     struct sockaddr_in local_address;
@@ -440,6 +441,10 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
     this->mutex_stdout.unlock();
 
 
+    delete ifAddrStruct;
+    delete ifa;
+
+    delete host;
     return address_printable;
 }
 
@@ -449,7 +454,7 @@ void Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT){
     seggio_client->connectTo(ip_pv);
     seggio_client->querySetAssociation(idHT);
 
-   // delete seggio_client;
+    // delete seggio_client;
 
 }
 

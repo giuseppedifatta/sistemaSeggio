@@ -23,7 +23,7 @@ private:
     void ShowCerts();
 
     void verify_ServerCert(const char * hostIP /*hostname*/);
-    int myssl_getFile();
+    //int myssl_getFile();
 public:
     SSLClient(Seggio * s);
     ~SSLClient();

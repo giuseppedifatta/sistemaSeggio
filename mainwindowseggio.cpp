@@ -10,6 +10,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindowSeggio)
 {
+
     this->logged = false;
     ui->setupUi(this);
     ui->stackedWidget->setCurrentIndex(loginSeggio);
@@ -32,7 +33,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     //    ui->pinInsertCS_lineEdit->setEchoMode(QLineEdit::Password);
     //    ui->pinInsertRP_lineEdit->setEchoMode(QLineEdit::Password);
 
-
+    seggio = NULL;
 }
 MainWindowSeggio::~MainWindowSeggio()
 {
