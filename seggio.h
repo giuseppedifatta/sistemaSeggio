@@ -120,7 +120,6 @@ public:
         errore,
         offline
     };
-    std::array <std::string,6> patternSS;
 
 
     std::mutex mutex_stati;

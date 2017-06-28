@@ -37,7 +37,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 }
 MainWindowSeggio::~MainWindowSeggio()
 {
-    delete seggio;
+    //delete seggio;
     delete ui;
 }
 void MainWindowSeggio::sessioneDiVotoTerminata(){
@@ -104,7 +104,7 @@ void MainWindowSeggio::on_accediGestioneSeggio_button_clicked(){
         //this->thread_1 = std::thread(&MainWindowSeggio::updatePVbuttons,this);
 
         seggio->mutex_stdout.lock();
-        cout << "loggato" << endl;
+        cout << "View: loggato" << endl;
         seggio->mutex_stdout.unlock();
         if(seggio->anyPostazioneLibera()){
             ui->creaAssociazioneHTPV_button->setEnabled(true);
@@ -163,7 +163,7 @@ void MainWindowSeggio::updatePVbuttons(){
     }
 
     seggio->mutex_stdout.lock();
-    cout << "Aggiorno bottoni Postazioni Voto" << endl;
+    cout << "View: Aggiorno bottoni Postazioni Voto" << endl;
     seggio->mutex_stdout.unlock();
 
     //
@@ -172,7 +172,7 @@ void MainWindowSeggio::updatePVbuttons(){
     //        QString newStyle = QString("%1 { %2 }").arg(nameButton).arg(qstr);
 
     //        seggio->mutex_stdout.lock();
-    //        cout << "PV1, nuovo stile: " << newStyle.toUtf8().constData() << endl;
+    //        cout << "View: PV1, nuovo stile: " << newStyle.toUtf8().constData() << endl;
     //        seggio->mutex_stdout.unlock();
     //        //setStyleSheet(newStyle);
     //        ui->pv1_button->setStyleSheet(newStyle);
@@ -183,7 +183,7 @@ void MainWindowSeggio::updatePVbuttons(){
     //aggiornamento bottone PV1
     ui->pv1_button->setText(messaggioPV[0]);
     if(statoPV[0] == seggio->statiPV::libera){
-        cout << "PV1: set green border" << endl;
+        cout << "View: PV1: set green border" << endl;
         ui->pv1_button->setProperty("free",true);
         ui->pv1_button->style()->unpolish(ui->pv1_button);
         ui->pv1_button->style()->polish(ui->pv1_button);
@@ -192,7 +192,7 @@ void MainWindowSeggio::updatePVbuttons(){
         ui->creaAssociazioneHTPV_button->setEnabled(true);
     }
     else if (statoPV[0] == seggio->statiPV::votazione_completata){
-        cout << "PV1: set green background" << endl;
+        cout << "View: PV1: set green background" << endl;
         ui->pv1_button->setProperty("freeable",true);
         ui->pv1_button->style()->unpolish(ui->pv1_button);
         ui->pv1_button->style()->polish(ui->pv1_button);
@@ -210,7 +210,7 @@ void MainWindowSeggio::updatePVbuttons(){
     //aggiornamento bottone PV2
     ui->pv2_button->setText(messaggioPV[1]);
     if(statoPV[1] == seggio->statiPV::libera){
-        cout << "PV2: set green border" << endl;
+        cout << "View: PV2: set green border" << endl;
         ui->pv2_button->setProperty("free",true);
         ui->pv2_button->style()->unpolish(ui->pv2_button);
         ui->pv2_button->style()->polish(ui->pv2_button);
@@ -219,7 +219,7 @@ void MainWindowSeggio::updatePVbuttons(){
         ui->creaAssociazioneHTPV_button->setEnabled(true);
     }
     else if (statoPV[1] == seggio->statiPV::votazione_completata){
-        cout << "PV2: set green background" << endl;
+        cout << "View: PV2: set green background" << endl;
         ui->pv2_button->setProperty("freeable",true);
         ui->pv2_button->style()->unpolish(ui->pv2_button);
         ui->pv2_button->style()->polish(ui->pv2_button);
@@ -237,7 +237,7 @@ void MainWindowSeggio::updatePVbuttons(){
     //aggiornamento bottone PV3
     ui->pv3_button->setText(messaggioPV[2]);
     if(statoPV[2] == seggio->statiPV::libera){
-        cout << "PV3: set green border" << endl;
+        cout << "View: PV3: set green border" << endl;
         ui->pv3_button->setProperty("free",true);
         ui->pv3_button->style()->unpolish(ui->pv3_button);
         ui->pv3_button->style()->polish(ui->pv3_button);
@@ -246,7 +246,7 @@ void MainWindowSeggio::updatePVbuttons(){
         ui->creaAssociazioneHTPV_button->setEnabled(true);
     }
     else if (statoPV[2] == seggio->statiPV::votazione_completata){
-        cout << "PV3: set green background" << endl;
+        cout << "View: PV3: set green background" << endl;
         ui->pv3_button->setProperty("freeable",true);
         ui->pv3_button->style()->unpolish(ui->pv3_button);
         ui->pv3_button->style()->polish(ui->pv3_button);
@@ -261,35 +261,35 @@ void MainWindowSeggio::updatePVbuttons(){
         ui->pv3_button->update();
     }
 
-//    ui->pv2_button->setText(messaggioPV[1]);
-//    QString nameButton = "QPushButton#pv2_button";
-//    QString qstr = QString::fromStdString(seggio->patternSS[statoPV[1]]);
-//    QString newStyle = QString("%1 { %2 }").arg(nameButton).arg(qstr);
-//    seggio->mutex_stdout.lock();
-//    cout << "PV2, nuovo stile: " << newStyle.toUtf8().constData() << endl;
-//    seggio->mutex_stdout.unlock();
-//    ui->pv2_button->setStyleSheet(newStyle);
-//    if(statoPV[1]==seggio->statiPV::votazione_completata){
-//        ui->pv2_button->setEnabled(true);
-//    }
-//    else if(statoPV[1]==seggio->statiPV::libera){
-//        ui->creaAssociazioneHTPV_button->setEnabled(true);
-//    }
+    //    ui->pv2_button->setText(messaggioPV[1]);
+    //    QString nameButton = "QPushButton#pv2_button";
+    //    QString qstr = QString::fromStdString(seggio->patternSS[statoPV[1]]);
+    //    QString newStyle = QString("%1 { %2 }").arg(nameButton).arg(qstr);
+    //    seggio->mutex_stdout.lock();
+    //    cout << "View: PV2, nuovo stile: " << newStyle.toUtf8().constData() << endl;
+    //    seggio->mutex_stdout.unlock();
+    //    ui->pv2_button->setStyleSheet(newStyle);
+    //    if(statoPV[1]==seggio->statiPV::votazione_completata){
+    //        ui->pv2_button->setEnabled(true);
+    //    }
+    //    else if(statoPV[1]==seggio->statiPV::libera){
+    //        ui->creaAssociazioneHTPV_button->setEnabled(true);
+    //    }
 
-//    ui->pv3_button->setText(messaggioPV[2]);
-//    nameButton = "QPushButton#pv3_button";
-//    qstr = QString::fromStdString(seggio->patternSS[statoPV[2]]);
-//    newStyle = QString("%1 { %2 }").arg(nameButton).arg(qstr);
-//    seggio->mutex_stdout.lock();
-//    cout << "PV3, nuovo stile: " << newStyle.toUtf8().constData() << endl;
-//    seggio->mutex_stdout.unlock();
-//    ui->pv3_button->setStyleSheet(newStyle);
-//    if(statoPV[2]==seggio->statiPV::votazione_completata){
-//        ui->pv3_button->setEnabled(true);
-//    }
-//    else if(statoPV[2]==seggio->statiPV::libera){
-//        ui->creaAssociazioneHTPV_button->setEnabled(true);
-//    }
+    //    ui->pv3_button->setText(messaggioPV[2]);
+    //    nameButton = "QPushButton#pv3_button";
+    //    qstr = QString::fromStdString(seggio->patternSS[statoPV[2]]);
+    //    newStyle = QString("%1 { %2 }").arg(nameButton).arg(qstr);
+    //    seggio->mutex_stdout.lock();
+    //    cout << "View: PV3, nuovo stile: " << newStyle.toUtf8().constData() << endl;
+    //    seggio->mutex_stdout.unlock();
+    //    ui->pv3_button->setStyleSheet(newStyle);
+    //    if(statoPV[2]==seggio->statiPV::votazione_completata){
+    //        ui->pv3_button->setEnabled(true);
+    //    }
+    //    else if(statoPV[2]==seggio->statiPV::libera){
+    //        ui->creaAssociazioneHTPV_button->setEnabled(true);
+    //    }
 
 
     //aggiornamento bottoni crea_associazione e rimuovi associazione
@@ -300,7 +300,7 @@ void MainWindowSeggio::updatePVbuttons(){
         ui->rimuoviAssociazione_button->setEnabled(true);
     }
     seggio->mutex_stdout.lock();
-    cout <<"view: executed the function that updates states of PVs "<< endl;
+    cout << "View: executed the function that updates states of PVs "  << endl;
     seggio->mutex_stdout.unlock();
 
 }
@@ -314,7 +314,7 @@ void MainWindowSeggio::on_gestisci_HT_button_clicked()
     ui->token_attivi_comboBox->clear();
     array <unsigned int, 4> idHtAttivi = seggio->getArrayIdHTAttivi();
     seggio->mutex_stdout.lock();
-    cout << "numero ht attivi: "<< idHtAttivi.size() << endl;
+    cout << "View: numero ht attivi: "  << idHtAttivi.size() << endl;
     seggio->mutex_stdout.unlock();
     for (unsigned int i  = 0; i < idHtAttivi.size();i++){
         if(!(seggio->isBusyHT(idHtAttivi[i]))){
@@ -339,7 +339,7 @@ void MainWindowSeggio::on_logout_button_clicked()
     //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
     seggio->stopServerUpdatePV();
 
-
+    delete seggio;
 }
 
 //void MainWindowSeggio::on_aggiungiHT_button_clicked()
@@ -411,7 +411,7 @@ void MainWindowSeggio::on_logoutCS_button_clicked()
     //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
     seggio->stopServerUpdatePV();
 
-
+    delete seggio;
 }
 
 void MainWindowSeggio::on_annullaAssociazione_button_clicked()
@@ -460,20 +460,20 @@ void MainWindowSeggio::on_confermaAssociazione_button_clicked()
     //controllo
 
     if(seggio->anyPostazioneLibera()){
-        cout << "almeno un'associazione libera, abilito il bottone di creazione associazione" << endl;
+        cout << "View: almeno un'associazione libera, abilito il bottone di creazione associazione" << endl;
         ui->creaAssociazioneHTPV_button->setEnabled(true);
     }
     else {
-        cout << "non ci sono altre postazioni libere" << endl;
+        cout << "View: non ci sono altre postazioni libere" << endl;
     }
 
     //abilitazione bottone per la rimozione delle associazioni
     if(seggio->anyAssociazioneEliminabile()){
-        cout << "almeno un'associazione eliminabile, attivo il bottone rimuovi associazione" <<endl;
+        cout << "View: almeno un'associazione eliminabile, attivo il bottone rimuovi associazione" <<endl;
         ui->rimuoviAssociazione_button->setEnabled(true);
     }
     else{
-        cout << "non ci sono associazioni rimovibili" << endl;
+        cout << "View: non ci sono associazioni rimovibili" << endl;
     }
     on_annullaRimozione_button_clicked();
 }
@@ -528,7 +528,7 @@ void MainWindowSeggio::on_rimuovi_button_clicked()
     //pv = selectedAss[10];
     unsigned int pvToFree = pv.toInt();
     seggio->mutex_stdout.lock();
-    cout << "postazione da liberare: " << pvToFree << endl;
+    cout << "View: postazione da liberare: " << pvToFree << endl;
     seggio->mutex_stdout.unlock();
     seggio->removeAssociazioneHT_PV(pvToFree);
 
@@ -591,7 +591,7 @@ void MainWindowSeggio::on_logout2_button_clicked()
     //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
     seggio->stopServerUpdatePV();
 
-
+    delete seggio;
 }
 
 void MainWindowSeggio::on_sostituisci_button_clicked()
