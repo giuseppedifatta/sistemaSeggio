@@ -37,6 +37,7 @@ SSLServer::SSLServer(Seggio *s){
     seggioChiamante->mutex_stdout.unlock();
 
     this->init_openssl_library();
+
     this->createServerContext();
 
     char certFile[] =
