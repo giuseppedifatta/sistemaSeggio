@@ -29,15 +29,14 @@ class Seggio {
 
 private:
 
-    //strutture condivisibili di SSL
-
-
 
     SSLServer * seggio_server;
     std::thread thread_server;
     bool stopThreads;
+
     SSLClient * seggio_client;
 
+    //riferimento al gestore dell'interfaccia dell'applicazione
     MainWindowSeggio *mainWindow;
 
     //questi due arrey tengono traccia delle postazioni di voto e degli hardaware token attualmente impegnati in associazioni PV_HT
@@ -63,7 +62,7 @@ private:
     std::vector< Associazione > listAssociazioni;
     Associazione *nuovaAssociazione;
 
-    //funzione che setta gli ht e le pv inmpegnate e chiama la funzione che comunica l'associazione alla postazione di voto relativa
+    //funzioni a solo uso del seggio
     void setBusyHT_PV();
     void pushAssociationToPV(unsigned int idPV, unsigned int idHT);
     bool removeAssociationFromPV(unsigned int idPV);
@@ -73,10 +72,10 @@ private:
     //allo stato attuale un seggio prevede una composizione di 3 postazioni di voto e 4 hardware token attivi
 public:
     Seggio(MainWindowSeggio * m);
-    virtual ~Seggio();
+    ~Seggio();
 
 
-    void setNumeroSeggio(int number);
+    //void setNumeroSeggio(int number);
     Associazione *getNuovaAssociazione();
 
 

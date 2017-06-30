@@ -19,15 +19,16 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     ui->wrongPassword_label->hide();
     ui->password_lineEdit->setEchoMode(QLineEdit::Password);
 
+
     //setWindowFlags(  Qt::WindowMinMaxButtonsHint);
-    //
+
+    //initTableRV();
+
     setWindowFlags(Qt::FramelessWindowHint);
 
-    setWindowTitle("Voto digitale UNIPA");
-    initTableRV();
+    //setWindowTitle("Voto digitale UNIPA");
 
-    //inizializzazione interfaccia gestioneSeggio
-    initGestioneSeggio();
+
 
     ui->password_lineEdit->setEchoMode(QLineEdit::Password);
     //    ui->pinInsertCS_lineEdit->setEchoMode(QLineEdit::Password);
@@ -37,7 +38,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 }
 MainWindowSeggio::~MainWindowSeggio()
 {
-    //delete seggio;
+
     delete ui;
 }
 void MainWindowSeggio::sessioneDiVotoTerminata(){
@@ -93,25 +94,41 @@ void MainWindowSeggio::on_accediGestioneSeggio_button_clicked(){
     //int numeroSeggio = ui->numeroSeggio_comboBox->currentText().toInt();
     QString pass;
     pass = ui->password_lineEdit->text();
-    //TODO usare il numero del seggio e l'IP per controllare che la password sia esatta
+
+
+    //TODO contattare il dbms degli accessi per controllare se la password è esatta
 
     if(pass=="qwerty"){
+        this->logged = true;
+
+
         ui->stackedWidget->setCurrentIndex(gestioneSeggio);
         ui->password_lineEdit->setText("");
+
+        //inizializzazione interfaccia gestioneSeggio
+        initGestioneSeggio();
+
         this->seggio = new Seggio(this);
-        //this->seggio->setNumeroSeggio(numeroSeggio);
-        this->logged = true;
-        //this->thread_1 = std::thread(&MainWindowSeggio::updatePVbuttons,this);
 
         seggio->mutex_stdout.lock();
         cout << "View: loggato" << endl;
         seggio->mutex_stdout.unlock();
+
+
+
+
         if(seggio->anyPostazioneLibera()){
             ui->creaAssociazioneHTPV_button->setEnabled(true);
         }
         else{
             ui->creaAssociazioneHTPV_button->setEnabled(false);
 
+        }
+        if(seggio->anyAssociazioneEliminabile()){
+            ui->rimuoviAssociazione_button->setEnabled(true);
+        }
+        else{
+            ui->rimuoviAssociazione_button->setEnabled(false);
         }
     }
     else{

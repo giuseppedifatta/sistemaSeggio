@@ -66,7 +66,7 @@ Seggio::Seggio(MainWindowSeggio * m)
 
 
     //TODO calcolare usando come indirizzo base l'IP pubblico del seggio
-    IP_PV[idPostazioniVoto[0]-1] = "192.168.56.100";
+    IP_PV[idPostazioniVoto[0]-1] = "192.168.56.101";
     IP_PV[idPostazioniVoto[1]-1] = "192.168.56.102";
     IP_PV[idPostazioniVoto[2]-1] = "192.168.56.103";
 
@@ -75,8 +75,10 @@ Seggio::Seggio(MainWindowSeggio * m)
 }
 
 Seggio::~Seggio(){
+
     delete this->seggio_client;
     delete nuovaAssociazione;
+
     this->mutex_stdout.lock();
     cout << "Seggio: join del thread_server" << endl;
     this->mutex_stdout.unlock();
@@ -104,10 +106,15 @@ void Seggio::setBusyHT_PV(){
     this->mutex_stdout.lock();
     cout << "Seggio: Hardware token: " << idHT << ", ultimo utilizzo su PV: " << idPV << endl;
     this->mutex_stdout.unlock();
+    if(this->busyPV[idPV-1] == false){
+        this->busyPV[idPV-1]=true;
+    }
+    else {
+        cerr << "postazione già impegnata, runtime error" << endl;
+        exit(EXIT_FAILURE);
+    }
 
-    this->busyPV[idPV-1]=true;
-
-    //TODO comunicare alla postazione di competenza la nuova associazione
+    //comunicare alla postazione di competenza la nuova associazione
     //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
 
     pushAssociationToPV(idPV,idHT);
@@ -126,29 +133,31 @@ bool Seggio::createAssociazioneHT_PV(){
     bool associationFound = false;
     for(unsigned int indexPV = 0; indexPV < this->busyPV.size();indexPV++){
         if (associationFound==true){
-            break;
+            break; //interrompe il ciclo for
         }
         else {
             bool pv_occupata = this->busyPV[indexPV];
             this->mutex_stati.lock();
             unsigned int pv_stato = this->stateInfoPV(indexPV+1);
             this->mutex_stati.unlock();
-            this->mutex_stdout.lock();
-            cout << "Seggio: PV " << indexPV+1 << " candidata alla associazione trovata" << endl;
-            this->mutex_stdout.unlock();
-            if((!pv_occupata) && (pv_stato!=statiPV::attesa_attivazione) && (pv_stato==statiPV::libera)){ // se la postazione non è occupata
-                //sceglie una postazione voto libera e attivata (disponibile per una associazione)
 
+            if((!pv_occupata) && (pv_stato!=statiPV::attesa_attivazione) && (pv_stato==statiPV::libera)){ // se la postazione non è occupata
+                //seleziona la postazione se è attivata e libera(disponibile per una associazione)
+                this->mutex_stdout.lock();
+                cout << "Seggio: PV " << indexPV+1 << " candidata alla associazione trovata" << endl;
+                this->mutex_stdout.unlock();
                 idPV=indexPV+1; //postazione selezionata
                 for (unsigned int indexHT = 0; indexHT < this->busyHT.size();indexHT++){
                     if (this->busyHT[indexHT]==false){ // se l'HT non è impegnato
                         if(this->PV_lastUsedHT[indexPV]!=this->idHTAttivi[indexHT]){ //e l'HT non è stato utilizzato l'ultima volta su questa postazione, si può selezionare
                             idHT=this->idHTAttivi[indexHT]; //seleziona l'i-esimo HT tra quelli attivi
-                            associationFound = true; //associazione possibile trovata
+                            cout << "Seggio: HT " << idHT << " selezionato" << endl;
+                            associationFound = true; //associazione trovata
 
-                            //TODO vedere come fare la delete
+                            //creazione della nuova associazione
                             this->nuovaAssociazione = new Associazione(idPV,idHT);
-                            break;
+
+                            break; //interrompe il ciclo for
                         }
                     }
                 }
@@ -186,9 +195,9 @@ unsigned int Seggio::getNumberAssCorrenti(){
     return elementiHeap;
 }
 
-void Seggio::setNumeroSeggio(int number){
-    this->numeroSeggio=number;
-}
+//void Seggio::setNumeroSeggio(int number){
+//    this->numeroSeggio=number;
+//}
 
 vector< Associazione > Seggio::getListAssociazioni(){
     return this->listAssociazioni;
@@ -278,12 +287,14 @@ bool Seggio::anyPostazioneLibera(){
 bool Seggio::anyAssociazioneEliminabile(){
     for(unsigned int i=0; i< this->listAssociazioni.size(); ++i){
         unsigned int idPV = this->listAssociazioni[i].getIdPV();
-        cout << "Seggio: anyAssociazioneEliminabile: pv #" << idPV << endl;
+
         unsigned int statoPV = stateInfoPV(idPV);
-        cout << "Seggio: pv #" <<idPV<< ": stato " << statoPV << endl;
+        cout << "Seggio: pv #" << idPV << ": stato " << statoPV << endl;
         if(( statoPV == Seggio::statiPV::attesa_abilitazione) || ( statoPV == Seggio::statiPV::errore)){
+            cout << "trovata almeno una associazione eliminabile" << endl;
             return true;
         }
+        cout << "Non eliminabile" << endl;
     }
     return false;
 }
@@ -325,9 +336,16 @@ bool Seggio::isBusyHT(unsigned int idHT){
 }
 
 void Seggio::setPVstate(unsigned int idPV, unsigned int nuovoStatoPV){
-    this->mutex_stati.lock();
-    this->statoPV[idPV-1] = nuovoStatoPV;
-    this->mutex_stati.unlock();
+
+    if(idPV > 0 && idPV <= NUM_PV){
+        this->mutex_stati.lock();
+        this->statoPV[idPV-1] = nuovoStatoPV;
+        this->mutex_stati.unlock();
+    }
+    else{
+        cerr << "id Postazione di Voto non valido" << endl;
+        exit(EXIT_FAILURE);
+    }
     switch(nuovoStatoPV) {
 
     case statiPV::libera :
@@ -348,7 +366,7 @@ void Seggio::runServerUpdatePV(){
     //funzione eseguita da un thread
     this->seggio_server = new SSLServer(this);
     this->mutex_stdout.lock();
-    cout << "Seggio: avvio del seggio_server per ricevere gli update dello stato delle Postazioni di Voto" << endl;
+    cout << "Seggio: avviato il ServerSeggio per ricevere gli update dello stato delle Postazioni di Voto" << endl;
     this->mutex_stdout.unlock();
 
     while(!(this->stopThreads)){//se stopThreads ha valore vero il while termina
@@ -388,7 +406,7 @@ void Seggio::stopServerUpdatePV(){
     this->seggio_client->stopLocalServer(localhost);
 
 
-    //delete this->seggio_client;
+
 
 }
 
@@ -442,10 +460,10 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
     this->mutex_stdout.unlock();
 
 
-    delete ifAddrStruct;
-    delete ifa;
+    //delete ifAddrStruct;
+    //delete ifa;
 
-    delete host;
+    //delete host;
     return address_printable;
 }
 
