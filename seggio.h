@@ -64,8 +64,10 @@ private:
 
     //funzioni a solo uso del seggio
     void setBusyHT_PV();
-    void pushAssociationToPV(unsigned int idPV, unsigned int idHT);
+    bool pushAssociationToPV(unsigned int idPV, unsigned int idHT);
+    void pullStatePV(unsigned int idPV);
     bool removeAssociationFromPV(unsigned int idPV);
+
     const char * calcolaIP_PVbyID(unsigned int idPV);
     void runServerUpdatePV();
 
@@ -127,7 +129,7 @@ public:
     //questa funzione verrà chiamata dal thread che si mette in ascolto di aggiornamenti delle postazioni di voto
 
     void stopServerUpdatePV();
-    void setStopThreads(bool b);
+    //void setStopThreads(bool b);
 
 
 };

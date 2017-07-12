@@ -88,14 +88,19 @@ Seggio::~Seggio(){
 
 }
 
-void Seggio::setStopThreads(bool b) {
-    this->stopThreads = b;
-}
+//void Seggio::setStopThreads(bool b) {
+//    this->stopThreads = b;
+//}
 
 void Seggio::setBusyHT_PV(){
-    //segna come occupate le postazioni corrente, e memorizza la postazione di ultimo utilizzo per l'HT
     unsigned int idPV=this->nuovaAssociazione->getIdPV();
     unsigned int idHT=this->nuovaAssociazione->getIdHT();
+
+    //comunicare alla postazione di competenza la nuova associazione
+    //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
+
+    //se il push dell'associazioe è andato a buon fine...
+    //segna come occupate le postazioni corrente, e memorizza la postazione di ultimo utilizzo per l'HT
 
     for(unsigned int index = 0; index < this->busyHT.size(); index++){
         if(this->idHTAttivi[index] == idHT){ //se l'id dell'HTAttivo corrente corrisponde con l'id dell'HT da impegnare
@@ -114,10 +119,9 @@ void Seggio::setBusyHT_PV(){
         exit(EXIT_FAILURE);
     }
 
-    //comunicare alla postazione di competenza la nuova associazione
-    //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
 
-    pushAssociationToPV(idPV,idHT);
+
+
 
     if(!this->anyPostazioneLibera()){
         mainWindow->disableCreaAssociazioneButton();
@@ -170,12 +174,22 @@ bool Seggio::createAssociazioneHT_PV(){
 void Seggio::addAssociazioneHT_PV(){
     //aggiunge un'associazione alla lista e aggiorna i flag su PV e HT occupati
 
+    //back nel caso in cui non si riesca a fare il push della associazione, risolvere!!!
+    //
+    unsigned int idPV=this->nuovaAssociazione->getIdPV();
+    unsigned int idHT=this->nuovaAssociazione->getIdHT();
 
-    this->listAssociazioni.push_back(*this->nuovaAssociazione);
+    //comunicare alla postazione di competenza la nuova associazione
+    //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
+    if(pushAssociationToPV(idPV,idHT)){
+        //aggiungiamo la nuova associazione alla lista delle associazioni correnti
+        this->listAssociazioni.push_back(*this->nuovaAssociazione);
 
-    //settiamo ad occupati ht e pv
-    setBusyHT_PV();
+        //settiamo ad occupati ht e pv
+        this->setBusyHT_PV();
+    }
 
+    //liberiamo la memoria della nuova associazione, nel caso in cui sia stata aggiunta alla lista delle associazioni ne è stata creata una copia nel vettore
     delete this->nuovaAssociazione;
     //libera il puntatore membro di classe
     this->nuovaAssociazione = NULL;
@@ -294,7 +308,7 @@ bool Seggio::anyAssociazioneEliminabile(){
             cout << "trovata almeno una associazione eliminabile" << endl;
             return true;
         }
-        cout << "Non eliminabile" << endl;
+        cout << "Seggio: Non eliminabile" << endl;
     }
     return false;
 }
@@ -374,7 +388,7 @@ void Seggio::runServerUpdatePV(){
         //attesa di una richiesta
         this->seggio_server->ascoltoNuovoStatoPV();
 
-        //prosegue rimettendosi in ascolto al ciclo successivo
+        //prosegue rimettendosi in ascolto al ciclo successivo, se stopThreads è falso
     }
 
     this->mutex_stdout.lock();
@@ -393,6 +407,7 @@ void Seggio::stopServerUpdatePV(){
 
     //creo client per contattare il server
     //this->seggio_client = new SSLClient(this);
+    this->stopThreads = true;
 
     //predispongo il server per l'interruzione
     this->seggio_server->setStopServer(true);
@@ -418,8 +433,8 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
     local_address.sin_family = AF_INET;
     local_address.sin_addr.s_addr = *(long*) (host->h_addr);
     /* ---------------------------------------------------------- *
-     * Zeroing the rest of the struct                             *
-     * ---------------------------------------------------------- */
+             * Zeroing the rest of the struct                             *
+             * ---------------------------------------------------------- */
     memset(&(local_address.sin_zero), '\0', 8);
 
     const char * address_printable = inet_ntoa(local_address.sin_addr);
@@ -449,12 +464,12 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
             printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
         }
         /*else if (ifa->ifa_addr->sa_family == AF_INET6) { // check it is IP6
-            // is a valid IP6 Address
-            tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
-            char addressBuffer[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-        }*/
+                    // is a valid IP6 Address
+                    tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+                    char addressBuffer[INET6_ADDRSTRLEN];
+                    inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+                    printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
+                }*/
     }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
     this->mutex_stdout.unlock();
@@ -467,22 +482,29 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
     return address_printable;
 }
 
-void Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT){
+bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT){
     const char* ip_pv = this->IP_PV[idPV-1];
-    //seggio_client = new SSLClient(this);
-    seggio_client->connectTo(ip_pv);
-    seggio_client->querySetAssociation(idHT);
 
-    //delete seggio_client;
-    return;
+    bool res = false;
+    if(seggio_client->connectTo(ip_pv)!= nullptr){
+        //richiede il settaggio della associazione alla postazione di voto a cui il client del seggio si è connesso
+        res = seggio_client->querySetAssociation(idHT);
+    }
+
+    return res;
 }
 
 bool Seggio::removeAssociationFromPV(unsigned int idPV){
     const char* ip_pv = this->IP_PV[idPV-1];
-    //seggio_client = new SSLClient(this);
-    seggio_client->connectTo(ip_pv);
-    bool res = seggio_client->queryRemoveAssociation();
-    //delete seggio_client;
+    bool res = false;
+    if(seggio_client->connectTo(ip_pv)!= nullptr){
+
+        //richiede la rimozione della associazione alla postazione di voto a cui il client del seggio si è connesso
+        res = seggio_client->queryRemoveAssociation();
+    }
     return res;
 }
 
+void Seggio::pullStatePV(unsigned int idPV){
+
+}

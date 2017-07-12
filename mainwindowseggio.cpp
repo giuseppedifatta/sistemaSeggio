@@ -34,6 +34,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     //    ui->pinInsertCS_lineEdit->setEchoMode(QLineEdit::Password);
     //    ui->pinInsertRP_lineEdit->setEchoMode(QLineEdit::Password);
 
+
     seggio = NULL;
 }
 MainWindowSeggio::~MainWindowSeggio()
@@ -351,7 +352,7 @@ void MainWindowSeggio::on_logout_button_clicked()
     this->logged=false;
     ui->stackedWidget->setCurrentIndex(loginSeggio);
     //setto il seggio affinchè vengano fermati i thread alla successiva esecuzione del costrutto while in essi contenuto
-    seggio->setStopThreads(true);
+    //seggio->setStopThreads(true);
 
     //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
     seggio->stopServerUpdatePV();
@@ -423,7 +424,7 @@ void MainWindowSeggio::on_logoutCS_button_clicked()
     this->logged=false;
     ui->stackedWidget->setCurrentIndex(loginSeggio);
     //setto il seggio affinchè vengano fermati i thread alla successiva esecuzione del costrutto while in essi contenuto
-    seggio->setStopThreads(true);
+    //seggio->setStopThreads(true);
 
     //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
     seggio->stopServerUpdatePV();
@@ -477,7 +478,7 @@ void MainWindowSeggio::on_confermaAssociazione_button_clicked()
     //controllo
 
     if(seggio->anyPostazioneLibera()){
-        cout << "View: almeno un'associazione libera, abilito il bottone di creazione associazione" << endl;
+        cout << "View: almeno una postazione libera, abilito il bottone di creazione associazione" << endl;
         ui->creaAssociazioneHTPV_button->setEnabled(true);
     }
     else {
@@ -603,7 +604,7 @@ void MainWindowSeggio::on_logout2_button_clicked()
     this->logged=false;
     ui->stackedWidget->setCurrentIndex(loginSeggio);
     //setto il seggio affinchè vengano fermati i thread alla successiva esecuzione del costrutto while in essi contenuto
-    seggio->setStopThreads(true);
+    //seggio->setStopThreads(true);
 
     //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
     seggio->stopServerUpdatePV();

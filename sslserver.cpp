@@ -332,7 +332,7 @@ void SSLServer::configure_context(char* CertFile, char* KeyFile, char* ChainFile
     //SSL_CTX_set_default_passwd_cb(ctx,"password"); // cercare funzionamento con reference
 
     if (!SSL_CTX_check_private_key(this->ctx)) {
-        fprintf(stderr, "ServerSeggioPrivate key does not match the public certificate\n");
+        fprintf(stderr, "ServerSeggio: Private key does not match the public certificate\n");
         abort();
     }
     //substitute NULL with the name of the specific verify_callback
@@ -575,7 +575,7 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
     X509_STORE *store = NULL;
     X509_STORE_CTX *vrfy_ctx = NULL;
     //BIO *certbio = NULL;
-    X509_NAME *certname = NULL;
+    //X509_NAME *certname = NULL;
     //certbio = BIO_new(BIO_s_file());
 
     /* ---------------------------------------------------------- *
@@ -597,17 +597,21 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
     /* ---------------------------------------------------------- *
      * extract various certificate information                    *
      * -----------------------------------------------------------*/
-    certname = X509_NAME_new();
-    certname = X509_get_subject_name(cert);
+    //certname = X509_NAME_new();
+    //certname = X509_get_subject_name(cert);
 
     /* ---------------------------------------------------------- *
      * display the cert subject here                              *
      * -----------------------------------------------------------*/
-    seggioChiamante->mutex_stdout.lock();
-    BIO_printf(this->outbio, "ServerSeggioThread: Displaying the certificate subject data:\n");
-    X509_NAME_print_ex(this->outbio, certname, 0, 0);
-    BIO_printf(this->outbio, "\n");
-    seggioChiamante->mutex_stdout.unlock();
+//    seggioChiamante->mutex_stdout.lock();
+//    BIO_printf(this->outbio, "ServerSeggioThread: Displaying the certificate subject data:\n");
+//    seggioChiamante->mutex_stdout.unlock();
+
+    //X509_NAME_print_ex(this->outbio, certname, 0, 0);
+
+//    seggioChiamante->mutex_stdout.lock();
+//    BIO_printf(this->outbio, "\n");
+//    seggioChiamante->mutex_stdout.unlock();
     /* ---------------------------------------------------------- *
      * Initialize the global certificate validation store object. *
      * ---------------------------------------------------------- */

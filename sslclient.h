@@ -41,7 +41,7 @@ public:
     void configure_context(char* CertFile, char* KeyFile, char * ChainFile);
 
     //richieste per le Postazioni di Voto
-    void querySetAssociation(unsigned int idHT);
+    bool querySetAssociation(unsigned int idHT);
     void queryPullPVState();
     bool queryRemoveAssociation();
     void queryFreePV();
