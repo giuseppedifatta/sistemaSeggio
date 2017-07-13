@@ -42,7 +42,7 @@ public:
 
     //richieste per le Postazioni di Voto
     bool querySetAssociation(unsigned int idHT);
-    void queryPullPVState();
+    int queryPullPVState();
     bool queryRemoveAssociation();
     void queryFreePV();
 };

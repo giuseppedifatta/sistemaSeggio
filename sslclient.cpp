@@ -29,8 +29,8 @@ SSLClient::SSLClient(Seggio * s){
     /* ---------------------------------------------------------- *
      * Create the Input/Output BIO's.                             *
      * ---------------------------------------------------------- */
-    outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
-    ssl = nullptr;
+    this->outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
+    this->ssl = nullptr;
 
     /* ---------------------------------------------------------- *
      * Function that initialize openssl for correct work.		  *
@@ -45,9 +45,9 @@ SSLClient::SSLClient(Seggio * s){
             "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
 
     this->configure_context(certFile, keyFile, chainFile);
-    s->mutex_stdout.lock();
+    seggioChiamante->mutex_stdout.lock();
     cout << "ClientSeggio: context configured" << endl;
-    s->mutex_stdout.unlock();
+    seggioChiamante->mutex_stdout.unlock();
 }
 
 SSLClient::~SSLClient(){
@@ -105,62 +105,71 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
     /* ---------------------------------------------------------- *
      * Try to make the host connect here                          *
     * ---------------------------------------------------------- */
-    int res = connect(this->server_sock, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr));
 
-    seggioChiamante->mutex_stdout.lock();
+    int res = connect(this->server_sock, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr));
     if (res  == -1) {
+
         BIO_printf(this->outbio, "ClientSeggio: Error: Cannot connect to host %s [%s] on port %d.\n",
                    hostIP/*hostname*/, address_printable, portCod);
-    } else {
+
+        return res;
+    }
+    else {
+
         BIO_printf(this->outbio, "ClientSeggio: Successfully connect to host %s [%s] on port %d.\n",
                    hostIP/*hostname*/, address_printable, portCod);
+        cout << "ClientSeggio: Descrittore socket: " << this->server_sock << endl;
 
+        return res;
     }
-    seggioChiamante->mutex_stdout.unlock();
 
-    seggioChiamante->mutex_stdout.lock();
-    cout << "ClientSeggio: Descrittore socket: "<< this->server_sock << endl;
-    seggioChiamante->mutex_stdout.unlock();
 
-    return res;
+
+
+
 }
 
 SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
     cout << "ClientSeggio: Connecting to " << hostIP << endl;
-    this->PV_IPaddress = hostIP;
+
+    //this->PV_IPaddress = hostIP;
 
     const char  port[] = SERVER_PORT;
 
     /* ---------------------------------------------------------- *
      * Create new SSL connection state object                     *
      * ---------------------------------------------------------- */
-
     this->ssl = SSL_new(this->ctx);
-    seggioChiamante->mutex_stdout.lock();
-    cout << "ClientSeggio: ConnectTo - ssl pointer: " << this->ssl << endl;
-    seggioChiamante->mutex_stdout.unlock();
+    cout << "ClientSeggio: ssl pointer: " << this->ssl << endl;
+
+
     /* ---------------------------------------------------------- *
      * Make the underlying TCP socket connection                  *
      * ---------------------------------------------------------- */
-
-
     int ret = create_socket(hostIP /*hostname*/,port);
+
+
     if (ret == 0){
-        BIO_printf(this->outbio,
-                   "ClientSeggio: Successfully create the socket for TCP connection to: %s \n",
+
+        BIO_printf(this->outbio,"ClientSeggio: Successfully create the socket for TCP connection to: %s \n",
                    hostIP /*hostname*/);
     }
     else {
-        BIO_printf(this->outbio,
-                   "ClientSeggio: Unable to create the socket for TCP connection to: %s \n",
-                   hostIP /*hostname*/);
-        if(close(this->server_sock) != 0)
-        {
+        if(close(this->server_sock) != 0){
             cerr << "ClientSeggio: errore chiusura socket server" << endl;
         }
+
+
+
+        cout << ret << endl;
+        BIO_printf(this->outbio,"ClientSeggio: Unable to create the socket for TCP connection to: %s \n",
+                   hostIP /*hostname*/);
+
+        SSL_free(this->ssl);
         this->ssl = nullptr;
         return this->ssl;
     }
+    //cout << ret << endl;
 
     /* ---------------------------------------------------------- *
      * Attach the SSL session to the socket descriptor            *
@@ -172,6 +181,7 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
         {
             cerr << "ClientSeggio: errore chiusura socket server" << endl;
         }
+        SSL_free(this->ssl);
         this->ssl = nullptr;
         return this->ssl;
     }
@@ -188,6 +198,7 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
         {
             cerr << "ClientSeggio: errore chiusura socket server" << endl;
         }
+        SSL_free(this->ssl);
         this->ssl = nullptr;
         return this->ssl;
     }
@@ -448,10 +459,10 @@ bool SSLClient::querySetAssociation(unsigned int idHT){
 
     }
 
-    seggioChiamante->mutex_stdout.lock();
+
     BIO_printf(this->outbio, "ClientSeggio: Finished SSL/TLS connection with server: %s.\n",
                this->PV_IPaddress);
-    seggioChiamante->mutex_stdout.unlock();
+
 
     if(SSL_shutdown(this->ssl) == 0){ // valore di ritorno uguale a 0 indica che lo shutdown non si è concluso , bisogna richiamare la SSL_shutdown una seconda volta
         SSL_shutdown(this->ssl);
@@ -466,7 +477,7 @@ bool SSLClient::querySetAssociation(unsigned int idHT){
     return res;
 }
 
-void SSLClient::queryPullPVState(){
+int SSLClient::queryPullPVState(){
     //invia codice del servizio richiesto al PV_Server
     //pullPVState: 1
 
@@ -481,6 +492,17 @@ void SSLClient::queryPullPVState(){
     SSL_write(ssl,charCod,strlen(charCod));
 
     //do stuff
+    int statoCorrente = 0;
+    char buf[16];
+    memset(buf, '\0', sizeof(buf));
+    int bytes = SSL_read(ssl, buf, sizeof(buf));
+    if (bytes>0){
+        cout << "Received buffer: " << buf << endl;
+        statoCorrente = atoi(buf);
+        seggioChiamante->mutex_stdout.lock();
+        cout << "ServerSeggioThread: nuovoStato: " << statoCorrente << endl;
+        seggioChiamante->mutex_stdout.unlock();
+    }
 
 
     //end do stuff
@@ -498,7 +520,7 @@ void SSLClient::queryPullPVState(){
     //        cerr << "ClientSeggio: errore chiusura socket per il server" << endl;
 
     //    }
-
+    return statoCorrente;
 }
 
 bool SSLClient::queryRemoveAssociation() {
@@ -553,6 +575,7 @@ bool SSLClient::queryRemoveAssociation() {
 
     return res;
 }
+
 void SSLClient::queryFreePV(){
     //invia codice del servizio richiesto al PV_Server
     //freePV: 3
