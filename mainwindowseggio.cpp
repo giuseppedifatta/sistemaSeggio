@@ -176,6 +176,12 @@ void MainWindowSeggio::updatePVbuttons(){
         case seggio->statiPV::errore  :
             messaggioPV[i] = "errore";
             break;
+        case seggio->statiPV::offline  :
+            messaggioPV[i] = "postazione offline";
+            break;
+        case seggio->statiPV::non_raggiungibile :
+            messaggioPV[i] = "postazione spenta o non raggiungibile";
+            break;
 
         }
     }
