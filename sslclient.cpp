@@ -62,7 +62,7 @@ SSLClient::~SSLClient(){
 
 }
 
-int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) {
+int SSLClient::create_socket(/*const char * hostIP*//*hostname*/const char * port) {
     /* ---------------------------------------------------------- *
      * create_socket() creates the socket & TCP-connect to server *
      * ---------------------------------------------------------- */
@@ -89,7 +89,7 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
     */
 
     // commentare la riga sotto se non si vuole usare l'ip dell'host, ma l'hostname
-    dest_addr.sin_addr.s_addr = inet_addr(hostIP);
+    dest_addr.sin_addr.s_addr = inet_addr(this->PV_IPaddress);
 
     /* ---------------------------------------------------------- *
      * create the basic TCP socket                                *
@@ -110,29 +110,24 @@ int SSLClient::create_socket(const char * hostIP/*hostname*/,const char * port) 
     if (res  == -1) {
 
         BIO_printf(this->outbio, "ClientSeggio: Error: Cannot connect to host %s [%s] on port %d.\n",
-                   hostIP/*hostname*/, address_printable, portCod);
+                   this->PV_IPaddress/*hostname*/, address_printable, portCod);
 
         return res;
     }
     else {
 
         BIO_printf(this->outbio, "ClientSeggio: Successfully connect to host %s [%s] on port %d.\n",
-                   hostIP/*hostname*/, address_printable, portCod);
+                   this->PV_IPaddress/*hostname*/, address_printable, portCod);
         cout << "ClientSeggio: Descrittore socket: " << this->server_sock << endl;
 
         return res;
     }
-
-
-
-
-
 }
 
 SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
     cout << "ClientSeggio: Connecting to " << hostIP << endl;
 
-    //this->PV_IPaddress = hostIP;
+    this->PV_IPaddress = hostIP;
 
     const char  port[] = SERVER_PORT;
 
@@ -146,37 +141,33 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
     /* ---------------------------------------------------------- *
      * Make the underlying TCP socket connection                  *
      * ---------------------------------------------------------- */
-    int ret = create_socket(hostIP /*hostname*/,port);
+    int ret = create_socket(/*this->PV_IPaddress *//*hostname,*/port);
 
 
     if (ret == 0){
 
         BIO_printf(this->outbio,"ClientSeggio: Successfully create the socket for TCP connection to: %s \n",
-                   hostIP /*hostname*/);
+                   this->PV_IPaddress /*hostname*/);
     }
     else {
         if(close(this->server_sock) != 0){
             cerr << "ClientSeggio: errore chiusura socket server" << endl;
         }
 
-
-
-        cout << ret << endl;
         BIO_printf(this->outbio,"ClientSeggio: Unable to create the socket for TCP connection to: %s \n",
-                   hostIP /*hostname*/);
+                   this->PV_IPaddress /*hostname*/);
 
         SSL_free(this->ssl);
         this->ssl = nullptr;
         return this->ssl;
     }
-    //cout << ret << endl;
 
     /* ---------------------------------------------------------- *
      * Attach the SSL session to the socket descriptor            *
      * ---------------------------------------------------------- */
 
     if (SSL_set_fd(this->ssl, this->server_sock) != 1) {
-        BIO_printf(this->outbio, "ClientSeggio: Error: Connection to %s failed \n", hostIP /*hostname*/);
+        BIO_printf(this->outbio, "ClientSeggio: Error: Connection to %s failed \n", this->PV_IPaddress /*hostname*/);
         if(close(this->server_sock) != 0)
         {
             cerr << "ClientSeggio: errore chiusura socket server" << endl;
@@ -186,14 +177,14 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
         return this->ssl;
     }
     else
-        BIO_printf(this->outbio, "ClientSeggio: Ok: Connection to %s \n", hostIP /*hostname*/);
+        BIO_printf(this->outbio, "ClientSeggio: Ok: Connection to %s \n", this->PV_IPaddress /*hostname*/);
     /* ---------------------------------------------------------- *
      * Try to SSL-connect here, returns 1 for success             *
      * ---------------------------------------------------------- */
     ret = SSL_connect(this->ssl);
     if (ret != 1){ //SSL handshake
         BIO_printf(this->outbio, "ClientSeggio: Error: Could not build a SSL session to: %s\n",
-                   hostIP /*hostname*/);
+                   this->PV_IPaddress /*hostname*/);
         if(close(this->server_sock) != 0)
         {
             cerr << "ClientSeggio: errore chiusura socket server" << endl;
@@ -204,10 +195,10 @@ SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){
     }
     else{
         BIO_printf(this->outbio, "ClientSeggio: Successfully enabled SSL/TLS session to: %s\n",
-                   hostIP /*hostname*/);
+                   this->PV_IPaddress /*hostname*/);
     }
     this->ShowCerts();
-    this->verify_ServerCert(hostIP /*hostname*/);
+    this->verify_ServerCert(/*this->PV_IPaddress *//*hostname*/);
 
     return this->ssl;
 }
@@ -232,7 +223,7 @@ void SSLClient::ShowCerts() {
         printf("No certificates.\n");
 }
 
-void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/) {
+void SSLClient::verify_ServerCert(/*const char * hostIPhostname*/) {
     // Declare X509 structure
     X509 *error_cert = NULL;
     X509 *peer_cert = NULL;
@@ -250,11 +241,11 @@ void SSLClient::verify_ServerCert(const char * hostIP/*hostname*/) {
     peer_cert = SSL_get_peer_certificate(this->ssl);
     if (peer_cert == NULL){
         BIO_printf(this->outbio, "ClientSeggio: Error: Could not get a certificate from: %s.\n",
-                   hostIP/*hostname*/);
+                   this->PV_IPaddress/*hostname*/);
     }
     else{
         BIO_printf(this->outbio, "ClientSeggio: Retrieved the server's certificate from: %s.\n",
-                   hostIP/*hostname*/);
+                   this->PV_IPaddress/*hostname*/);
     }
 
     // extract various certificate information
@@ -393,7 +384,7 @@ void SSLClient::cleanup_openssl() {
     EVP_cleanup();
 }
 
-void SSLClient::stopLocalServer(const char* localhost/*hostname*/){
+void SSLClient::stopLocalServer(/*const char* localhosthostname*/){
     //questa funzione contatta il server locale, ma non deve fare alcuna operazione se non quella
     //di sbloccare il server locale dallo stato di attesa di una nuova connessione, così da portare
     //al ricontrollo della condizione del while che se falsa, porta
@@ -401,8 +392,8 @@ void SSLClient::stopLocalServer(const char* localhost/*hostname*/){
     const char * port = SERVER_PORT;
 
     //la creazione della socket sblocca il server locale dall'accept della connessione tcp
-
-    create_socket(localhost/*hostname*/, port);
+    this->PV_IPaddress="127.0.0.1"; //forziamo l'host a cui collegarsi a localhost
+    create_socket(/*hostname,*/ port);
 
     // avendo impostato a true la variabile bool stopServer, non verrà inizializzata la connessione ssl
     // si passa direttamente alla chiusura delle socket

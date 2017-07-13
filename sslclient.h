@@ -22,16 +22,16 @@ private:
     //metodi privati
     void ShowCerts();
 
-    void verify_ServerCert(const char * hostIP /*hostname*/);
+    void verify_ServerCert();
     //int myssl_getFile();
 public:
     SSLClient(Seggio * s);
     ~SSLClient();
 
     Seggio *seggioChiamante;
-    void stopLocalServer(const char * localhost);
+    void stopLocalServer();
     unsigned int getStatoPV();
-    int create_socket(const char * hostIP/*hostname*/,const char * port);
+    int create_socket(const char * port);
     SSL* connectTo(const char* hostIP/*hostname*/);
 
     //funzioni per l'inizializzazione di SSL e la configurazione del contesto SSL

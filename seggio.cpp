@@ -365,6 +365,7 @@ void Seggio::setPVstate(unsigned int idPV, unsigned int nuovoStatoPV){
     case statiPV::libera :
         this->busyPV[idPV-1]=false;
         break;
+
     }
     //richiama la funzione della view che si occupa di aggiornare la grafica delle postazioni
     //e la conseguente abilitazione o disabilitazione di bottoni(ovvero attivazione o
@@ -417,8 +418,8 @@ void Seggio::stopServerUpdatePV(){
     this->mutex_stdout.unlock();
 
     //mi connetto al server locale per sbloccare l'ascolto e portare alla terminazione della funzione eseguita dal thread che funge da serve in ascolto
-    const char * localhost = "127.0.0.1";
-    this->seggio_client->stopLocalServer(localhost);
+    //const char * localhost = "127.0.0.1";
+    this->seggio_client->stopLocalServer(/*localhost*/);
 
 
 
@@ -489,6 +490,9 @@ bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT){
     if(seggio_client->connectTo(ip_pv)!= nullptr){
         //richiede il settaggio della associazione alla postazione di voto a cui il client del seggio si è connesso
         res = seggio_client->querySetAssociation(idHT);
+    }
+    else{
+        this->setPVstate(idPV,statiPV::non_raggiungibile);
     }
 
     return res;

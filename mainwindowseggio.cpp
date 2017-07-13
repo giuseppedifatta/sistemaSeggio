@@ -159,10 +159,10 @@ void MainWindowSeggio::updatePVbuttons(){
 
         switch(statoPV[i]){
         case seggio->statiPV::attesa_attivazione :
-            messaggioPV[i] = "attivare postazione";
+            messaggioPV[i] = "da attivare";
             break;
         case seggio->statiPV::libera  :
-            messaggioPV[i] = "postazione libera";
+            messaggioPV[i] = "libera";
             break;
         case seggio->statiPV::attesa_abilitazione  :
             messaggioPV[i] = "attesa abilitazione";
@@ -177,10 +177,10 @@ void MainWindowSeggio::updatePVbuttons(){
             messaggioPV[i] = "errore";
             break;
         case seggio->statiPV::offline  :
-            messaggioPV[i] = "postazione offline";
+            messaggioPV[i] = "offline";
             break;
         case seggio->statiPV::non_raggiungibile :
-            messaggioPV[i] = "postazione spenta o non raggiungibile";
+            messaggioPV[i] = "non raggiungibile";
             break;
 
         }
