@@ -119,7 +119,8 @@ public:
         votazione_in_corso,
         votazione_completata,
         errore,
-        offline
+        offline,
+        non_raggiungibile
     };
 
 
