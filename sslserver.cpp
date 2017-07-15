@@ -49,9 +49,9 @@ SSLServer::SSLServer(Seggio *s){
 
     configure_context(certFile, keyFile, chainFile);
 
-
+    seggioChiamante->mutex_stdout.lock();
     cout << "ServerSeggio: Context configured" << endl;
-
+    seggioChiamante->mutex_stdout.unlock();
     this->openListener(atoi(PORT));
     this->outbio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
@@ -198,7 +198,7 @@ void SSLServer::service(SSL * ssl,servizi servizio) {
         unsigned int idPV = 0;
         bytes = SSL_read(ssl, buf, sizeof(buf));
         if (bytes > 0){
-            cout << "Received buffer: " << buf << endl;
+            //cout << "Received buffer: " << buf << endl;
             idPV = atoi(buf);
             seggioChiamante->mutex_stdout.lock();
             cout << "ServerSeggioThread: idPV: " << idPV << endl;
@@ -229,7 +229,7 @@ void SSLServer::service(SSL * ssl,servizi servizio) {
         unsigned int nuovoStato = 0;
         bytes = SSL_read(ssl, buf, sizeof(buf));
         if (bytes>0){
-            cout << "Received buffer: " << buf << endl;
+            //cout << "Received buffer: " << buf << endl;
             nuovoStato = atoi(buf);
             seggioChiamante->mutex_stdout.lock();
             cout << "ServerSeggioThread: nuovoStato: " << nuovoStato << endl;
@@ -301,13 +301,13 @@ void SSLServer::createServerContext() {
         exit(EXIT_FAILURE);
     }
 
-    //https://www.openssl.org/docs/man1.1.0/ssl/SSL_CTX_set_options.html
+
     const long flags = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
-    long old_opts = SSL_CTX_set_options(this->ctx, flags);
-    seggioChiamante->mutex_stdout.lock();
-    cout << "ServerSeggio: bitmask options: " << old_opts << endl;
-    seggioChiamante->mutex_stdout.unlock();
-    //return ctx;
+    /*long old_opts = */SSL_CTX_set_options(this->ctx, flags);
+    //    seggioChiamante->mutex_stdout.lock();
+    //    cout << "ServerSeggio: bitmask options: " << old_opts << endl;
+    //    seggioChiamante->mutex_stdout.unlock();
+
 
 }
 
@@ -603,15 +603,15 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
     /* ---------------------------------------------------------- *
      * display the cert subject here                              *
      * -----------------------------------------------------------*/
-//    seggioChiamante->mutex_stdout.lock();
-//    BIO_printf(this->outbio, "ServerSeggioThread: Displaying the certificate subject data:\n");
-//    seggioChiamante->mutex_stdout.unlock();
+    //    seggioChiamante->mutex_stdout.lock();
+    //    BIO_printf(this->outbio, "ServerSeggioThread: Displaying the certificate subject data:\n");
+    //    seggioChiamante->mutex_stdout.unlock();
 
     //X509_NAME_print_ex(this->outbio, certname, 0, 0);
 
-//    seggioChiamante->mutex_stdout.lock();
-//    BIO_printf(this->outbio, "\n");
-//    seggioChiamante->mutex_stdout.unlock();
+    //    seggioChiamante->mutex_stdout.lock();
+    //    BIO_printf(this->outbio, "\n");
+    //    seggioChiamante->mutex_stdout.unlock();
     /* ---------------------------------------------------------- *
      * Initialize the global certificate validation store object. *
      * ---------------------------------------------------------- */

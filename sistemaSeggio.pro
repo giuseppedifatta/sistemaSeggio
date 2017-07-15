@@ -5,7 +5,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 
 QMAKE_CXXFLAGS += -g \
--O1
+-O1 \
+-Wall \
+-Wextra
 
 TARGET = sistemaSeggio
 TEMPLATE = app

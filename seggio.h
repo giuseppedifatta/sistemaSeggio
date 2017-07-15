@@ -39,7 +39,7 @@ private:
     //riferimento al gestore dell'interfaccia dell'applicazione
     MainWindowSeggio *mainWindow;
 
-    //questi due arrey tengono traccia delle postazioni di voto e degli hardaware token attualmente impegnati in associazioni PV_HT
+    //questi due arrey tengono traccia delle postazioni di voto e degli hardware token attualmente impegnati in associazioni PV_HT
     std::array <bool,NUM_HT_ATTIVI> busyHT;
     std::array <bool,NUM_PV> busyPV;
 
@@ -75,7 +75,7 @@ private:
 public:
     Seggio(MainWindowSeggio * m);
     ~Seggio();
-
+    void aggiornaPVs();
 
     //void setNumeroSeggio(int number);
     Associazione *getNuovaAssociazione();
@@ -112,7 +112,7 @@ public:
     unsigned int getNumberAssCorrenti();
 
     //dati membro pubblici
-    enum statiPV{
+    enum statiPV : unsigned int{
         attesa_attivazione,
         libera,
         attesa_abilitazione,
