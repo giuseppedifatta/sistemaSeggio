@@ -204,25 +204,7 @@ void SSLServer::service(SSL * ssl,servizi servizio) {
             cout << "ServerSeggioThread: idPV: " << idPV << endl;
             seggioChiamante->mutex_stdout.unlock();
         }
-        //        else if(bytes == 0){
-        //            seggioChiamante->mutex_stdout.lock();
-        //            cout << "ServerSeggioThread: error connection" << endl;
-        //            seggioChiamante->mutex_stdout.unlock();
-        //            int ret = SSL_get_error(ssl,bytes);
-        //            seggioChiamante->mutex_stdout.lock();
-        //            cout << "ServerSeggioThread:  Error code: " << ret << endl;
-        //            seggioChiamante->mutex_stdout.unlock();
-        //        }
-        //        else {
-        //            seggioChiamante->mutex_stdout.lock();
-        //            cout << "ServerSeggioThread: error read" << endl;
-        //            seggioChiamante->mutex_stdout.unlock();
-        //            int ret = SSL_get_error(ssl,bytes);
 
-        //            seggioChiamante->mutex_stdout.lock();
-        //            cout << "ServerSeggioThread: Error code: " << ret << endl;
-        //            seggioChiamante->mutex_stdout.unlock();
-        //        }
 
         memset(buf, '\0', sizeof(buf));
 
@@ -237,7 +219,7 @@ void SSLServer::service(SSL * ssl,servizi servizio) {
         }
 
 
-        //chiamo la funzione per aggiornare i bottoni delle postazioni nella vista
+        //chiamo la funzione per aggiornare lo stato della postazione
         seggioChiamante->setPVstate(idPV,nuovoStato);
         break;
     }

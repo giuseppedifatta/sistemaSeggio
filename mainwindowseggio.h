@@ -33,7 +33,7 @@ public:
     ~MainWindowSeggio();
     void sessioneDiVotoTerminata();
 
-    void updatePVbuttons(unsigned int idPV);
+    void updatePVbuttons(unsigned int idPVtoUpdate);
     void disableCreaAssociazioneButton();
     //void initTableHT();
     void initTableRV();

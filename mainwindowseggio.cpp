@@ -102,10 +102,6 @@ void MainWindowSeggio::on_accediGestioneSeggio_button_clicked(){
     if(pass=="qwerty"){
         this->logged = true;
 
-
-
-
-
         //inizializzazione interfaccia gestioneSeggio
         initGestioneSeggio();
 
@@ -149,7 +145,7 @@ void MainWindowSeggio::on_accediGestioneSeggio_button_clicked(){
 
 }
 
-void MainWindowSeggio::updatePVbuttons(unsigned int idPV){
+void MainWindowSeggio::updatePVbuttons(unsigned int idPVtoUpdate){
     //Questa funzione si occupa di aggiornare la grafica delle postazioni
     //e la conseguente abilitazione o disabilitazione di bottoni, ovvero attivazione o
     //disattivazione di funzionalità relazionate allo stato delle postazioni di voto
@@ -163,11 +159,11 @@ void MainWindowSeggio::updatePVbuttons(unsigned int idPV){
     //for (int i = 0;i < 3; i++){
 
 
-    cout << "View: Aggiorno lo stato della postazione " << idPV << endl;
+    cout << "View: Aggiorno lo stato della postazione " << idPVtoUpdate << endl;
 
     //ottiene lo stato della postazione corrente
 
-    statoPV = seggio->stateInfoPV(idPV);
+    statoPV = seggio->stateInfoPV(idPVtoUpdate);
 
 
     switch(statoPV){
@@ -216,7 +212,7 @@ void MainWindowSeggio::updatePVbuttons(unsigned int idPV){
     //            ui->pv1_button->setEnabled(true);
     //        }
 
-    switch(idPV){
+    switch(idPVtoUpdate){
     case 1:{
         //aggiornamento bottone PV1
         ui->pv1_button->setText(messaggioPV);
