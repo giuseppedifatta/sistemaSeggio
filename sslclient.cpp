@@ -57,14 +57,15 @@ SSLClient::~SSLClient(){
     BIO_free_all(this->outbio);
     SSL_CTX_free(this->ctx);
 
-    //pericolosa, cancella gli algoritmi e non funziona più nulla
-    this->cleanup_openssl();
+    //usare con cura, cancella gli algoritmi e non funziona più nulla
+    // this->cleanup_openssl();
 
 }
 
 int SSLClient::create_socket(/*const char * hostIP*//*hostname*/const char * port) {
     /* ---------------------------------------------------------- *
      * create_socket() creates the socket & TCP-connect to server *
+     * non specifica per SSL                                      *
      * ---------------------------------------------------------- */
 
     const char *address_printable = NULL;
@@ -84,7 +85,7 @@ int SSLClient::create_socket(/*const char * hostIP*//*hostname*/const char * por
 
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(portCod);
-    /* decommentare la sezione se si passa alla funzione l'hostname invece dell'ip dell'host
+    /* decommentare la sezione se si passa all'hostname invece dell'ip dell'host
     dest_addr.sin_addr.s_addr = *(long*) (host->h_addr);
     */
 
@@ -115,7 +116,7 @@ int SSLClient::create_socket(/*const char * hostIP*//*hostname*/const char * por
                    this->PV_IPaddress/*hostname*/, address_printable, portCod);
         seggioChiamante->mutex_stdout.unlock();
 
-        return res;
+
     }
     else {
         seggioChiamante->mutex_stdout.lock();
@@ -123,8 +124,10 @@ int SSLClient::create_socket(/*const char * hostIP*//*hostname*/const char * por
                    this->PV_IPaddress/*hostname*/, address_printable, portCod);
         cout << "ClientSeggio: Descrittore socket: " << this->server_sock << endl;
         seggioChiamante->mutex_stdout.unlock();
-        return res;
+
     }
+
+    return res;
 }
 
 SSL * SSLClient::connectTo(const char* hostIP/*hostname*/){

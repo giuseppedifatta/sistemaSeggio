@@ -19,25 +19,108 @@
 #include "sslclient.h"
 #include "mainwindowseggio.h"
 
+#include <QtCore>
+#include <QThread>
+
 #define NUM_PV 3
 #define NUM_HT_ATTIVI 4
 class SSLServer;
-class MainWindowSeggio;
 class SSLClient;
 
-class Seggio {
+class Seggio : public QThread{
+    Q_OBJECT
+signals:
+    void stateChanged(unsigned int idPV,unsigned int stato);
+    void anyPVFree(bool);
+    void anyAssociationRemovable(bool);
+    void associationReady(unsigned int idHT, unsigned int idPV);
+    void validPass();
+    void wrongPass();
+    void forbidLogout();
+    void grantLogout();
+
+public slots:
+    void createAssociazioneHT_PV();
+    void addAssociazioneHT_PV();
+    void eliminaNuovaAssociazione();
+    void removeAssociazioneHT_PV(unsigned int idPV);
+    void aggiornaPVs();
+    void validatePassKey(QString pass);
+    void tryLogout();
+    //void liberaHT_PV(unsigned int idPV);
+    //bool feedbackFreeBusy(unsigned int idPV);
+    //servizio da richiedere all'urna virtuale
+    //void readVoteResults(unsigned int idProceduraVoto);
+
+public:
+    Seggio(QObject *parent = 0);
+    ~Seggio();
+
+
+
+
+
+    //void setNumeroSeggio(int number);
+    Associazione *getNuovaAssociazione();
+
+
+    //metodi pubblici
+    bool isBusyHT(unsigned int idHT);
+    void disattivaHT(unsigned int tokenAttivo);
+
+    void setPVstate(unsigned int idPV, unsigned int nuovoStatoPV);
+
+    std::vector< Associazione > getListAssociazioni();
+    std::array<unsigned int, NUM_HT_ATTIVI>& getArrayIdHTAttivi();
+    unsigned int getIdHTRiserva();
+    const char * getIP_PV(unsigned int idPV);
+
+    bool anyAssociazioneEliminabile();
+    unsigned int stateInfoPV(unsigned int idPV);
+    bool anyPostazioneLibera();
+
+
+    //funzionalità dei componenti del seggio
+
+
+
+
+
+
+    unsigned int getNumberAssCorrenti();
+
+    //dati membro pubblici
+    enum statiPV : unsigned int{
+        attesa_attivazione,
+        libera,
+        attesa_abilitazione,
+        votazione_in_corso,
+        votazione_completata,
+        errore,
+        offline,
+        non_raggiungibile
+    };
+
+
+    std::mutex mutex_stati;
+    std::mutex mutex_stdout;
+
+    //questa funzione verrà chiamata dal thread che si mette in ascolto di aggiornamenti delle postazioni di voto
+
+    void stopServerUpdatePV();
+    //void setStopThreads(bool b);
 
 private:
-
+    void run();
 
     SSLServer * seggio_server;
     std::thread thread_server;
     bool stopThreads;
 
-    SSLClient * seggio_client;
+    //SSLClient * seggio_client;
 
     //riferimento al gestore dell'interfaccia dell'applicazione
-    MainWindowSeggio *mainWindow;
+    //MainWindowSeggio *mainWindow;
 
     //questi due arrey tengono traccia delle postazioni di voto e degli hardware token attualmente impegnati in associazioni PV_HT
     std::array <bool,NUM_HT_ATTIVI> busyHT;
@@ -72,65 +155,7 @@ private:
     void runServerUpdatePV();
 
     //allo stato attuale un seggio prevede una composizione di 3 postazioni di voto e 4 hardware token attivi
-public:
-    Seggio(MainWindowSeggio * m);
-    ~Seggio();
-    void aggiornaPVs();
 
-    //void setNumeroSeggio(int number);
-    Associazione *getNuovaAssociazione();
-
-
-    //metodi pubblici
-    bool isBusyHT(unsigned int idHT);
-    void disattivaHT(unsigned int tokenAttivo);
-
-    void setPVstate(unsigned int idPV, unsigned int nuovoStatoPV);
-
-    std::vector< Associazione > getListAssociazioni();
-    std::array<unsigned int, NUM_HT_ATTIVI>& getArrayIdHTAttivi();
-    unsigned int getIdHTRiserva();
-    const char * getIP_PV(unsigned int idPV);
-
-    bool anyAssociazioneEliminabile();
-    unsigned int stateInfoPV(unsigned int idPV);
-    bool anyPostazioneLibera();
-
-
-    //funzionalità dei componenti del seggio
-    bool createAssociazioneHT_PV();
-    void addAssociazioneHT_PV();
-    void eliminaNuovaAssociazione();
-    void removeAssociazioneHT_PV(unsigned int idPV);
-    //void liberaHT_PV(unsigned int idPV);
-    //bool feedbackFreeBusy(unsigned int idPV);
-
-    //servizio da richiedere all'urna virtuale
-    //void readVoteResults(unsigned int idProceduraVoto);
-
-
-    unsigned int getNumberAssCorrenti();
-
-    //dati membro pubblici
-    enum statiPV : unsigned int{
-        attesa_attivazione,
-        libera,
-        attesa_abilitazione,
-        votazione_in_corso,
-        votazione_completata,
-        errore,
-        offline,
-        non_raggiungibile
-    };
-
-
-    std::mutex mutex_stati;
-    std::mutex mutex_stdout;
-
-    //questa funzione verrà chiamata dal thread che si mette in ascolto di aggiornamenti delle postazioni di voto
-
-    void stopServerUpdatePV();
-    //void setStopThreads(bool b);
 
 
 };

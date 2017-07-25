@@ -1,7 +1,7 @@
 #include "mainwindowseggio.h"
 #include "ui_mainwindowseggio.h"
-
 #include "associazione.h"
+
 #include <iostream>
 #include <algorithm>
 using namespace std;
@@ -26,7 +26,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 
     setWindowFlags(Qt::FramelessWindowHint);
 
-    //setWindowTitle("Voto digitale UNIPA");
+    setWindowTitle("Voto digitale UNIPA");
 
 
 
@@ -34,12 +34,38 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     //    ui->pinInsertCS_lineEdit->setEchoMode(QLineEdit::Password);
     //    ui->pinInsertRP_lineEdit->setEchoMode(QLineEdit::Password);
 
+    //inizializzazione del model
+    seggio = new Seggio(this);
 
-    seggio = NULL;
+    //inserire qui le connect tra model e view
+    QObject::connect(seggio,SIGNAL(anyPVFree(bool)),this,SLOT(updateCreaAssociazioneButton(bool)));
+    QObject::connect(seggio,SIGNAL(anyAssociationRemovable(bool)),this,SLOT(updateRimuoviAssociazioneButton(bool)));
+    QObject::connect(seggio,SIGNAL(stateChanged(uint,uint)),this,SLOT(updatePVButtons(uint,uint)));//parametri: idPV, statoPV
+    QObject::connect(this,SIGNAL(needNewAssociation()),seggio,SLOT(createAssociazioneHT_PV()));
+    QObject::connect(this,SIGNAL(needStatePVs()),seggio,SLOT(aggiornaPVs()));
+    QObject::connect(seggio,SIGNAL(associationReady(uint,uint)),this,SLOT(showNewAssociation(uint,uint)));//parametri:idHT, idPV
+    QObject::connect(this,SIGNAL(confirmAssociation()),seggio,SLOT(addAssociazioneHT_PV()));
+    QObject::connect(this,SIGNAL(abortAssociation()),seggio,SLOT(eliminaNuovaAssociazione()));
+    QObject::connect(this,SIGNAL(checkPassKey(QString)),seggio,SLOT(validatePassKey(QString)));
+    QObject::connect(seggio,SIGNAL(validPass()),this,SLOT(initSeggio()));
+    QObject::connect(seggio,SIGNAL(wrongPass()),this,SLOT(showErrorPass()));
+    QObject::connect(this,SIGNAL(logoutRequest()),seggio,SLOT(tryLogout()));
+    QObject::connect(seggio,SIGNAL(forbidLogout()),this,SLOT(showErrorLogout()));
+    QObject::connect(seggio,SIGNAL(grantLogout()),this,SLOT(doLogout()));
+
+
 }
 MainWindowSeggio::~MainWindowSeggio()
 {
+    cout << "View: distruttore della GUI" << endl;
+    if(seggio->isRunning()){
+        //se non è stato fatto l'accesso, il thread seggio non sarà stato avviato e non bisogna attendere che termini la sua esecuzione
 
+        cout << "View: attendo che il thread del seggio termini la sua esecuzione" << endl;
+        seggio->wait();
+    }
+
+    delete seggio;
     delete ui;
 }
 void MainWindowSeggio::sessioneDiVotoTerminata(){
@@ -68,8 +94,6 @@ void MainWindowSeggio::initGestioneSeggio(){
     ui->liberaPValert3_label->hide();
 }
 
-
-
 void MainWindowSeggio::on_loginCS_button_clicked()
 {
     ui->password_lineEdit->setFocus();
@@ -96,63 +120,48 @@ void MainWindowSeggio::on_accediGestioneSeggio_button_clicked(){
     QString pass;
     pass = ui->password_lineEdit->text();
 
-
-    //TODO contattare il dbms degli accessi per controllare se la password è esatta
-
-    if(pass=="qwerty"){
-        this->logged = true;
-
-        //inizializzazione interfaccia gestioneSeggio
-        initGestioneSeggio();
-
-        this->seggio = new Seggio(this);
-
-        seggio->mutex_stdout.lock();
-        cout << "View: loggato" << endl;
-        seggio->mutex_stdout.unlock();
-
-        ui->stackedWidget->setCurrentIndex(gestioneSeggio);
-
-        seggio->aggiornaPVs();
-
-        ui->password_lineEdit->setText("");
-
-
-
-        //        if(seggio->anyPostazioneLibera()){
-        //            ui->creaAssociazioneHTPV_button->setEnabled(true);
-        //        }
-        //        else{
-        //            ui->creaAssociazioneHTPV_button->setEnabled(false);
-
-        //        }
-
-        //        if(seggio->anyAssociazioneEliminabile()){
-        //            ui->rimuoviAssociazione_button->setEnabled(true);
-        //        }
-        //        else{
-        //            ui->rimuoviAssociazione_button->setEnabled(false);
-        //        }
-
-
-    }
-    else{
-        ui->wrongPassword_label->show();
-    }
-
-
+    emit checkPassKey(pass);
 
 
 }
 
-void MainWindowSeggio::updatePVbuttons(unsigned int idPVtoUpdate){
+void MainWindowSeggio::initSeggio(){
+
+    this->logged = true;
+
+    //inizializzazione interfaccia gestioneSeggio
+    initGestioneSeggio();
+
+
+    ui->wrongPassword_label->hide();
+    ui->password_lineEdit->setText("");
+
+    seggio->mutex_stdout.lock();
+    cout << "View: loggato" << endl;
+    seggio->mutex_stdout.unlock();
+
+    ui->stackedWidget->setCurrentIndex(gestioneSeggio);
+
+    //avvio del thread del model
+    seggio->start();
+
+    //il segnale segnala la necessità di aggiornamento dello stato delle postazioni di voto
+    emit needStatePVs();
+}
+
+void MainWindowSeggio::showErrorPass(){
+    ui->wrongPassword_label->show();
+}
+
+
+void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int statoPV){
     //Questa funzione si occupa di aggiornare la grafica delle postazioni
     //e la conseguente abilitazione o disabilitazione di bottoni, ovvero attivazione o
     //disattivazione di funzionalità relazionate allo stato delle postazioni di voto
 
     //    std::array <int,3> statoPV;
     //    std::array <QString, 3> messaggioPV;
-    unsigned int statoPV;
+    //unsigned int statoPV;
     QString messaggioPV;
 
     //aggiornamento del testo
@@ -163,7 +172,7 @@ void MainWindowSeggio::updatePVbuttons(unsigned int idPVtoUpdate){
 
     //ottiene lo stato della postazione corrente
 
-    statoPV = seggio->stateInfoPV(idPVtoUpdate);
+    //statoPV = seggio->stateInfoPV(idPVtoUpdate);
 
 
     switch(statoPV){
@@ -198,19 +207,6 @@ void MainWindowSeggio::updatePVbuttons(unsigned int idPVtoUpdate){
     cout << "View: Aggiorno bottoni" << endl;
     seggio->mutex_stdout.unlock();
 
-    //
-    //        QString nameButton = "QPushButton#pv1_button";
-    //        QString qstr = QString::fromStdString(seggio->patternSS[statoPV[0]]);
-    //        QString newStyle = QString("%1 { %2 }").arg(nameButton).arg(qstr);
-
-    //        seggio->mutex_stdout.lock();
-    //        cout << "View: PV1, nuovo stile: " << newStyle.toUtf8().constData() << endl;
-    //        seggio->mutex_stdout.unlock();
-    //        //setStyleSheet(newStyle);
-    //        ui->pv1_button->setStyleSheet(newStyle);
-    //        if(statoPV[0]==seggio->statiPV::votazione_completata){
-    //            ui->pv1_button->setEnabled(true);
-    //        }
 
     switch(idPVtoUpdate){
     case 1:{
@@ -302,66 +298,24 @@ void MainWindowSeggio::updatePVbuttons(unsigned int idPVtoUpdate){
     }
     }
 
-    //    ui->pv2_button->setText(messaggioPV[1]);
-    //    QString nameButton = "QPushButton#pv2_button";
-    //    QString qstr = QString::fromStdString(seggio->patternSS[statoPV[1]]);
-    //    QString newStyle = QString("%1 { %2 }").arg(nameButton).arg(qstr);
-    //    seggio->mutex_stdout.lock();
-    //    cout << "View: PV2, nuovo stile: " << newStyle.toUtf8().constData() << endl;
-    //    seggio->mutex_stdout.unlock();
-    //    ui->pv2_button->setStyleSheet(newStyle);
-    //    if(statoPV[1]==seggio->statiPV::votazione_completata){
-    //        ui->pv2_button->setEnabled(true);
-    //    }
-    //    else if(statoPV[1]==seggio->statiPV::libera){
-    //        ui->creaAssociazioneHTPV_button->setEnabled(true);
-    //    }
-
-    //    ui->pv3_button->setText(messaggioPV[2]);
-    //    nameButton = "QPushButton#pv3_button";
-    //    qstr = QString::fromStdString(seggio->patternSS[statoPV[2]]);
-    //    newStyle = QString("%1 { %2 }").arg(nameButton).arg(qstr);
-    //    seggio->mutex_stdout.lock();
-    //    cout << "View: PV3, nuovo stile: " << newStyle.toUtf8().constData() << endl;
-    //    seggio->mutex_stdout.unlock();
-    //    ui->pv3_button->setStyleSheet(newStyle);
-    //    if(statoPV[2]==seggio->statiPV::votazione_completata){
-    //        ui->pv3_button->setEnabled(true);
-    //    }
-    //    else if(statoPV[2]==seggio->statiPV::libera){
-    //        ui->creaAssociazioneHTPV_button->setEnabled(true);
-    //    }
-
-
-    //aggiornamento bottoni crea_associazione e rimuovi associazione
-    if(seggio->anyPostazioneLibera()){
-        ui->creaAssociazioneHTPV_button->setEnabled(true);
-    }
-    else{
-        ui->creaAssociazioneHTPV_button->setEnabled(false);
-    }
-
-
-    if(seggio->anyAssociazioneEliminabile()){
-        ui->rimuoviAssociazione_button->setEnabled(true);
-    }
-    else {
-        ui->rimuoviAssociazione_button->setEnabled(false);
-    }
-
-
     seggio->mutex_stdout.lock();
     cout << "View: bottoni aggiornati "  << endl;
     seggio->mutex_stdout.unlock();
-
 }
 
-void MainWindowSeggio::disableCreaAssociazioneButton(){
-    ui->creaAssociazioneHTPV_button->setEnabled(false);
+
+
+void MainWindowSeggio::updateRimuoviAssociazioneButton(bool b){
+    ui->rimuoviAssociazione_button->setEnabled(b);
+}
+
+void MainWindowSeggio::updateCreaAssociazioneButton(bool b){
+    ui->creaAssociazioneHTPV_button->setEnabled(b);
 }
 
 void MainWindowSeggio::on_gestisci_HT_button_clicked()
 {
+    //sistemare rispetto al modello Model-View
     ui->token_attivi_comboBox->clear();
     array <unsigned int, 4> idHtAttivi = seggio->getArrayIdHTAttivi();
     seggio->mutex_stdout.lock();
@@ -380,119 +334,32 @@ void MainWindowSeggio::on_gestisci_HT_button_clicked()
 }
 
 void MainWindowSeggio::on_logout_button_clicked(){
-    bool allowLogout = true;
-    unsigned int statoPV;
-    for (unsigned int idPV = 1; idPV <= NUM_PV; idPV++){
-        statoPV = seggio->stateInfoPV(idPV);
-
-        switch(statoPV){
-        case seggio->statiPV::attesa_abilitazione:
-        case seggio->statiPV::votazione_in_corso:
-        case seggio->statiPV::votazione_completata:
-            allowLogout = false;
-            break;
-
-        default:
-
-            //in tutti gli altri casi
-            //il valore di allowLogout resta a true, e si può procedere con il logout
-            break;
-        }
-        if(!allowLogout){
-            //si può già interrompere il for, non è necessario controllare lo stato delle altre postazioni di voto
-            break;
-        }
-
-    }
-
-    if(allowLogout){
-        this->logged=false;
-        ui->stackedWidget->setCurrentIndex(loginSeggio);
-        //setto il seggio affinchè vengano fermati i thread alla successiva esecuzione del costrutto while in essi contenuto
-        //seggio->setStopThreads(true);
-
-        //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
-        seggio->stopServerUpdatePV();
-
-        delete seggio;
-    }
-    else{
-        // implementare messaggio popup a schermo che avvisa di aspettare la fine delle operazioni di voto in corso
-        cout << "View: logout non consentito, delle operazioni di voto sono in corso" << endl;
-    }
-
+    emit logoutRequest();
 }
 
-//void MainWindowSeggio::on_aggiungiHT_button_clicked()
-//{
-//    QString codHT = ui->codHT_lineEdit->text();
-//    ui->codHT_lineEdit->setText("");
-//    ui->token_tableWidget->insertRow(ui->token_tableWidget->rowCount());
-//    int rigaAggiunta = ui->token_tableWidget->rowCount()-1;
-//    ui->token_tableWidget->setItem(rigaAggiunta,0,new QTableWidgetItem(codHT));
-//    QString elimina = "Elimina";
-//    ui->token_tableWidget->setItem(rigaAggiunta,1,new QTableWidgetItem(elimina));
-//}
-
-//void MainWindowSeggio::on_token_tableWidget_clicked(const QModelIndex &index)
-//{
-//    int colonnaCliccata=index.column();
-//    if(colonnaCliccata==1)
-//            ui->token_tableWidget->removeRow(index.row());
-//}
-
-
-//void MainWindowSeggio::initTableHT(){
-//ui->token_tableWidget->verticalHeader()->setVisible(false);
-//ui->token_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-//ui->token_tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
-//QStringList tableHeaders;
-//tableHeaders << "S/N hardware token" << "Azione";
-//ui->token_tableWidget->setColumnCount(2);
-//ui->token_tableWidget->setHorizontalHeaderLabels(tableHeaders);
-
-//ui->token_tableWidget->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);
-//ui->token_tableWidget->horizontalHeader()->setSectionResizeMode(1,QHeaderView::Stretch);
-//QFont font = ui->token_tableWidget->horizontalHeader()->font();
-//font.setPointSize(18);
-//ui->token_tableWidget->horizontalHeader()->setFont( font );
-//ui->token_tableWidget->horizontalHeader()->setStyleSheet(".QHeaderView{}");
-
-//QFont fontItem("Sans Serif",18);
-//ui->token_tableWidget->setFont(fontItem);
-//}
-
-void MainWindowSeggio::initTableRV(){
-    ui->risultatiVoto_tableWidget->verticalHeader()->setVisible(false);
-    ui->risultatiVoto_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->risultatiVoto_tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
-    QStringList tableHeaders;
-    tableHeaders << "Candidati" << "Numero voti ricevuti";
-    ui->risultatiVoto_tableWidget->setColumnCount(2);
-    ui->risultatiVoto_tableWidget->setHorizontalHeaderLabels(tableHeaders);
-
-    ui->risultatiVoto_tableWidget->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);
-    ui->risultatiVoto_tableWidget->horizontalHeader()->setSectionResizeMode(1,QHeaderView::Stretch);
-    QFont font = ui->risultatiVoto_tableWidget->horizontalHeader()->font();
-    font.setPointSize(18);
-    ui->risultatiVoto_tableWidget->horizontalHeader()->setFont( font );
-    ui->risultatiVoto_tableWidget->horizontalHeader()->setStyleSheet(".QHeaderView{}");
-
-    QFont fontItem("Sans Serif",18);
-    ui->risultatiVoto_tableWidget->setFont(fontItem);
-}
 
 void MainWindowSeggio::on_logoutCS_button_clicked()
 {
+    emit logoutRequest();
+}
+
+void MainWindowSeggio::on_logout2_button_clicked()
+{
+    emit logoutRequest();
+}
+
+void MainWindowSeggio::doLogout(){
     this->logged=false;
     ui->stackedWidget->setCurrentIndex(loginSeggio);
     //setto il seggio affinchè vengano fermati i thread alla successiva esecuzione del costrutto while in essi contenuto
     //seggio->setStopThreads(true);
 
-    //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
-    seggio->stopServerUpdatePV();
 
-    delete seggio;
+}
+
+void MainWindowSeggio::showErrorLogout(){
+    // implementare messaggio popup a schermo che avvisa di aspettare la fine delle operazioni di voto in corso
+    cout << "View: logout non consentito, delle operazioni di voto sono in corso" << endl;
 }
 
 void MainWindowSeggio::on_annullaAssociazione_button_clicked()
@@ -504,17 +371,25 @@ void MainWindowSeggio::on_annullaAssociazione_button_clicked()
     ui->confermaAssociazione_button->hide();
     ui->creaAssociazioneHTPV_button->setEnabled(true);
 
-    seggio->eliminaNuovaAssociazione();
+    emit abortAssociation();
+    //seggio->eliminaNuovaAssociazione();
 }
 
 void MainWindowSeggio::on_creaAssociazioneHTPV_button_clicked()
 {
     ui->creaAssociazioneHTPV_button->setEnabled(false);
     ui->gestisci_HT_button->setEnabled(false);
-    seggio->createAssociazioneHT_PV();
 
-    unsigned int ht = seggio->getNuovaAssociazione()->getIdHT();
-    unsigned int idPV  = seggio->getNuovaAssociazione()->getIdPV();
+    //emettere un segnale
+    emit needNewAssociation();
+
+}
+
+void MainWindowSeggio::showNewAssociation(unsigned int ht, unsigned int idPV){
+    //    unsigned int ht = seggio->getNuovaAssociazione()->getIdHT();
+    //    unsigned int idPV  = seggio->getNuovaAssociazione()->getIdPV();
+
+
     QString s = "HT %1 - PV %2";
     ui->confermaAssociazione_button->setText(s.arg(ht).arg(idPV));
 
@@ -527,37 +402,18 @@ void MainWindowSeggio::on_creaAssociazioneHTPV_button_clicked()
 
 void MainWindowSeggio::on_confermaAssociazione_button_clicked()
 {
-    ui->gestisci_HT_button->setEnabled(true);
+
 
     //completare associazione HT-PV
-    seggio->addAssociazioneHT_PV();
+    emit confirmAssociation();
+    //seggio->addAssociazioneHT_PV();
 
+    ui->gestisci_HT_button->setEnabled(true);
 
     ui->annullaAssociazione_button->hide();
     ui->associazioneDisponibile_label->hide();
     ui->confermaAssociazione_button->hide();
 
-
-    //controllo
-
-    if(seggio->anyPostazioneLibera()){
-        cout << "View: almeno una postazione libera, abilito il bottone di creazione associazione" << endl;
-        ui->creaAssociazioneHTPV_button->setEnabled(true);
-    }
-    else {
-        cout << "View: non ci sono altre postazioni libere" << endl;
-    }
-
-    //abilitazione bottone per la rimozione delle associazioni
-    if(seggio->anyAssociazioneEliminabile()){
-        cout << "View: almeno un'associazione eliminabile, attivo il bottone rimuovi associazione" <<endl;
-        ui->rimuoviAssociazione_button->setEnabled(true);
-    }
-    else{
-        cout << "View: non ci sono associazioni rimovibili" << endl;
-        ui->rimuoviAssociazione_button->setEnabled(false);
-    }
-    //on_annullaRimozione_button_clicked();
 }
 
 void MainWindowSeggio::on_rimuoviAssociazione_button_clicked()
@@ -663,18 +519,7 @@ void MainWindowSeggio::on_schedaSuccessiva_button_clicked()
 
 }
 
-void MainWindowSeggio::on_logout2_button_clicked()
-{
-    this->logged=false;
-    ui->stackedWidget->setCurrentIndex(loginSeggio);
-    //setto il seggio affinchè vengano fermati i thread alla successiva esecuzione del costrutto while in essi contenuto
-    //seggio->setStopThreads(true);
 
-    //chiedo l'arresto del server che è in ascolto per aggiornare lo stato delle postazioni di voto
-    seggio->stopServerUpdatePV();
-
-    delete seggio;
-}
 
 void MainWindowSeggio::on_sostituisci_button_clicked()
 {
@@ -697,4 +542,23 @@ void MainWindowSeggio::on_goBackToGestioneSeggio_button_clicked()
     ui->stackedWidget->setCurrentIndex(gestioneSeggio);
 }
 
+void MainWindowSeggio::initTableRV(){
+    ui->risultatiVoto_tableWidget->verticalHeader()->setVisible(false);
+    ui->risultatiVoto_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->risultatiVoto_tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    QStringList tableHeaders;
+    tableHeaders << "Candidati" << "Numero voti ricevuti";
+    ui->risultatiVoto_tableWidget->setColumnCount(2);
+    ui->risultatiVoto_tableWidget->setHorizontalHeaderLabels(tableHeaders);
+
+    ui->risultatiVoto_tableWidget->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);
+    ui->risultatiVoto_tableWidget->horizontalHeader()->setSectionResizeMode(1,QHeaderView::Stretch);
+    QFont font = ui->risultatiVoto_tableWidget->horizontalHeader()->font();
+    font.setPointSize(18);
+    ui->risultatiVoto_tableWidget->horizontalHeader()->setFont( font );
+    ui->risultatiVoto_tableWidget->horizontalHeader()->setStyleSheet(".QHeaderView{}");
+
+    QFont fontItem("Sans Serif",18);
+    ui->risultatiVoto_tableWidget->setFont(fontItem);
+}
 

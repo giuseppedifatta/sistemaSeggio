@@ -16,6 +16,30 @@ class MainWindowSeggio;
 class MainWindowSeggio : public QMainWindow
 {
     Q_OBJECT
+    
+signals:
+    void needNewAssociation();
+    void needStatePVs();
+    void confirmAssociation();
+    void abortAssociation();
+    void checkPassKey(QString pass);
+    void logoutRequest();
+public slots:
+    //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
+    void updateCreaAssociazioneButton(bool b);
+    void updateRimuoviAssociazioneButton(bool b);
+    void updatePVButtons(unsigned int idPVtoUpdate, unsigned int statoPV);
+    
+    void showNewAssociation(unsigned int ht, unsigned int idPV);
+
+    void initSeggio();
+    void showErrorPass();
+
+    void doLogout();
+    void showErrorLogout();
+
+    void showRemovableAssociations(vector < Associazione > associazioniRimovibili);
+
 private:
     Ui::MainWindowSeggio *ui;
     Seggio *seggio;
@@ -33,8 +57,7 @@ public:
     ~MainWindowSeggio();
     void sessioneDiVotoTerminata();
 
-    void updatePVbuttons(unsigned int idPVtoUpdate);
-    void disableCreaAssociazioneButton();
+    
     //void initTableHT();
     void initTableRV();
     void initGestioneSeggio();
