@@ -38,20 +38,25 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     seggio = new Seggio(this);
 
     //inserire qui le connect tra model e view
-    QObject::connect(seggio,SIGNAL(anyPVFree(bool)),this,SLOT(updateCreaAssociazioneButton(bool)));
-    QObject::connect(seggio,SIGNAL(anyAssociationRemovable(bool)),this,SLOT(updateRimuoviAssociazioneButton(bool)));
-    QObject::connect(seggio,SIGNAL(stateChanged(uint,uint)),this,SLOT(updatePVButtons(uint,uint)));//parametri: idPV, statoPV
-    QObject::connect(this,SIGNAL(needNewAssociation()),seggio,SLOT(createAssociazioneHT_PV()));
-    QObject::connect(this,SIGNAL(needStatePVs()),seggio,SLOT(aggiornaPVs()));
-    QObject::connect(seggio,SIGNAL(associationReady(uint,uint)),this,SLOT(showNewAssociation(uint,uint)));//parametri:idHT, idPV
-    QObject::connect(this,SIGNAL(confirmAssociation()),seggio,SLOT(addAssociazioneHT_PV()));
-    QObject::connect(this,SIGNAL(abortAssociation()),seggio,SLOT(eliminaNuovaAssociazione()));
-    QObject::connect(this,SIGNAL(checkPassKey(QString)),seggio,SLOT(validatePassKey(QString)));
-    QObject::connect(seggio,SIGNAL(validPass()),this,SLOT(initSeggio()));
-    QObject::connect(seggio,SIGNAL(wrongPass()),this,SLOT(showErrorPass()));
-    QObject::connect(this,SIGNAL(logoutRequest()),seggio,SLOT(tryLogout()));
-    QObject::connect(seggio,SIGNAL(forbidLogout()),this,SLOT(showErrorLogout()));
-    QObject::connect(seggio,SIGNAL(grantLogout()),this,SLOT(doLogout()));
+    QObject::connect(seggio,SIGNAL(anyPVFree(bool)),this,SLOT(updateCreaAssociazioneButton(bool)),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(anyAssociationRemovable(bool)),this,SLOT(updateRimuoviAssociazioneButton(bool)),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(associationToRemove(uint)),seggio,SLOT(removeAssociazioneHT_PV(uint)),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(stateChanged(uint,uint)),this,SLOT(updatePVButtons(uint,uint)),Qt::QueuedConnection);//parametri: idPV, statoPV
+    QObject::connect(this,SIGNAL(needNewAssociation()),seggio,SLOT(createAssociazioneHT_PV()),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(needStatePVs()),seggio,SLOT(aggiornaPVs()),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(associationReady(uint,uint)),this,SLOT(showNewAssociation(uint,uint)),Qt::QueuedConnection);//parametri:idHT, idPV
+    QObject::connect(this,SIGNAL(confirmAssociation()),seggio,SLOT(addAssociazioneHT_PV()),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(abortAssociation()),seggio,SLOT(eliminaNuovaAssociazione()),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(checkPassKey(QString)),seggio,SLOT(validatePassKey(QString)),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(validPass()),this,SLOT(initSeggio()),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(wrongPass()),this,SLOT(showErrorPass()),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(logoutRequest()),seggio,SLOT(tryLogout()),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(forbidLogout()),this,SLOT(showErrorLogout()),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(grantLogout()),this,SLOT(doLogout()),Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(needRemovableAssociations()),seggio,SLOT(calculateRemovableAssociations()),Qt::QueuedConnection);
+
+    qRegisterMetaType< std::vector<Associazione>>( "std::vector<Associazione>" );
+    QObject::connect(seggio,SIGNAL(removableAssociationsReady(std::vector<Associazione>)),this,SLOT(showRemovableAssociations(std::vector<Associazione>)),Qt::QueuedConnection);
 
 
 }
@@ -130,7 +135,9 @@ void MainWindowSeggio::initSeggio(){
     this->logged = true;
 
     //inizializzazione interfaccia gestioneSeggio
-    initGestioneSeggio();
+    this->initGestioneSeggio();
+
+    ui->stackedWidget->setCurrentIndex(gestioneSeggio);
 
 
     ui->wrongPassword_label->hide();
@@ -140,13 +147,15 @@ void MainWindowSeggio::initSeggio(){
     cout << "View: loggato" << endl;
     seggio->mutex_stdout.unlock();
 
-    ui->stackedWidget->setCurrentIndex(gestioneSeggio);
+
 
     //avvio del thread del model
     seggio->start();
 
     //il segnale segnala la necessità di aggiornamento dello stato delle postazioni di voto
     emit needStatePVs();
+
+
 }
 
 void MainWindowSeggio::showErrorPass(){
@@ -419,22 +428,19 @@ void MainWindowSeggio::on_confermaAssociazione_button_clicked()
 void MainWindowSeggio::on_rimuoviAssociazione_button_clicked()
 {
     ui->rimuoviAssociazione_button->setEnabled(false);
+
+    emit needRemovableAssociations();
+}
+void MainWindowSeggio::showRemovableAssociations(vector<Associazione> associazioniRimovibili){
     //Questa funzione riempie il combo box relativo alle associazioni eliminabili
     ui->associazioneRimovibili_comboBox->clear();
 
+    //vector < Associazione > associazioniCorrenti = seggio->getListAssociazioni();
+    for(unsigned i=0; i< associazioniRimovibili.size(); ++i){
+        unsigned int idPV = associazioniRimovibili[i].getIdPV();
+        unsigned int idHT = associazioniRimovibili[i].getIdHT();
 
-    vector < Associazione > associazioniCorrenti = seggio->getListAssociazioni();
-    for(unsigned i=0; i< associazioniCorrenti.size(); ++i){
-        unsigned int idPV = associazioniCorrenti[i].getIdPV();
-        unsigned int idHT = associazioniCorrenti[i].getIdHT();
-
-        //seggio->mutex_stati.lock();
-        unsigned int statoPV = seggio->stateInfoPV(idPV);
-        //seggio->mutex_stati.unlock();
-
-
-        if(( statoPV == Seggio::attesa_abilitazione) || ( statoPV == Seggio::errore)){
-            //creiamo l'item per l'associazione che risulta eliminabile
+      //creiamo l'item per l'associazione che risulta eliminabile
             QString str = "HT ";
             QString s;
             s.setNum(idHT);
@@ -444,8 +450,10 @@ void MainWindowSeggio::on_rimuoviAssociazione_button_clicked()
             str.append(s);
 
             ui->associazioneRimovibili_comboBox->addItem(str);
-        }
+        //}
     }
+
+    associazioniRimovibili.clear();
 
     //contenuto della funzionalità pronto, rendiamolo visibile all'utente
     ui->associazioniRimovibili_label->show();
@@ -468,10 +476,11 @@ void MainWindowSeggio::on_rimuovi_button_clicked()
     seggio->mutex_stdout.lock();
     cout << "View: postazione da liberare: " << pvToFree << endl;
     seggio->mutex_stdout.unlock();
-    seggio->removeAssociazioneHT_PV(pvToFree);
 
 
-    ui->rimuoviAssociazione_button->setEnabled(true);
+    emit associationToRemove(pvToFree);
+
+    //ui->rimuoviAssociazione_button->setEnabled(true);
 
     ui->associazioniRimovibili_label->hide();
     ui->associazioneRimovibili_comboBox->hide();
@@ -479,13 +488,7 @@ void MainWindowSeggio::on_rimuovi_button_clicked()
     ui->annullaRimozione_button->hide();
 
 
-    if(/*seggio->getNumberAssCorrenti()<3 && */seggio->anyPostazioneLibera()){
-        ui->creaAssociazioneHTPV_button->setEnabled(true);
-    }
 
-    if(!(seggio->anyAssociazioneEliminabile())){
-        ui->rimuoviAssociazione_button->setEnabled(false);
-    }
 }
 
 void MainWindowSeggio::on_annullaRimozione_button_clicked()

@@ -77,9 +77,9 @@ Seggio::~Seggio(){
 
     delete nuovaAssociazione;
 
-//    this->mutex_stdout.lock();
-//    cout << "Seggio: join del thread_server" << endl;
-//    this->mutex_stdout.unlock();
+    //    this->mutex_stdout.lock();
+    //    cout << "Seggio: join del thread_server" << endl;
+    //    this->mutex_stdout.unlock();
 
 
 
@@ -87,16 +87,16 @@ Seggio::~Seggio(){
 }
 
 void Seggio::run(){
-    this->stopThreads = false;
-    thread_server = std::thread(&Seggio::runServerUpdatePV, this);
+    this->stopServer = false;
+    thread_server = std::thread(&Seggio::runServerPV, this);
 
     thread_server.join();
 
     cout << "Seggio: thread server ha terminato, esco dalla mia run()" << endl;
 }
 
-//void Seggio::setStopThreads(bool b) {
-//    this->stopThreads = b;
+//void Seggio::setstopServer(bool b) {
+//    this->stopServer = b;
 //}
 
 void Seggio::setBusyHT_PV(){
@@ -121,6 +121,7 @@ void Seggio::setBusyHT_PV(){
     this->busyPV[idPV-1] = true;
 
     if(this->anyPostazioneLibera()){
+        cout << "almeno una postazione libera" << endl;
         emit anyPVFree(true);
         //mainWindow->disableCreaAssociazioneButton();
     }
@@ -128,7 +129,8 @@ void Seggio::setBusyHT_PV(){
         emit anyPVFree(false);
     }
 
-    if(this->anyAssociazioneEliminabile()){
+    if(anyAssociazioneEliminabile()){
+        cout << "almeno una associazione eliminabile" << endl;
         emit anyAssociationRemovable(true);
     }
     else{
@@ -233,7 +235,7 @@ vector< Associazione > Seggio::getListAssociazioni(){
 void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
     //elimina un'associazione per la postazione di voto indicata
 
-    unsigned int index = 0;
+    unsigned int indexAss = 0;
     unsigned int currentPV = 0;
     unsigned int idHT = 0;
     for (unsigned int i = 0; this->listAssociazioni.size();i++){
@@ -244,7 +246,7 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
             //salva l'id dell'hardware token da rendere libero
             idHT = this->listAssociazioni[i].getIdHT();
             //salva l'indice corrispondente per la successiva eliminazione
-            index = i;
+            indexAss = i;
             break; //interrompe l'esecuzione del for in cui è immediatemente contenuto
             // quindi in currentPV resta l'id della postazione per cui rimuovere l'associazione
         }
@@ -275,7 +277,14 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
         //elimino dall'heap vector l'istanza dell'associazione rimossa
         //l'eliminazione dal vettore di un elemento libera anche la memoria
         //perchè il vettore listAssociazioni è un vettore di oggetti Associazione e non un vettore di puntatori di tipo Associazione
-        this->listAssociazioni.erase(this->listAssociazioni.begin()+index);
+        this->listAssociazioni.erase(this->listAssociazioni.begin()+indexAss);
+
+        //prova di pulizia
+        this->associazioniRimovibili.clear();
+
+        emit anyPVFree(this->anyPostazioneLibera());
+
+        emit anyAssociationRemovable(this->anyAssociazioneEliminabile());
     }
     else{
         cout << "Seggio: Unable to remove association from PV" << endl;
@@ -325,7 +334,7 @@ bool Seggio::anyAssociazioneEliminabile(){
 
         cout << "Seggio: pv #" << idPV << ": stato " << statoPV << endl;
         if(( statoPV == Seggio::statiPV::attesa_abilitazione) || ( statoPV == Seggio::statiPV::errore)){
-            cout << "trovata almeno una associazione eliminabile" << endl;
+            cout << "Seggio: trovata almeno una associazione eliminabile" << endl;
             return true;
         }
 
@@ -423,23 +432,23 @@ const char *Seggio::getIP_PV(unsigned int idPV){
     return this->IP_PV[idPV-1];
 }
 
-void Seggio::runServerUpdatePV(){
+void Seggio::runServerPV(){
     //funzione eseguita da un thread
     this->seggio_server = new SSLServer(this);
     this->mutex_stdout.lock();
     cout << "Seggio: avviato il ServerSeggio per ricevere gli update dello stato delle Postazioni di Voto" << endl;
     this->mutex_stdout.unlock();
 
-    while(!(this->stopThreads)){//se stopThreads ha valore vero il while termina
+    while(!(this->stopServer)){//se stopServer ha valore vero il while termina
 
         //attesa di una richiesta
         this->seggio_server->ascoltoNuovoStatoPV();
 
-        //prosegue rimettendosi in ascolto al ciclo successivo, se stopThreads è falso
+        //prosegue rimettendosi in ascolto al ciclo successivo, se stopServer è falso
     }
 
     this->mutex_stdout.lock();
-    cout << "Seggio: runServerUpdatePV: exit!" << endl;
+    cout << "Seggio: runServerPV: exit!" << endl;
     this->mutex_stdout.unlock();
 
 
@@ -450,13 +459,13 @@ void Seggio::runServerUpdatePV(){
 }
 
 
-void Seggio::stopServerUpdatePV(){
+void Seggio::stopServerPV(){
 
     //creo client per contattare il server
     SSLClient * seggio_client = new SSLClient(this);
 
     //predispongo il thread all'uscita del loop while
-    this->stopThreads = true;
+    this->stopServer = true;
 
     //predispongo il server per l'interruzione
     this->seggio_server->setStopServer(true);
@@ -647,7 +656,33 @@ void Seggio::tryLogout(){
     //se siamo arrivati qui, è possibile effettuare il logout
 
     //interruzione del thread server
-    this->stopServerUpdatePV();
+    this->stopServerPV();
 
     emit grantLogout();
+}
+
+void Seggio::calculateRemovableAssociations()
+{
+    //così mi sa che non funziona
+    //std::vector <Associazione> associazioniRimovibili;
+    associazioniRimovibili.clear();
+
+    for(unsigned i=0; i < listAssociazioni.size(); ++i){
+        //cout << i << endl;
+        //ottengo id postazione di voto dell'associazione corrente
+        unsigned int idPV = listAssociazioni[i].getIdPV();
+        //ottengo lo stato della postazione di voto relativa
+        unsigned int statoPV = this->stateInfoPV(idPV);
+
+
+        if(( statoPV == Seggio::attesa_abilitazione) || ( statoPV == Seggio::errore)){
+            //se la postazione di voto ha uno stato che consente la rimozione dell'associazione
+            //aggiungo l'associazione al vettore delle associazioni rimovibili
+            cout << "associazione rimovibile alla PV: "<< idPV << endl;
+            associazioniRimovibili.push_back(listAssociazioni[i]);
+
+        }
+    }
+
+    emit removableAssociationsReady(associazioniRimovibili);
 }

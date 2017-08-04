@@ -24,6 +24,7 @@
 
 #define NUM_PV 3
 #define NUM_HT_ATTIVI 4
+
 class SSLServer;
 class SSLClient;
 
@@ -38,6 +39,7 @@ signals:
     void wrongPass();
     void forbidLogout();
     void grantLogout();
+    void removableAssociationsReady(std::vector <Associazione> associazioniRimovibili);
 
 public slots:
     void createAssociazioneHT_PV();
@@ -47,6 +49,7 @@ public slots:
     void aggiornaPVs();
     void validatePassKey(QString pass);
     void tryLogout();
+    void calculateRemovableAssociations();
     //void liberaHT_PV(unsigned int idPV);
     //bool feedbackFreeBusy(unsigned int idPV);
     //servizio da richiedere all'urna virtuale
@@ -107,15 +110,14 @@ public:
 
     //questa funzione verrà chiamata dal thread che si mette in ascolto di aggiornamenti delle postazioni di voto
 
-    void stopServerUpdatePV();
-    //void setStopThreads(bool b);
+    void stopServerPV();
 
 private:
     void run();
 
     SSLServer * seggio_server;
     std::thread thread_server;
-    bool stopThreads;
+    bool stopServer;
 
     //SSLClient * seggio_client;
 
@@ -152,12 +154,12 @@ private:
     bool removeAssociationFromPV(unsigned int idPV);
 
     const char * calcolaIP_PVbyID(unsigned int idPV);
-    void runServerUpdatePV();
+    void runServerPV();
 
     //allo stato attuale un seggio prevede una composizione di 3 postazioni di voto e 4 hardware token attivi
 
 
-
+    std::vector <Associazione> associazioniRimovibili;
 };
 
 #endif /* SEGGIO_H_ */

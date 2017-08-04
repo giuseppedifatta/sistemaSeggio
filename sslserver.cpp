@@ -278,7 +278,7 @@ void SSLServer::createServerContext() {
 
     this->ctx = SSL_CTX_new(method);
     if (!this->ctx) {
-        perror("Unable to create SSL context");
+        perror("ServerSeggio::Unable to create SSL context");
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }

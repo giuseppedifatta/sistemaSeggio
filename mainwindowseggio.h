@@ -5,8 +5,9 @@
 #include "seggio.h"
 #include "associazione.h"
 #include <thread>
+#include <vector>
 #include <QObject>
-
+Q_DECLARE_METATYPE(std::vector <Associazione>)
 class Seggio;
 
 namespace Ui {
@@ -22,23 +23,21 @@ signals:
     void needStatePVs();
     void confirmAssociation();
     void abortAssociation();
+    void needRemovableAssociations();
     void checkPassKey(QString pass);
     void logoutRequest();
+    void associationToRemove(uint);
 public slots:
     //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
     void updateCreaAssociazioneButton(bool b);
     void updateRimuoviAssociazioneButton(bool b);
-    void updatePVButtons(unsigned int idPVtoUpdate, unsigned int statoPV);
-    
+    void updatePVButtons(unsigned int idPVtoUpdate, unsigned int statoPV); 
     void showNewAssociation(unsigned int ht, unsigned int idPV);
-
     void initSeggio();
     void showErrorPass();
-
     void doLogout();
     void showErrorLogout();
-
-    void showRemovableAssociations(vector < Associazione > associazioniRimovibili);
+    void showRemovableAssociations(std::vector<Associazione> associazioniRimovibili);
 
 private:
     Ui::MainWindowSeggio *ui;

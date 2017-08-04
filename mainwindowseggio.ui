@@ -23,6 +23,16 @@
 background-color: rgb(49, 149, 255);
 }
 
+.QLabel {
+color: white;
+font-size: 22px bold sans serif;
+}
+
+.QLineEdit{
+font-size: 24px bold sans serif;
+background-color: white;
+}
+
 .QPushButton {
 background-color:rgb(146, 134, 134);
 background-color: rgb(148, 140, 140);
@@ -89,15 +99,7 @@ border: 7px solid rgb(85,255,0);
    <property name="styleSheet">
     <string notr="true">
 
-.QLabel {
-color: white;
-font-size: 22px bold sans serif;
-}
 
-.QLineEdit{
-font-size: 24px bold sans serif;
-background-color: white;
-}
 
 </string>
    </property>
@@ -108,7 +110,7 @@ background-color: white;
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="loginSeggio_page">
        <property name="sizePolicy">
