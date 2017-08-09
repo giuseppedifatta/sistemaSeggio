@@ -469,7 +469,8 @@ void MainWindowSeggio::on_rimuovi_button_clicked()
 
     //alla posizione di indice 10 è presente l'id della PV da liberare
     //mettiamo il carattere relativo all'id della PV da liberare in una variabile QString
-    //QString dovrebbe essere una struttura di tipo queue
+
+    //perchè push_back? verificare se la versione commentata sotto funziona
     pv.push_back(selectedAss[10]);
     //pv = selectedAss[10];
     unsigned int pvToFree = pv.toInt();
