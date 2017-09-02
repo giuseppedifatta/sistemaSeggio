@@ -126,7 +126,7 @@ border: 7px solid rgb(85,255,0);
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="loginSeggio_page">
        <property name="sizePolicy">

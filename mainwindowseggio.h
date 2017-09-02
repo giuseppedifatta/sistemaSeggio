@@ -100,6 +100,9 @@ private slots:
 
     void on_goBackToGestioneSeggio_button_clicked();
 
+    void on_pv1_button_clicked();
+    void on_pv2_button_clicked();
+    void on_pv3_button_clicked();
 };
 
 #endif // MAINWINDOWSEGGIO_H

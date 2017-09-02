@@ -566,3 +566,18 @@ void MainWindowSeggio::initTableRV(){
     ui->risultatiVoto_tableWidget->setFont(fontItem);
 }
 
+
+void MainWindowSeggio::on_pv1_button_clicked()
+{
+    //libera postazione 1
+}
+
+void MainWindowSeggio::on_pv2_button_clicked()
+{
+    //libera postazione 2
+}
+
+void MainWindowSeggio::on_pv3_button_clicked()
+{
+    //libera postazione 3
+}
