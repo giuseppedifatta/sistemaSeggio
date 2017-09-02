@@ -45,31 +45,20 @@ Seggio::Seggio(QObject *parent):
         idPostazioniVoto[i]=i+1;
         //busyPV[i]=true;
         PV_lastUsedHT[i] = 0;
-
-        //
         statoPV[i]=0;
     }
 
-    for(unsigned int i = 0; i < NUM_HT_ATTIVI; i++){
-        //il primo HT del vettore non è quello con id "1", ma quello con id memorizzato nella prima posizione del vettore idHTAttivi
-        busyHT[i]=false;
-    }
+//    for(unsigned int i = 0; i < NUM_HT_ATTIVI; i++){
+//        //il primo HT del vettore non è quello con id "1", ma quello con id memorizzato nella prima posizione del vettore idHTAttivi
+//        busyHT[i]=false;
+//    }
     nuovaAssociazione = NULL;
-
-
-
-
-
-
 
     //TODO calcolare usando come indirizzo base l'IP pubblico del seggio
     ////const char* IP_PV = this->calcolaIP_PVbyID(idPV);
     IP_PV[idPostazioniVoto[0]-1] = "192.168.56.101";
     IP_PV[idPostazioniVoto[1]-1] = "192.168.56.102";
     IP_PV[idPostazioniVoto[2]-1] = "192.168.56.103";
-
-
-
 
 }
 
@@ -80,14 +69,17 @@ Seggio::~Seggio(){
     //    this->mutex_stdout.lock();
     //    cout << "Seggio: join del thread_server" << endl;
     //    this->mutex_stdout.unlock();
-
-
-
-
 }
 
 void Seggio::run(){
     this->stopServer = false;
+    this->associazioniRimovibili.clear();
+    this->listAssociazioni.clear();
+    for (uint i = 0; i < busyHT.size(); i++){
+        busyHT.at(i) = false;
+    }
+    this->nuovaAssociazione = NULL;
+
     thread_server = std::thread(&Seggio::runServerPV, this);
 
     thread_server.join();
@@ -102,10 +94,6 @@ void Seggio::run(){
 void Seggio::setBusyHT_PV(){
     unsigned int idPV=this->nuovaAssociazione->getIdPV();
     unsigned int idHT=this->nuovaAssociazione->getIdHT();
-
-
-
-
 
     for(unsigned int index = 0; index < this->busyHT.size(); index++){
         if(this->idHTAttivi[index] == idHT){ //se l'id dell'HTAttivo corrente corrisponde con l'id dell'HT da impegnare

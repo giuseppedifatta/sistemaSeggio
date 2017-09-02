@@ -97,6 +97,8 @@ void MainWindowSeggio::initGestioneSeggio(){
     ui->liberaPValert1_label->hide();
     ui->liberaPValert2_label->hide();
     ui->liberaPValert3_label->hide();
+
+    ui->associazioneRimovibili_comboBox->clear();
 }
 
 void MainWindowSeggio::on_loginCS_button_clicked()
@@ -146,8 +148,6 @@ void MainWindowSeggio::initSeggio(){
     seggio->mutex_stdout.lock();
     cout << "View: loggato" << endl;
     seggio->mutex_stdout.unlock();
-
-
 
     //avvio del thread del model
     seggio->start();

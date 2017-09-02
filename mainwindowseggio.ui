@@ -23,6 +23,36 @@
 background-color: rgb(49, 149, 255);
 }
 
+.QPushButton {
+background-color:rgb(146, 134, 134);
+font-size: 22px bold sans serif;
+text-align:center;
+vertical-align:middle;
+min-height:60px;
+color:black;
+}
+.QPushButton:disabled{
+background-color: rgb(49, 149, 255);
+font-size: 22px bold sans serif;
+text-align:center;
+vertical-align:middle;
+min-height:60px;
+color: rgb(108, 108, 108);
+
+}
+
+
+.QComboBox{
+font:18px bold sans serif;
+}
+
+
+
+.QMessageBox{
+background-color: rgb(49, 149, 255);
+}
+
+
 .QLabel {
 color: white;
 font-size: 22px bold sans serif;
@@ -31,16 +61,6 @@ font-size: 22px bold sans serif;
 .QLineEdit{
 font-size: 24px bold sans serif;
 background-color: white;
-}
-
-.QPushButton {
-background-color:rgb(146, 134, 134);
-background-color: rgb(148, 140, 140);
-font-size: 24px bold sans serif;
-text-align:center;
-vertical-align:middle;
-min-height:60px;
-color:black;
 }
 
 QPushButton#pv1_button{
@@ -97,11 +117,7 @@ border: 7px solid rgb(85,255,0);
     <bool>true</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">
-
-
-
-</string>
+    <string notr="true"/>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_16">
     <item>
@@ -110,7 +126,7 @@ border: 7px solid rgb(85,255,0);
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="loginSeggio_page">
        <property name="sizePolicy">
@@ -157,7 +173,7 @@ border: 7px solid rgb(85,255,0);
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>64</height>
+              <height>62</height>
              </size>
             </property>
             <property name="maximumSize">
@@ -185,7 +201,7 @@ border: 7px solid rgb(85,255,0);
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>64</height>
+              <height>62</height>
              </size>
             </property>
             <property name="maximumSize">
@@ -603,7 +619,13 @@ color:black;</string>
              </sizepolicy>
             </property>
             <property name="font">
-             <font/>
+             <font>
+              <family>12 sans serif</family>
+              <pointsize>-1</pointsize>
+              <weight>50</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+             </font>
             </property>
             <property name="styleSheet">
              <string notr="true"/>
