@@ -610,7 +610,7 @@ bool SSLClient::queryRemoveAssociation() {
     return res;
 }
 
-void SSLClient::queryFreePV(){
+bool SSLClient::queryFreePV(){
     //invia codice del servizio richiesto al PV_Server
     //freePV: 3
     int serviceCod = 3;
@@ -626,7 +626,27 @@ void SSLClient::queryFreePV(){
     SSL_write(ssl,charCod,strlen(charCod));
 
     //do stuff
+    //ricevi esito dell'operazione
+    // 0 -> success
+    // -1 -> error
+    bool res;
+    int bytes;
+    char buffer[8];
+    memset(buffer, '\0', sizeof(buffer));
+    bytes = SSL_read(ssl,buffer,sizeof(buffer));
+    if(bytes > 0){
+        buffer[bytes] = 0;
+        int result = atoi(buffer);
 
+        seggioChiamante->mutex_stdout.lock();
+        cout << "ClientSeggio: Risultato rimozione: " << result << endl;
+        seggioChiamante->mutex_stdout.unlock();
+
+        if (result == 0){
+            res = true;
+        }
+
+    }
 
     //end do stuff
 
@@ -643,6 +663,8 @@ void SSLClient::queryFreePV(){
         cerr << "ClientSeggio: errore chiusura socket per il server" << endl;
     }
     SSL_free(this->ssl);
+
+    return res;
 }
 
 //int SSLClient::myssl_getFile(){

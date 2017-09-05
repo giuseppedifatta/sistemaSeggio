@@ -52,7 +52,7 @@ public:
     bool querySetAssociation(unsigned int idHT);
     int queryPullPVState();
     bool queryRemoveAssociation();
-    void queryFreePV();
+    bool queryFreePV();
 
     //utility per far terminare la funzione di esecuzione del thread server del seggio
     void stopLocalServer();

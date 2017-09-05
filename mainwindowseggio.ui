@@ -70,11 +70,11 @@ border: 7px solid red;
 background-color:white;
 color:black;
 font-size:18px;
-
 }
 
 QPushButton#pv1_button[free = &quot;true&quot;] {
 border: 7px solid rgb(85,255,0);
+background-color:white;
 }
 
 QPushButton#pv1_button[freeable = &quot;true&quot;] {

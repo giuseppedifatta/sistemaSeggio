@@ -224,6 +224,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
         if(statoPV == seggio->statiPV::libera){
             cout << "View: PV1: set green border" << endl;
             ui->pv1_button->setProperty("free",true);
+            ui->pv1_button->setProperty("freeable", false);
             ui->pv1_button->style()->unpolish(ui->pv1_button);
             ui->pv1_button->style()->polish(ui->pv1_button);
             ui->pv1_button->update();
@@ -570,6 +571,8 @@ void MainWindowSeggio::initTableRV(){
 void MainWindowSeggio::on_pv1_button_clicked()
 {
     //libera postazione 1
+
+
 }
 
 void MainWindowSeggio::on_pv2_button_clicked()

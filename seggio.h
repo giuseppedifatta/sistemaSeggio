@@ -43,13 +43,18 @@ signals:
 
 public slots:
     void createAssociazioneHT_PV();
-    void addAssociazioneHT_PV();
     void eliminaNuovaAssociazione();
-    void removeAssociazioneHT_PV(unsigned int idPV);
+
     void aggiornaPVs();
     void validatePassKey(QString pass);
     void tryLogout();
     void calculateRemovableAssociations();
+
+    //funzioni per richiedere servizi alle postazioni voto
+    void addAssociazioneHT_PV();
+    void removeAssociazioneHT_PV(unsigned int idPV);
+    void completaOperazioneVoto(uint idPV);
+
     //void liberaHT_PV(unsigned int idPV);
     //bool feedbackFreeBusy(unsigned int idPV);
     //servizio da richiedere all'urna virtuale
@@ -84,11 +89,6 @@ public:
 
 
     //funzionalità dei componenti del seggio
-
-
-
-
-
 
     unsigned int getNumberAssCorrenti();
 
@@ -152,6 +152,7 @@ private:
     bool pushAssociationToPV(unsigned int idPV, unsigned int idHT);
     void pullStatePV(unsigned int idPV);
     bool removeAssociationFromPV(unsigned int idPV);
+    bool freePVpostVotazione(unsigned int idPV);
 
     const char * calcolaIP_PVbyID(unsigned int idPV);
     void runServerPV();

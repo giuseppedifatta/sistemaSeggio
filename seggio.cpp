@@ -240,7 +240,7 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
         }
     }
 
-    //TODO comunica alla postazione voto la rimozione dell'associazione
+    //comunica alla postazione voto la rimozione dell'associazione
     if(removeAssociationFromPV(idPV)){
         //se la rimozione sulla postazione è andata a buon fine, prosegui con l'aggiornamento sul seggio
 
@@ -279,10 +279,76 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
     }
 }
 
-//void Seggio::liberaHT_PV(unsigned int idPV){
-//    //cliccando sulla postazione in cui il voto è completato, rimuove l'associazione relativa dalla listaAssociazioni
-//    //TODO libera le postazioni di voto alla conclusione di una operazione di voto, chiamata dal click sul bottone relativo alla postazione di voto, quando è verde
-//}
+void Seggio::completaOperazioneVoto(uint idPV)
+{
+    //libera la postazione di voto indicata
+
+    unsigned int indexAss = 0;
+    unsigned int currentPV = 0;
+    unsigned int idHT = 0;
+    for (unsigned int i = 0; this->listAssociazioni.size();i++){
+        currentPV = this->listAssociazioni[i].getIdPV();
+
+        //trova l'associazione che corrisponde alla postazione di voto da liberare
+        if(currentPV==idPV){
+            //salva l'id dell'hardware token da rendere libero
+            idHT = this->listAssociazioni[i].getIdHT();
+            //salva l'indice corrispondente per l'operazione di liberazione da fare dopo aver comunicato alla postazione di voto l'azione da intraprendere
+            indexAss = i;
+            break; //interrompe l'esecuzione del for in cui è immediatemente contenuto
+            // quindi in currentPV resta l'id della postazione per cui rimuovere l'associazione
+        }
+    }
+
+    //comunica alla postazione voto la rimozione dell'associazione
+    if(freePVpostVotazione(idPV)){
+        //se la liberazione sulla postazione è andata a buon fine, prosegui con l'aggiornamento sul seggio
+
+        //setta a libera la postazione di voto
+        this->busyPV[currentPV-1]=false;
+
+        this->mutex_stdout.lock();
+        cout << "Seggio: postazione: " << currentPV <<" -> liberata" << endl;
+        this->mutex_stdout.unlock();
+
+        bool relaesedHT = false;
+        for(unsigned int index = 0; index < this->busyHT.size(); index++){
+            if(this->idHTAttivi[index] == idHT){ //se l'idHTAttivo corrente corrisponde con l'id dell'HT da liberare
+                this->busyHT[index] = false; //lo settiamo a libero nell'indice degli HT occupati
+                this->mutex_stdout.lock();
+                cout << "Seggio: token: " << idHT <<" -> liberato" << endl;
+                this->mutex_stdout.unlock();
+                relaesedHT = true;
+                break;
+            }
+        }
+
+        if(!relaesedHT){
+            cerr << "non è stato possibile rilasciare il token";
+            exit(1);
+        }
+
+
+        //elimino dall'heap vector l'istanza dell'associazione rimossa
+        //l'eliminazione dal vettore di un elemento libera anche la memoria
+        //perchè il vettore listAssociazioni è un vettore di oggetti Associazione e non un vettore di puntatori di tipo Associazione
+        this->listAssociazioni.erase(this->listAssociazioni.begin()+indexAss);
+
+        //prova di pulizia
+        this->associazioniRimovibili.clear();
+
+        emit anyPVFree(this->anyPostazioneLibera());
+
+        emit anyAssociationRemovable(this->anyAssociazioneEliminabile());
+
+        //TODO comunicare al database con gli elettori attivi, che l'elettore associato alla postazione per cui si è liberata la postazione ha votato
+
+    }
+    else{
+        cout << "Seggio: Unable to remove association from PV" << endl;
+    }
+}
+
 
 //void Seggio::readVoteResults(unsigned int idProceduraVoto){
 //    //servizio da richiedere all'urna virtuale
@@ -559,6 +625,20 @@ bool Seggio::removeAssociationFromPV(unsigned int idPV){
     return res;
 }
 
+bool Seggio::freePVpostVotazione(unsigned int idPV)
+{
+    const char* ip_pv = this->IP_PV[idPV-1];
+    bool res = false;
+    SSLClient *seggio_client = new SSLClient(this);
+    if(seggio_client->connectTo(ip_pv)!= nullptr){
+
+        //richiede la rimozione della associazione alla postazione di voto a cui il client del seggio si è connesso
+        res = seggio_client->queryFreePV();
+    }
+    delete seggio_client;
+    return res;
+}
+
 void Seggio::pullStatePV(unsigned int idPV){
     const char* ip_pv = this->IP_PV[idPV-1];
 
@@ -593,7 +673,6 @@ void Seggio::pullStatePV(unsigned int idPV){
     delete seggio_client;
     //return res;
 }
-
 void Seggio::aggiornaPVs(){
     for (unsigned int i = 1; i <= NUM_PV; i++){
         this->pullStatePV(i);
@@ -674,3 +753,5 @@ void Seggio::calculateRemovableAssociations()
 
     emit removableAssociationsReady(associazioniRimovibili);
 }
+
+

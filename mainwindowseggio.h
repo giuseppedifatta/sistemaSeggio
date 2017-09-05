@@ -26,7 +26,8 @@ signals:
     void needRemovableAssociations();
     void checkPassKey(QString pass);
     void logoutRequest();
-    void associationToRemove(uint);
+    void associationToRemove(uint pvToFree);
+    void confirmVotazioneCompleta(uint pvToFree);
 public slots:
     //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
     void updateCreaAssociazioneButton(bool b);
