@@ -54,10 +54,10 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     QObject::connect(seggio,SIGNAL(forbidLogout()),this,SLOT(showErrorLogout()),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(grantLogout()),this,SLOT(doLogout()),Qt::QueuedConnection);
     QObject::connect(this, SIGNAL(needRemovableAssociations()),seggio,SLOT(calculateRemovableAssociations()),Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(confirmVotazioneCompleta(uint)),seggio,SLOT(completaOperazioneVoto(uint)),Qt::QueuedConnection);
 
     qRegisterMetaType< std::vector<Associazione>>( "std::vector<Associazione>" );
     QObject::connect(seggio,SIGNAL(removableAssociationsReady(std::vector<Associazione>)),this,SLOT(showRemovableAssociations(std::vector<Associazione>)),Qt::QueuedConnection);
-
 
 }
 MainWindowSeggio::~MainWindowSeggio()
@@ -571,16 +571,18 @@ void MainWindowSeggio::initTableRV(){
 void MainWindowSeggio::on_pv1_button_clicked()
 {
     //libera postazione 1
-
+    emit confirmVotazioneCompleta(1);
 
 }
 
 void MainWindowSeggio::on_pv2_button_clicked()
 {
     //libera postazione 2
+    emit confirmVotazioneCompleta(2);
 }
 
 void MainWindowSeggio::on_pv3_button_clicked()
 {
     //libera postazione 3
+    emit confirmVotazioneCompleta(3);
 }
