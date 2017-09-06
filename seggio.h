@@ -59,6 +59,8 @@ signals:
     void forbidLogout();
     void grantLogout();
     void removableAssociationsReady(std::vector <Associazione> associazioniRimovibili);
+    void sessionEnded();
+    void sessionNotYetStarted();
 
 public slots:
     void createAssociazioneHT_PV();
@@ -118,6 +120,14 @@ public:
         non_raggiungibile
     };
 
+    enum statiProcedura: unsigned int{
+            creazione,
+            programmata,
+            in_corso,
+            conclusa,
+            scrutinata,
+            undefined
+        };
 
     std::mutex mutex_stati;
     std::mutex mutex_stdout;
@@ -127,22 +137,31 @@ public:
     void stopServerPV();
 
     QDateTime getDtAperturaSessione() const;
-    void setDtAperturaSessione(const QDateTime &value);
+    void setDtAperturaSessione(const string &value);
 
     QDateTime getDtChiusuraSessione() const;
-    void setDtChiusuraSessione(const QDateTime &value);
+    void setDtChiusuraSessione(const string &value);
 
     QDateTime getDtInizioProcedura() const;
-    void setDtInizioProcedura(const QDateTime &value);
+    void setDtInizioProcedura(const string &value);
 
     QDateTime getDtTermineProcedura() const;
-    void setDtTermineProcedura(const QDateTime &value);
+    void setDtTermineProcedura(const string &value);
 
     unsigned int getIdProceduraVoto() const;
     void setIdProceduraVoto(unsigned int value);
 
     string calcolaMAC(string encodedSessionKey, string plainText);
     int verifyMAC(string encodedSessionKey, string data, string macEncoded);
+    string getDescrizioneProcedura() const;
+    void setDescrizioneProcedura(const string &value);
+
+    uint getStatoProcedura() const;
+    void setStatoProcedura(const uint &value);
+
+    uint getIdSessione() const;
+    void setIdSessione(const uint &value);
+
 private:
     void run();
 
@@ -164,6 +183,9 @@ private:
     QDateTime dtChiusuraSessione;
     QDateTime dtInizioProcedura;
     QDateTime dtTermineProcedura;
+    string descrizioneProcedura;
+    uint statoProcedura;
+    uint idSessione;
     //gli id degli HT non vanno da 1 a 5, ma sono relativi agli identificativi propri HT
     std::array <unsigned int,NUM_HT_ATTIVI> idHTAttivi;
     std::array <string, NUM_HT_ATTIVI> authenticationUsernameHT;

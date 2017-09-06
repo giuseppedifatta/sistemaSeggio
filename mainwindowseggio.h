@@ -2,6 +2,7 @@
 #define MAINWINDOWSEGGIO_H
 
 #include <QMainWindow>
+#include <QMessageBox>
 #include "seggio.h"
 #include "associazione.h"
 #include <thread>
@@ -39,6 +40,8 @@ public slots:
     void doLogout();
     void showErrorLogout();
     void showRemovableAssociations(std::vector<Associazione> associazioniRimovibili);
+    void showMessageSessioneEnded();
+    void showMessageSessionNotStarted();
 
 private:
     Ui::MainWindowSeggio *ui;

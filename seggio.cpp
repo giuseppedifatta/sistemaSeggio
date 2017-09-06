@@ -87,6 +87,36 @@ void Seggio::run(){
     cout << "Seggio: thread server ha terminato, esco dalla mia run()" << endl;
 }
 
+uint Seggio::getIdSessione() const
+{
+    return idSessione;
+}
+
+void Seggio::setIdSessione(const uint &value)
+{
+    idSessione = value;
+}
+
+uint Seggio::getStatoProcedura() const
+{
+    return statoProcedura;
+}
+
+void Seggio::setStatoProcedura(const uint &value)
+{
+    statoProcedura = value;
+}
+
+string Seggio::getDescrizioneProcedura() const
+{
+    return descrizioneProcedura;
+}
+
+void Seggio::setDescrizioneProcedura(const string &value)
+{
+    descrizioneProcedura = value;
+}
+
 unsigned int Seggio::getIdProceduraVoto() const
 {
     return idProceduraVoto;
@@ -102,9 +132,11 @@ QDateTime Seggio::getDtTermineProcedura() const
     return dtTermineProcedura;
 }
 
-void Seggio::setDtTermineProcedura(const QDateTime &value)
+void Seggio::setDtTermineProcedura(const string &value)
 {
-    dtTermineProcedura = value;
+    QString str = QString::fromStdString(value);
+    dtTermineProcedura = QDateTime::fromString(str,"dd/MM/yyyy hh:mm");
+
 }
 
 QDateTime Seggio::getDtInizioProcedura() const
@@ -112,9 +144,10 @@ QDateTime Seggio::getDtInizioProcedura() const
     return dtInizioProcedura;
 }
 
-void Seggio::setDtInizioProcedura(const QDateTime &value)
+void Seggio::setDtInizioProcedura(const string &value)
 {
-    dtInizioProcedura = value;
+    QString str = QString::fromStdString(value);
+    dtInizioProcedura = QDateTime::fromString(str,"dd/MM/yyyy hh:mm");
 }
 
 QDateTime Seggio::getDtChiusuraSessione() const
@@ -122,9 +155,10 @@ QDateTime Seggio::getDtChiusuraSessione() const
     return dtChiusuraSessione;
 }
 
-void Seggio::setDtChiusuraSessione(const QDateTime &value)
+void Seggio::setDtChiusuraSessione(const string &value)
 {
-    dtChiusuraSessione = value;
+    QString str = QString::fromStdString(value);
+    dtChiusuraSessione = QDateTime::fromString(str,"dd/MM/yyyy hh:mm");
 }
 
 QDateTime Seggio::getDtAperturaSessione() const
@@ -132,9 +166,10 @@ QDateTime Seggio::getDtAperturaSessione() const
     return dtAperturaSessione;
 }
 
-void Seggio::setDtAperturaSessione(const QDateTime &value)
+void Seggio::setDtAperturaSessione(const string &value)
 {
-    dtAperturaSessione = value;
+    QString str = QString::fromStdString(value);
+    dtAperturaSessione = QDateTime::fromString(str,"dd/MM/yyyy hh:mm");
 }
 
 //void Seggio::setstopServer(bool b) {
@@ -178,6 +213,15 @@ void Seggio::setBusyHT_PV(){
 }
 
 void Seggio::createAssociazioneHT_PV(){
+    if(QDateTime::currentDateTime() < this->dtAperturaSessione){
+        emit sessionNotYetStarted();
+        return;
+    }
+    if(QDateTime::currentDateTime() > this->dtChiusuraSessione){
+        emit sessionEnded();
+        return;
+    }
+
     //crea un associazione in base alle risorse disponibili
     //lo stesso HT non viene assegnato due volte consecutive alla stessa PV
     unsigned int idPV = 0;

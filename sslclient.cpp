@@ -739,11 +739,48 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
 
     //----se l'attivazione è andata a buon fine----
     if(attivata){
-        //ricevi infoProcedura
+        //ricevi infoProcedura: descrizione,dtInizio,dtTermine,stato
+        string descrizione;
+        receiveString_SSL(ssl,descrizione);
+        cout << "descrizione: " << descrizione << endl;
+        seggioChiamante->setDescrizioneProcedura(descrizione);
+
+        string dtInizio;
+        receiveString_SSL(ssl,dtInizio);
+        cout << "inizio Procedura: " << dtInizio << endl;
+        seggioChiamante->setDtInizioProcedura(dtInizio);
+
+        string dtTermine;
+        receiveString_SSL(ssl,dtTermine);
+        cout << "termine Procedura: " << dtTermine << endl;
+        seggioChiamante->setDtTermineProcedura(dtTermine);
+
+        string stato;
+        receiveString_SSL(ssl,stato);
+        cout << "stato Procedura: " << stato << endl;
+        seggioChiamante->setStatoProcedura(atoi(stato.c_str()));
 
 
-        //ricevi infoSessione
+        //ricevi infoSessione:idSessione,dataSessione, oraApertura, oraChiusura
+        string idSessione;
+        receiveString_SSL(ssl,idSessione);
+        cout << "id Sessione: " << idSessione << endl;
+        seggioChiamante->setIdSessione(atoi(idSessione.c_str()));
 
+        string dataSessione;
+        receiveString_SSL(ssl,dataSessione);
+        cout << "data Sessione: " << dataSessione << endl;
+
+        string oraApertura;
+        receiveString_SSL(ssl,oraApertura);
+        cout << "ora Apertura: " << oraApertura << endl;
+
+        string oraChiusura;
+        receiveString_SSL(ssl,oraChiusura);
+        cout << "ora Chiusura: " << oraChiusura << endl;
+
+        seggioChiamante->setDtAperturaSessione(dataSessione + " " + oraApertura);
+        seggioChiamante->setDtChiusuraSessione(dataSessione + " " + oraChiusura);
 
         //ricevi info HT associati al seggio
 
@@ -758,3 +795,30 @@ bool SSLClient::queryRisultatiVoto()
     return true;
 }
 
+void SSLClient::sendString_SSL(SSL* ssl, string s) {
+    int length = strlen(s.c_str());
+    string length_str = std::to_string(length);
+    const char *num_bytes = length_str.c_str();
+    SSL_write(ssl, num_bytes, strlen(num_bytes));
+    SSL_write(ssl, s.c_str(), length);
+}
+
+int SSLClient::receiveString_SSL(SSL* ssl, string &s){
+
+    char dim_string[16];
+    memset(dim_string, '\0', sizeof(dim_string));
+    int bytes = SSL_read(ssl, dim_string, sizeof(dim_string));
+    if (bytes > 0) {
+        dim_string[bytes] = 0;
+        //lunghezza fileScheda da ricevere
+        uint length = atoi(dim_string);
+        char buffer[length + 1];
+        memset(buffer, '\0', sizeof(buffer));
+        bytes = SSL_read(ssl, buffer, sizeof(buffer));
+        if (bytes > 0) {
+            buffer[bytes] = 0;
+            s = buffer;
+        }
+    }
+    return bytes; //bytes read for the string received
+}

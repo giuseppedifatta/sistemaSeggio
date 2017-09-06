@@ -59,6 +59,8 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     qRegisterMetaType< std::vector<Associazione>>( "std::vector<Associazione>" );
     QObject::connect(seggio,SIGNAL(removableAssociationsReady(std::vector<Associazione>)),this,SLOT(showRemovableAssociations(std::vector<Associazione>)),Qt::QueuedConnection);
 
+    QObject::connect(seggio,SIGNAL(sessionEnded()),SLOT(showMessageSessioneEnded()),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(sessionNotYetStarted()),SLOT(showMessageSessionNotStarted()),Qt::QueuedConnection);
 }
 MainWindowSeggio::~MainWindowSeggio()
 {
@@ -441,16 +443,16 @@ void MainWindowSeggio::showRemovableAssociations(vector<Associazione> associazio
         unsigned int idPV = associazioniRimovibili[i].getIdPV();
         unsigned int idHT = associazioniRimovibili[i].getIdHT();
 
-      //creiamo l'item per l'associazione che risulta eliminabile
-            QString str = "HT ";
-            QString s;
-            s.setNum(idHT);
-            str.append(s);
-            str.append(" - PV ");
-            s.setNum(idPV);
-            str.append(s);
+        //creiamo l'item per l'associazione che risulta eliminabile
+        QString str = "HT ";
+        QString s;
+        s.setNum(idHT);
+        str.append(s);
+        str.append(" - PV ");
+        s.setNum(idPV);
+        str.append(s);
 
-            ui->associazioneRimovibili_comboBox->addItem(str);
+        ui->associazioneRimovibili_comboBox->addItem(str);
         //}
     }
 
@@ -461,6 +463,22 @@ void MainWindowSeggio::showRemovableAssociations(vector<Associazione> associazio
     ui->associazioneRimovibili_comboBox->show();
     ui->annullaRimozione_button->show();
     ui->rimuovi_button->show();
+}
+
+void MainWindowSeggio::showMessageSessioneEnded()
+{
+    QMessageBox msgBox(this);
+    msgBox.setInformativeText("La sessione di voto si è conclusa, non è possibile creare nuove associazioni. Se non ci sono operazioni di voto in corso si prega di effettuare il Logout");
+    msgBox.exec();
+}
+
+void MainWindowSeggio::showMessageSessionNotStarted()
+{
+    QMessageBox msgBox(this);
+    msgBox.setInformativeText("La sessione di voto non è ancora iniziata, non è possibile creare nuove associazioni. Si prega di attendere...");
+    msgBox.exec();
+    ui->gestisci_HT_button->setEnabled(true);
+    ui->creaAssociazioneHTPV_button->setEnabled(true);
 }
 
 void MainWindowSeggio::on_rimuovi_button_clicked()

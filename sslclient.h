@@ -8,6 +8,7 @@
 #include <string>
 
 #include "seggio.h"
+#include "ssl_utils.h"
 
 using namespace std;
 class Seggio;
@@ -38,6 +39,8 @@ private:
 
 
     //int myssl_getFile();
+    void sendString_SSL(SSL *ssl, string s);
+    int receiveString_SSL(SSL *ssl, string &s);
 public:
     SSLClient(Seggio * s);
     ~SSLClient();
