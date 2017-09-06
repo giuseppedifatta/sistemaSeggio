@@ -448,7 +448,7 @@ void SSLClient::stopLocalServer(/*const char* localhosthostname*/){
 
 }
 
-bool SSLClient::querySetAssociation(unsigned int idHT){
+bool SSLClient::querySetAssociation(unsigned int idHT /*,string authenticationUsernameHT*/){
     bool res = false;
     //invia codice del servizio richiesto al PV_Server
     //setAssociation : 0
@@ -471,6 +471,8 @@ bool SSLClient::querySetAssociation(unsigned int idHT){
     cout << "ClientSeggio: Id Hardware token da associare alla PV: " << charIdHT << endl;
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charIdHT,strlen(charIdHT));
+
+    //TODO invio authenticationUsernameHT
 
     //ricevi esito dell'operazione
     // 0 -> success
@@ -667,55 +669,92 @@ bool SSLClient::queryFreePV(){
     return res;
 }
 
-//int SSLClient::myssl_getFile(){
-//    //richiede ed ottiene lo stato della Postazione di voto a cui è connesso
-//    char buffer[1024];
-//    //memset(buffer, '\0', sizeof(buffer));
+bool SSLClient::queryAttivazioneSeggio(string sessionKey)
+{
+    bool attivata = false;
 
-//    //ricevo proposta dal server
-//    //    int bytes = SSL_read(ssl, buffer, sizeof(buffer));
-//    //    if (bytes > 0){
-//    //        cout << buffer;
-//    //    }
+    //richiesta servizio
+    int serviceCod = serviziUrna::attivazioneSeggio;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
 
-//    //
+    //ricevo idProceduraVoto
+    uint idProcedura;
+    char cod_idProcedura[128];
+    memset(cod_idProcedura, '\0', sizeof(cod_idProcedura));
+    int bytes = SSL_read(ssl, cod_idProcedura, sizeof(cod_idProcedura));
+    if (bytes > 0) {
+        cod_idProcedura[bytes] = 0;
+        idProcedura = atoi(cod_idProcedura);
+        //pvChiamante->setIdProceduraVoto(idProcedura);
+    }
+    else{
+        cerr << "ClientPV: non sono riuscito a ricevere l'idProcedura" << endl;
+    }
 
-//    char reply[] = "b";
-//    cout << reply << endl;
-//    SSL_write(ssl, reply, strlen(reply));
+    //SE L'ID PROCEDURA RICEVUTO È 0, NON C'È UNA PROCEDURA IN CORSO, ABORTISCO L'ATTIVAZIONE
+    if(idProcedura == 0){
+        return attivata; //valore corrente "false"
 
-//    //SSL_write(ssl, reply, strlen(reply));
-//    //inizio test
-//    //char buffer[1024];
-//    memset(buffer, '\0', sizeof(buffer));
+    }
+    else{
+        seggioChiamante->setIdProceduraVoto(idProcedura);
+    }
 
-//    //lettura numero byte da ricevere
-//    int bytes = SSL_read(ssl, buffer, sizeof(buffer));
-//    if (bytes > 0) {
+    string idProceduraMAC = seggioChiamante->calcolaMAC(sessionKey, to_string(idProcedura));
 
-//        //creo un buffer della dimensione del file che sto per ricevere
-//        buffer[bytes] = 0;
-//        cout << "ClientSeggio: Bytes to read: " << buffer << endl;
-//        char buffer2[atoi(buffer)];
-//        if (bytes > 0) {
-//            ofstream outf("./file_ricevuto.cbc", ios::out);
-//            if (!outf) {
+    //invio MAC all'URNA
 
-//                cout << "ClientSeggio: unable to open file for output\n";
-//                exit(1);
-//            } else {
-//                cout << "ClientSeggio: ricevo il file" << endl;
-//                SSL_read(ssl, buffer2, sizeof(buffer2));
+    const char * charIdProceduraMAC = idProceduraMAC.c_str();
+    //uvChiamante->mutex_stdout.lock();
+    cout << "Invio il MAC all'Urna: " << charIdProceduraMAC << endl;
+    //uvChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charIdProceduraMAC,strlen(charIdProceduraMAC));
 
-//                cout << "ClientSeggio: Testo ricevuto: " << buffer2 << endl;
-//                outf.write(buffer2, sizeof(buffer2));
-//                outf.close();
-//                // release dynamically-allocated memory
-//                //delete[] buffer2;
 
-//            }
-//        }
-//    }
+    //ricevi esito verifica della chiave di sessione
+    // 0 -> success
+    // 1 -> error
 
-//    return 0;
-//}
+    char buffer[16];
+    memset(buffer, '\0', sizeof(buffer));
+    bytes = SSL_read(ssl,buffer,sizeof(buffer));
+    if(bytes > 0){
+        buffer[bytes] = 0;
+        int result = atoi(buffer);
+
+        if (result == 0){
+            attivata = true;
+        }
+
+    }
+
+
+
+    //----se l'attivazione è andata a buon fine----
+    if(attivata){
+        //ricevi infoProcedura
+
+
+        //ricevi infoSessione
+
+
+        //ricevi info HT associati al seggio
+
+
+
+    }
+    return attivata;
+}
+
+bool SSLClient::queryRisultatiVoto()
+{
+    return true;
+}
+

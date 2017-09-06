@@ -41,13 +41,12 @@ DEPENDPATH += $$PWD/../../../../usr/lib/x86_64-linux-gnu
 
 LIBS += \
     -lssl \
-    -lcrypto
+    -lcrypto \
+    -lcryptopp
 
-#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/release/ -lssl
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/debug/ -lssl
-#else:unix: LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/ -lssl
 
-#INCLUDEPATH += $$PWD/../../../../usr/lib/x86_64-linux-gnu
-#DEPENDPATH += $$PWD/../../../../usr/lib/x86_64-linux-gnu
 
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/release/ -lcryptopp
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/debug/ -lcryptopp
+else:unix: LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/ -lcryptopp
 

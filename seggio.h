@@ -9,6 +9,7 @@
 #define SEGGIO_H_
 
 #include <time.h>
+#include <iostream>
 #include <vector>
 #include <array>
 #include "associazione.h"
@@ -19,11 +20,29 @@
 #include "sslclient.h"
 #include "mainwindowseggio.h"
 
+#include "sslclient.h"
+#include "sslserver.h"
+
+
+#include "cryptopp/osrng.h"
+#include "cryptopp/cryptlib.h"
+#include "cryptopp/hmac.h"
+#include "cryptopp/sha.h"
+#include "cryptopp/hex.h"
+#include "cryptopp/filters.h"
+#include "cryptopp/secblock.h"
+#include "cryptopp/aes.h"
+#include "cryptopp/modes.h"
+#include <cryptopp/rsa.h>
+
 #include <QtCore>
 #include <QThread>
 
 #define NUM_PV 3
 #define NUM_HT_ATTIVI 4
+
+using namespace CryptoPP;
+using namespace std;
 
 class SSLServer;
 class SSLClient;
@@ -64,13 +83,8 @@ public:
     Seggio(QObject *parent = 0);
     ~Seggio();
 
-
-
-
-
     //void setNumeroSeggio(int number);
     Associazione *getNuovaAssociazione();
-
 
     //metodi pubblici
     bool isBusyHT(unsigned int idHT);
@@ -112,17 +126,29 @@ public:
 
     void stopServerPV();
 
+    QDateTime getDtAperturaSessione() const;
+    void setDtAperturaSessione(const QDateTime &value);
+
+    QDateTime getDtChiusuraSessione() const;
+    void setDtChiusuraSessione(const QDateTime &value);
+
+    QDateTime getDtInizioProcedura() const;
+    void setDtInizioProcedura(const QDateTime &value);
+
+    QDateTime getDtTermineProcedura() const;
+    void setDtTermineProcedura(const QDateTime &value);
+
+    unsigned int getIdProceduraVoto() const;
+    void setIdProceduraVoto(unsigned int value);
+
+    string calcolaMAC(string encodedSessionKey, string plainText);
+    int verifyMAC(string encodedSessionKey, string data, string macEncoded);
 private:
     void run();
 
     SSLServer * seggio_server;
     std::thread thread_server;
     bool stopServer;
-
-    //SSLClient * seggio_client;
-
-    //riferimento al gestore dell'interfaccia dell'applicazione
-    //MainWindowSeggio *mainWindow;
 
     //questi due arrey tengono traccia delle postazioni di voto e degli hardware token attualmente impegnati in associazioni PV_HT
     std::array <bool,NUM_HT_ATTIVI> busyHT;
@@ -131,12 +157,16 @@ private:
     std::array <unsigned int, NUM_PV> statoPV; //usare mutex per accedere al dato, accedono stateInfoPV (per ottenere lo stato della singola postazione e il thread che aggiorna i valori con quelli che riceve dalla i-esima PV
     std::array <const char *, NUM_PV> IP_PV;
 
+    string sessionKey_Seggio_Urna;
     //Dati da ottenere dall'urna centrale
     unsigned int idProceduraVoto;
-    tm dataAperturaSessione;
-    tm dataChiusuraSessione;
+    QDateTime dtAperturaSessione;
+    QDateTime dtChiusuraSessione;
+    QDateTime dtInizioProcedura;
+    QDateTime dtTermineProcedura;
     //gli id degli HT non vanno da 1 a 5, ma sono relativi agli identificativi propri HT
     std::array <unsigned int,NUM_HT_ATTIVI> idHTAttivi;
+    std::array <string, NUM_HT_ATTIVI> authenticationUsernameHT;
     unsigned int idHTRiserva;
     unsigned int numeroSeggio;
 

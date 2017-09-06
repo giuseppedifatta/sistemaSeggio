@@ -20,16 +20,16 @@ using namespace std;
 Seggio::Seggio(QObject *parent):
     QThread(parent){
 
-    idProceduraVoto = 1;
-    dataAperturaSessione.tm_mday = 15;
-    dataAperturaSessione.tm_mon = 6;
-    dataAperturaSessione.tm_year = 2017;
-    dataAperturaSessione.tm_hour = 9;
+//    idProceduraVoto = 1;
+//    dataAperturaSessione.tm_mday = 15;
+//    dataAperturaSessione.tm_mon = 6;
+//    dataAperturaSessione.tm_year = 2017;
+//    dataAperturaSessione.tm_hour = 9;
 
-    dataChiusuraSessione.tm_mday = 15;
-    dataChiusuraSessione.tm_mon = 6;
-    dataChiusuraSessione.tm_year = 2017;
-    dataChiusuraSessione.tm_hour = 17;
+//    dataChiusuraSessione.tm_mday = 15;
+//    dataChiusuraSessione.tm_mon = 6;
+//    dataChiusuraSessione.tm_year = 2017;
+//    dataChiusuraSessione.tm_hour = 17;
 
 
     //solo per test, gli ht attivi per un certo seggio saranno impostati all'atto della creazione del seggio
@@ -85,6 +85,56 @@ void Seggio::run(){
     thread_server.join();
 
     cout << "Seggio: thread server ha terminato, esco dalla mia run()" << endl;
+}
+
+unsigned int Seggio::getIdProceduraVoto() const
+{
+    return idProceduraVoto;
+}
+
+void Seggio::setIdProceduraVoto(unsigned int value)
+{
+    idProceduraVoto = value;
+}
+
+QDateTime Seggio::getDtTermineProcedura() const
+{
+    return dtTermineProcedura;
+}
+
+void Seggio::setDtTermineProcedura(const QDateTime &value)
+{
+    dtTermineProcedura = value;
+}
+
+QDateTime Seggio::getDtInizioProcedura() const
+{
+    return dtInizioProcedura;
+}
+
+void Seggio::setDtInizioProcedura(const QDateTime &value)
+{
+    dtInizioProcedura = value;
+}
+
+QDateTime Seggio::getDtChiusuraSessione() const
+{
+    return dtChiusuraSessione;
+}
+
+void Seggio::setDtChiusuraSessione(const QDateTime &value)
+{
+    dtChiusuraSessione = value;
+}
+
+QDateTime Seggio::getDtAperturaSessione() const
+{
+    return dtAperturaSessione;
+}
+
+void Seggio::setDtAperturaSessione(const QDateTime &value)
+{
+    dtAperturaSessione = value;
 }
 
 //void Seggio::setstopServer(bool b) {
@@ -682,13 +732,31 @@ void Seggio::aggiornaPVs(){
 void Seggio::validatePassKey(QString pass)
 {
     //TODO contattare il dbms degli accessi per controllare se la password è esatta
-    if(pass == "qwerty"){
-        cout << "Seggio: passKey corretta" << endl;
-        emit validPass();
+//    if(pass == "qwerty"){
+//        cout << "Seggio: passKey corretta" << endl;
+//        emit validPass();
+//    }
+//    else {
+//        emit wrongPass();
+//    }
+    //contatto l'urna per validare la password
+    // 11A47EC4465DD95FCD393075E7D3C4EB
+    const char * ipUrna = "192.168.19.129";
+
+    SSLClient * pv_client = new SSLClient(this);
+
+    if(pv_client->connectTo(ipUrna)!=nullptr){
+
+        if(pv_client->queryAttivazioneSeggio(pass.toStdString())){
+            emit validPass();
+            sessionKey_Seggio_Urna = pass.toStdString();
+        }
+        else{
+            emit wrongPass();
+        }
     }
-    else {
-        emit wrongPass();
-    }
+
+    delete pv_client;
 }
 
 void Seggio::tryLogout(){
@@ -754,4 +822,117 @@ void Seggio::calculateRemovableAssociations()
     emit removableAssociationsReady(associazioniRimovibili);
 }
 
+string Seggio::calcolaMAC(string encodedSessionKey, string plainText){
 
+
+    //"11A47EC4465DD95FCD393075E7D3C4EB";
+
+    cout << "Session key: " << encodedSessionKey << endl;
+    string decodedKey;
+    StringSource (encodedSessionKey,true,
+                  new HexDecoder(
+                      new StringSink(decodedKey)
+                      ) // HexDecoder
+                  ); // StringSource
+
+    SecByteBlock key(reinterpret_cast<const byte*>(decodedKey.data()), decodedKey.size());
+
+
+    string macCalculated, encoded;
+
+    /*********************************\
+    \*********************************/
+
+    // Pretty print key
+    encoded.clear();
+    StringSource(key, key.size(), true,
+                 new HexEncoder(
+                     new StringSink(encoded)
+                     ) // HexEncoder
+                 ); // StringSource
+    cout << "key encoded: " << encoded << endl;
+
+    cout << "plain text: " << plainText << endl;
+
+    /*********************************\
+    \*********************************/
+
+    try
+    {
+        CryptoPP::HMAC< CryptoPP::SHA256 > hmac(key, key.size());
+
+        StringSource(plainText, true,
+                     new HashFilter(hmac,
+                                    new StringSink(macCalculated)
+                                    ) // HashFilter
+                     ); // StringSource
+    }
+    catch(const CryptoPP::Exception& e)
+    {
+        cerr << e.what() << endl;
+
+    }
+
+    /*********************************\
+    \*********************************/
+
+    // Pretty print MAC
+    string macEncoded;
+    StringSource(macCalculated, true,
+                 new HexEncoder(
+                     new StringSink(macEncoded)
+                     ) // HexEncoder
+                 ); // StringSource
+    cout << "hmac encoded: " << macEncoded << endl;
+
+    verifyMAC(encodedSessionKey,plainText, macEncoded);
+
+    return macEncoded;
+}
+
+int Seggio::verifyMAC(string encodedSessionKey,string data, string macEncoded){
+    int success = 0;
+    cout << "Dati da verificare: " << data << endl;
+    cout << "mac da verificare: " << macEncoded << endl;
+
+    string decodedKey;
+    cout << "Session key: " << encodedSessionKey << endl;
+
+    StringSource (encodedSessionKey,true,
+                  new HexDecoder(
+                      new StringSink(decodedKey)
+                      ) // HexDecoder
+                  ); // StringSource
+
+    SecByteBlock key2(reinterpret_cast<const byte*>(decodedKey.data()), decodedKey.size());
+
+    string macDecoded;
+    StringSource(macEncoded, true,
+                 new HexDecoder(
+                     new StringSink(macDecoded)
+                     ) // HexDecoder
+                 ); // StringSource
+    cout << "hmac decoded: " << macDecoded << endl;
+
+    try
+    {
+        CryptoPP::HMAC< CryptoPP::SHA256 > hmac(key2, key2.size());
+        const int flags = HashVerificationFilter::THROW_EXCEPTION | HashVerificationFilter::HASH_AT_END;
+
+
+
+        StringSource(data + macDecoded, true,
+                     new HashVerificationFilter(hmac, NULL, flags)
+                     ); // StringSource
+
+        cout << "Verified message" << endl;
+        success = 0;
+    }
+    catch(const CryptoPP::Exception& e)
+    {
+        success = 1;
+        cerr << e.what() << endl;
+        exit(1);
+    }
+    return success;
+}

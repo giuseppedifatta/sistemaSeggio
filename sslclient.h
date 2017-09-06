@@ -5,9 +5,11 @@
 #include <netdb.h>
 #include <openssl/ssl.h>
 #include <openssl/conf.h>
+#include <string>
 
 #include "seggio.h"
 
+using namespace std;
 class Seggio;
 class SSLClient
 {
@@ -40,11 +42,6 @@ public:
     SSLClient(Seggio * s);
     ~SSLClient();
 
-
-
-    unsigned int getStatoPV();
-
-
     //connessione all'host
     SSL* connectTo(const char* hostIP/*hostname*/);
 
@@ -54,9 +51,25 @@ public:
     bool queryRemoveAssociation();
     bool queryFreePV();
 
+    //richieste per l'Urna
+    bool queryAttivazioneSeggio(string sessionKey);
+    bool queryRisultatiVoto();
+
     //utility per far terminare la funzione di esecuzione del thread server del seggio
     void stopLocalServer();
 
+    enum serviziUrna { //richiedente
+        //attivazionePV = 0, //postazionevoto
+        attivazioneSeggio = 1, //seggio
+        //infoProcedura, //seggio
+        //infoSessione, //seggio
+        risultatiVoto  = 4, //seggio
+        //invioSchedeCompilate = 5//, //postazionevoto
+        //scrutinio, //responsabile procedimento
+        //autenticazioneTecnico, //sistema tecnico
+        //autenticazioneRP, //responsabile procedimento
+
+    };
 
 };
 
