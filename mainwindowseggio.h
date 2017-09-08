@@ -29,6 +29,7 @@ signals:
     void logoutRequest();
     void associationToRemove(uint pvToFree);
     void confirmVotazioneCompleta(uint pvToFree);
+    void wantVote(uint matricola);
 public slots:
     //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
     void updateCreaAssociazioneButton(bool b);
@@ -42,7 +43,9 @@ public slots:
     void showRemovableAssociations(std::vector<Associazione> associazioniRimovibili);
     void showMessageSessioneEnded();
     void showMessageSessionNotStarted();
+    void showMessageForbidVote(std::string esitoLock);
 
+    void hideCreaAssociazione();
 private:
     Ui::MainWindowSeggio *ui;
     Seggio *seggio;
@@ -107,6 +110,7 @@ private slots:
     void on_pv1_button_clicked();
     void on_pv2_button_clicked();
     void on_pv3_button_clicked();
+    void on_pushButton_letVote_clicked();
 };
 
 #endif // MAINWINDOWSEGGIO_H

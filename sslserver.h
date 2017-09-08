@@ -18,7 +18,7 @@
 #include <thread>
 #include <queue>
 #include "seggio.h"
-#include "ssl_utils.h"
+
 using namespace std;
 
 class Seggio;

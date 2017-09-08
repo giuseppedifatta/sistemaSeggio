@@ -61,6 +61,9 @@ signals:
     void removableAssociationsReady(std::vector <Associazione> associazioniRimovibili);
     void sessionEnded();
     void sessionNotYetStarted();
+    void allowVote();
+    void forbidVote(std::string);
+    void errorPV(uint idPV);
 
 public slots:
     void createAssociazioneHT_PV();
@@ -72,9 +75,10 @@ public slots:
     void calculateRemovableAssociations();
 
     //funzioni per richiedere servizi alle postazioni voto
-    void addAssociazioneHT_PV();
+
     void removeAssociazioneHT_PV(unsigned int idPV);
     void completaOperazioneVoto(uint idPV);
+    void tryVote(uint matricola);
 
     //void liberaHT_PV(unsigned int idPV);
     //bool feedbackFreeBusy(unsigned int idPV);
@@ -128,7 +132,13 @@ public:
             scrutinata,
             undefined
         };
-
+    enum esitoLock{
+            locked,
+            alredyLocked,
+            alredyVoted,
+            notExist,
+            errorLocking
+        };
     std::mutex mutex_stati;
     std::mutex mutex_stdout;
 
@@ -168,7 +178,7 @@ private:
     SSLServer * seggio_server;
     std::thread thread_server;
     bool stopServer;
-
+    const char * ipUrna;
     //questi due arrey tengono traccia delle postazioni di voto e degli hardware token attualmente impegnati in associazioni PV_HT
     std::array <bool,NUM_HT_ATTIVI> busyHT;
     std::array <bool,NUM_PV> busyPV;
@@ -201,10 +211,11 @@ private:
 
     //funzioni a solo uso del seggio
     void setBusyHT_PV();
-    bool pushAssociationToPV(unsigned int idPV, unsigned int idHT);
+    bool pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo);
     void pullStatePV(unsigned int idPV);
     bool removeAssociationFromPV(unsigned int idPV);
     bool freePVpostVotazione(unsigned int idPV);
+    bool addAssociazioneHT_PV();
 
     const char * calcolaIP_PVbyID(unsigned int idPV);
     void runServerPV();

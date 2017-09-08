@@ -448,7 +448,7 @@ void SSLClient::stopLocalServer(/*const char* localhosthostname*/){
 
 }
 
-bool SSLClient::querySetAssociation(unsigned int idHT /*,string authenticationUsernameHT*/){
+bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante /*,string authenticationUsernameHT*/){
     bool res = false;
     //invia codice del servizio richiesto al PV_Server
     //setAssociation : 0
@@ -463,14 +463,14 @@ bool SSLClient::querySetAssociation(unsigned int idHT /*,string authenticationUs
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio idHT da associare alla postazione di voto per l'avvio della funzionalità di abilitazione al voto
-    stringstream ssIdHT;
-    ssIdHT<< idHT;
-    string strIdHT = ssIdHT.str();
-    const char * charIdHT = strIdHT.c_str();
+    this->sendString_SSL(ssl,to_string(idHT));
     seggioChiamante->mutex_stdout.lock();
-    cout << "ClientSeggio: Id Hardware token da associare alla PV: " << charIdHT << endl;
+    cout << "ClientSeggio: Id Hardware token da associare alla PV: " << idHT << endl;
     seggioChiamante->mutex_stdout.unlock();
-    SSL_write(ssl,charIdHT,strlen(charIdHT));
+
+
+    //invio ruoloVotante
+    this->sendString_SSL(ssl,to_string(ruoloVotante));
 
     //TODO invio authenticationUsernameHT
 
@@ -793,6 +793,39 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
 bool SSLClient::queryRisultatiVoto()
 {
     return true;
+}
+
+uint SSLClient::queryTryVote(uint matricola, uint &ruolo)
+{
+    //richiesta servizio
+    int serviceCod = serviziUrna::tryVoteElettore;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
+
+    //invia matricola
+    sendString_SSL(ssl,std::to_string(matricola));
+
+    //ricevi esito
+    uint esito;
+    string esitoStr;
+    receiveString_SSL(ssl,esitoStr);
+    esito = atoi(esitoStr.c_str());
+    cout << "esito lock: " << esito << endl;
+
+    //ricevi eventualmente il ruolo se l'esito del lock al voto è positivo
+    if(esito == seggioChiamante->esitoLock::locked){
+        string ruoloStr;
+        receiveString_SSL(ssl,ruoloStr);
+        ruolo = atoi(ruoloStr.c_str());
+    }
+
+    return esito;
 }
 
 void SSLClient::sendString_SSL(SSL* ssl, string s) {

@@ -17,7 +17,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 
     //impostazione interfaccia inserimento password
     ui->wrongPassword_label->hide();
-    ui->password_lineEdit->setEchoMode(QLineEdit::Password);
+
 
 
     //setWindowFlags(  Qt::WindowMinMaxButtonsHint);
@@ -30,9 +30,8 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 
 
 
-    ui->password_lineEdit->setEchoMode(QLineEdit::Password);
-    //    ui->pinInsertCS_lineEdit->setEchoMode(QLineEdit::Password);
-    //    ui->pinInsertRP_lineEdit->setEchoMode(QLineEdit::Password);
+    //ui->password_lineEdit->setEchoMode(QLineEdit::Password);
+
 
     //inizializzazione del model
     seggio = new Seggio(this);
@@ -45,7 +44,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     QObject::connect(this,SIGNAL(needNewAssociation()),seggio,SLOT(createAssociazioneHT_PV()),Qt::QueuedConnection);
     QObject::connect(this,SIGNAL(needStatePVs()),seggio,SLOT(aggiornaPVs()),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(associationReady(uint,uint)),this,SLOT(showNewAssociation(uint,uint)),Qt::QueuedConnection);//parametri:idHT, idPV
-    QObject::connect(this,SIGNAL(confirmAssociation()),seggio,SLOT(addAssociazioneHT_PV()),Qt::QueuedConnection);
+    //QObject::connect(this,SIGNAL(confirmAssociation()),seggio,SLOT(addAssociazioneHT_PV()),Qt::QueuedConnection);
     QObject::connect(this,SIGNAL(abortAssociation()),seggio,SLOT(eliminaNuovaAssociazione()),Qt::QueuedConnection);
     QObject::connect(this,SIGNAL(checkPassKey(QString)),seggio,SLOT(validatePassKey(QString)),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(validPass()),this,SLOT(initSeggio()),Qt::QueuedConnection);
@@ -61,6 +60,11 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 
     QObject::connect(seggio,SIGNAL(sessionEnded()),SLOT(showMessageSessioneEnded()),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(sessionNotYetStarted()),SLOT(showMessageSessionNotStarted()),Qt::QueuedConnection);
+    QObject::connect(this, SIGNAL(wantVote(uint)),seggio,SLOT(tryVote(uint)),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(allowVote()),this,SLOT(hideCreaAssociazione()),Qt::QueuedConnection);
+
+    qRegisterMetaType <std::string> ("std::string");
+    QObject::connect(seggio,SIGNAL(forbidVote(std::string)),this,SLOT(showMessageForbidVote(std::string)),Qt::QueuedConnection);
 }
 MainWindowSeggio::~MainWindowSeggio()
 {
@@ -81,9 +85,7 @@ void MainWindowSeggio::sessioneDiVotoTerminata(){
 
 void MainWindowSeggio::initGestioneSeggio(){
     //sezione nuove associazioni
-    ui->annullaAssociazione_button->hide();
-    ui->associazioneDisponibile_label->hide();
-    ui->confermaAssociazione_button->hide();
+    hideCreaAssociazione();
 
     //sezione rimozione associazioni
     //ui->rimuoviAssociazione_button->setEnabled(false);
@@ -170,21 +172,12 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
     //e la conseguente abilitazione o disabilitazione di bottoni, ovvero attivazione o
     //disattivazione di funzionalità relazionate allo stato delle postazioni di voto
 
-    //    std::array <int,3> statoPV;
-    //    std::array <QString, 3> messaggioPV;
-    //unsigned int statoPV;
+
     QString messaggioPV;
 
-    //aggiornamento del testo
-    //for (int i = 0;i < 3; i++){
 
 
     cout << "View: Aggiorno lo stato della postazione " << idPVtoUpdate << endl;
-
-    //ottiene lo stato della postazione corrente
-
-    //statoPV = seggio->stateInfoPV(idPVtoUpdate);
-
 
     switch(statoPV){
     case seggio->statiPV::attesa_attivazione :
@@ -241,6 +234,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
             ui->pv1_button->update();
 
             ui->pv1_button->setEnabled(true);
+            ui->liberaPValert1_label->show();
         }
         else{
             ui->pv1_button->setProperty("free",false);
@@ -270,6 +264,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
             ui->pv2_button->update();
 
             ui->pv2_button->setEnabled(true);
+            ui->liberaPValert2_label->show();
         }
         else{
             ui->pv2_button->setProperty("free",false);
@@ -299,6 +294,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
             ui->pv3_button->update();
 
             ui->pv3_button->setEnabled(true);
+            ui->liberaPValert3_label->show();
         }
         else{
             ui->pv3_button->setProperty("free",false);
@@ -363,9 +359,6 @@ void MainWindowSeggio::on_logout2_button_clicked()
 void MainWindowSeggio::doLogout(){
     this->logged=false;
     ui->stackedWidget->setCurrentIndex(loginSeggio);
-    //setto il seggio affinchè vengano fermati i thread alla successiva esecuzione del costrutto while in essi contenuto
-    //seggio->setStopThreads(true);
-
 
 }
 
@@ -376,15 +369,10 @@ void MainWindowSeggio::showErrorLogout(){
 
 void MainWindowSeggio::on_annullaAssociazione_button_clicked()
 {
-    ui->gestisci_HT_button->setEnabled(true);
-
-    ui->annullaAssociazione_button->hide();
-    ui->associazioneDisponibile_label->hide();
-    ui->confermaAssociazione_button->hide();
     ui->creaAssociazioneHTPV_button->setEnabled(true);
 
+    hideCreaAssociazione();
     emit abortAssociation();
-    //seggio->eliminaNuovaAssociazione();
 }
 
 void MainWindowSeggio::on_creaAssociazioneHTPV_button_clicked()
@@ -398,34 +386,41 @@ void MainWindowSeggio::on_creaAssociazioneHTPV_button_clicked()
 }
 
 void MainWindowSeggio::showNewAssociation(unsigned int ht, unsigned int idPV){
-    //    unsigned int ht = seggio->getNuovaAssociazione()->getIdHT();
-    //    unsigned int idPV  = seggio->getNuovaAssociazione()->getIdPV();
-
-
     QString s = "HT %1 - PV %2";
     ui->confermaAssociazione_button->setText(s.arg(ht).arg(idPV));
 
-
     ui->annullaAssociazione_button->show();
-
     ui->associazioneDisponibile_label->show();
     ui->confermaAssociazione_button->show();
+    ui->lineEdit_matricolaElettore->show();
+    ui->pushButton_letVote->show();
 }
 
 void MainWindowSeggio::on_confermaAssociazione_button_clicked()
 {
 
 
-    //completare associazione HT-PV
-    emit confirmAssociation();
-    //seggio->addAssociazioneHT_PV();
+//    //completare associazione HT-PV
+//    emit confirmAssociation();
 
+
+//    ui->gestisci_HT_button->setEnabled(true);
+
+//    ui->annullaAssociazione_button->hide();
+//    ui->associazioneDisponibile_label->hide();
+//    ui->confermaAssociazione_button->hide();
+
+}
+
+void MainWindowSeggio::hideCreaAssociazione(){
     ui->gestisci_HT_button->setEnabled(true);
 
+    ui->lineEdit_matricolaElettore->hide();
     ui->annullaAssociazione_button->hide();
     ui->associazioneDisponibile_label->hide();
     ui->confermaAssociazione_button->hide();
-
+    ui->lineEdit_matricolaElettore->hide();
+    ui->pushButton_letVote->hide();
 }
 
 void MainWindowSeggio::on_rimuoviAssociazione_button_clicked()
@@ -434,6 +429,7 @@ void MainWindowSeggio::on_rimuoviAssociazione_button_clicked()
 
     emit needRemovableAssociations();
 }
+
 void MainWindowSeggio::showRemovableAssociations(vector<Associazione> associazioniRimovibili){
     //Questa funzione riempie il combo box relativo alle associazioni eliminabili
     ui->associazioneRimovibili_comboBox->clear();
@@ -481,6 +477,15 @@ void MainWindowSeggio::showMessageSessionNotStarted()
     ui->creaAssociazioneHTPV_button->setEnabled(true);
 }
 
+void MainWindowSeggio::showMessageForbidVote(std::string esitoLock)
+{
+    QString matricola = ui->lineEdit_matricolaElettore->text();
+    QMessageBox msgBox(this);
+    msgBox.setInformativeText("Non è possibile accordare il voto alla matricola " +
+                              matricola + ", motivo: " + QString::fromStdString(esitoLock));
+    msgBox.exec();
+}
+
 void MainWindowSeggio::on_rimuovi_button_clicked()
 {
     QString selectedAss = ui->associazioneRimovibili_comboBox->currentText();
@@ -506,8 +511,6 @@ void MainWindowSeggio::on_rimuovi_button_clicked()
     ui->associazioneRimovibili_comboBox->hide();
     ui->rimuovi_button->hide();
     ui->annullaRimozione_button->hide();
-
-
 
 }
 
@@ -542,8 +545,6 @@ void MainWindowSeggio::on_schedaSuccessiva_button_clicked()
 
 }
 
-
-
 void MainWindowSeggio::on_sostituisci_button_clicked()
 {
     QString strHTDaDisattivare = ui->token_attivi_comboBox->currentText();
@@ -555,7 +556,9 @@ void MainWindowSeggio::on_sostituisci_button_clicked()
     }
     else{
         //TODO aggiungere label in cui visualizzare il messaggio di errore
-
+        QMessageBox msgBox(this);
+        msgBox.setInformativeText("Non è possibile disattivare il token selezionato, perché attualmente impegnato in una associazione");
+        msgBox.exec();
     }
 
 }
@@ -590,6 +593,7 @@ void MainWindowSeggio::on_pv1_button_clicked()
 {
     //libera postazione 1
     emit confirmVotazioneCompleta(1);
+    ui->liberaPValert1_label->hide();
 
 }
 
@@ -597,10 +601,26 @@ void MainWindowSeggio::on_pv2_button_clicked()
 {
     //libera postazione 2
     emit confirmVotazioneCompleta(2);
+    ui->liberaPValert2_label->hide();
 }
 
 void MainWindowSeggio::on_pv3_button_clicked()
 {
     //libera postazione 3
     emit confirmVotazioneCompleta(3);
+    ui->liberaPValert3_label->hide();
+}
+
+void MainWindowSeggio::on_pushButton_letVote_clicked()
+{
+    QString matricola = ui->lineEdit_matricolaElettore->text();
+    QRegExp re("\\d*");  // a digit (\d), zero or more times (*)
+    if (re.exactMatch(matricola)){
+        emit wantVote(matricola.toUInt());
+    }
+    else {
+        QMessageBox msgBox(this);
+        msgBox.setInformativeText("Matricola inserita non valida. La matricola deve essere numerica");
+        msgBox.exec();
+    }
 }

@@ -8,7 +8,7 @@
 #include <string>
 
 #include "seggio.h"
-#include "ssl_utils.h"
+
 
 using namespace std;
 class Seggio;
@@ -38,7 +38,7 @@ private:
     void verify_ServerCert();
 
 
-    //int myssl_getFile();
+
     void sendString_SSL(SSL *ssl, string s);
     int receiveString_SSL(SSL *ssl, string &s);
 public:
@@ -49,7 +49,7 @@ public:
     SSL* connectTo(const char* hostIP/*hostname*/);
 
     //richieste per le Postazioni di Voto
-    bool querySetAssociation(unsigned int idHT);
+    bool querySetAssociation(unsigned int idHT,unsigned int ruolo);
     int queryPullPVState();
     bool queryRemoveAssociation();
     bool queryFreePV();
@@ -57,6 +57,7 @@ public:
     //richieste per l'Urna
     bool queryAttivazioneSeggio(string sessionKey);
     bool queryRisultatiVoto();
+    uint queryTryVote(uint matricola,uint &ruolo);
 
     //utility per far terminare la funzione di esecuzione del thread server del seggio
     void stopLocalServer();
@@ -68,10 +69,9 @@ public:
         //infoSessione, //seggio
         risultatiVoto  = 4, //seggio
         //invioSchedeCompilate = 5//, //postazionevoto
-        //scrutinio, //responsabile procedimento
-        //autenticazioneTecnico, //sistema tecnico
-        //autenticazioneRP, //responsabile procedimento
-
+        //scrutinio = 6, //responsabile procedimento
+        //autenticazioneRP = 7, //responsabile procedimento
+        tryVoteElettore = 8
     };
 
 };

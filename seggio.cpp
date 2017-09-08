@@ -1,5 +1,3 @@
-
-
 #include <iostream>
 #include <thread>
 #include <mutex>
@@ -19,17 +17,17 @@ using namespace std;
 
 Seggio::Seggio(QObject *parent):
     QThread(parent){
+    ipUrna = "192.168.19.130";
+    //    idProceduraVoto = 1;
+    //    dataAperturaSessione.tm_mday = 15;
+    //    dataAperturaSessione.tm_mon = 6;
+    //    dataAperturaSessione.tm_year = 2017;
+    //    dataAperturaSessione.tm_hour = 9;
 
-//    idProceduraVoto = 1;
-//    dataAperturaSessione.tm_mday = 15;
-//    dataAperturaSessione.tm_mon = 6;
-//    dataAperturaSessione.tm_year = 2017;
-//    dataAperturaSessione.tm_hour = 9;
-
-//    dataChiusuraSessione.tm_mday = 15;
-//    dataChiusuraSessione.tm_mon = 6;
-//    dataChiusuraSessione.tm_year = 2017;
-//    dataChiusuraSessione.tm_hour = 17;
+    //    dataChiusuraSessione.tm_mday = 15;
+    //    dataChiusuraSessione.tm_mon = 6;
+    //    dataChiusuraSessione.tm_year = 2017;
+    //    dataChiusuraSessione.tm_hour = 17;
 
 
     //solo per test, gli ht attivi per un certo seggio saranno impostati all'atto della creazione del seggio
@@ -48,10 +46,10 @@ Seggio::Seggio(QObject *parent):
         statoPV[i]=0;
     }
 
-//    for(unsigned int i = 0; i < NUM_HT_ATTIVI; i++){
-//        //il primo HT del vettore non è quello con id "1", ma quello con id memorizzato nella prima posizione del vettore idHTAttivi
-//        busyHT[i]=false;
-//    }
+    //    for(unsigned int i = 0; i < NUM_HT_ATTIVI; i++){
+    //        //il primo HT del vettore non è quello con id "1", ma quello con id memorizzato nella prima posizione del vettore idHTAttivi
+    //        busyHT[i]=false;
+    //    }
     nuovaAssociazione = NULL;
 
     //TODO calcolare usando come indirizzo base l'IP pubblico del seggio
@@ -135,7 +133,7 @@ QDateTime Seggio::getDtTermineProcedura() const
 void Seggio::setDtTermineProcedura(const string &value)
 {
     QString str = QString::fromStdString(value);
-    dtTermineProcedura = QDateTime::fromString(str,"dd/MM/yyyy hh:mm");
+    dtTermineProcedura = QDateTime::fromString(str,"dd-MM-yyyy hh:mm:ss");
 
 }
 
@@ -147,7 +145,7 @@ QDateTime Seggio::getDtInizioProcedura() const
 void Seggio::setDtInizioProcedura(const string &value)
 {
     QString str = QString::fromStdString(value);
-    dtInizioProcedura = QDateTime::fromString(str,"dd/MM/yyyy hh:mm");
+    dtInizioProcedura = QDateTime::fromString(str,"dd-MM-yyyy hh:mm:ss");
 }
 
 QDateTime Seggio::getDtChiusuraSessione() const
@@ -158,7 +156,7 @@ QDateTime Seggio::getDtChiusuraSessione() const
 void Seggio::setDtChiusuraSessione(const string &value)
 {
     QString str = QString::fromStdString(value);
-    dtChiusuraSessione = QDateTime::fromString(str,"dd/MM/yyyy hh:mm");
+    dtChiusuraSessione = QDateTime::fromString(str,"dd-MM-yyyy hh:mm");
 }
 
 QDateTime Seggio::getDtAperturaSessione() const
@@ -169,7 +167,7 @@ QDateTime Seggio::getDtAperturaSessione() const
 void Seggio::setDtAperturaSessione(const string &value)
 {
     QString str = QString::fromStdString(value);
-    dtAperturaSessione = QDateTime::fromString(str,"dd/MM/yyyy hh:mm");
+    dtAperturaSessione = QDateTime::fromString(str,"dd-MM-yyyy hh:mm");
 }
 
 //void Seggio::setstopServer(bool b) {
@@ -267,28 +265,33 @@ void Seggio::createAssociazioneHT_PV(){
     }
 }
 
-void Seggio::addAssociazioneHT_PV(){
+bool Seggio::addAssociazioneHT_PV(){
+    bool pushed = false;
     //aggiunge un'associazione alla lista e aggiorna i flag su PV e HT occupati
 
-    //back nel caso in cui non si riesca a fare il push della associazione, risolvere!!!
-    //
+    //bug nel caso in cui non si riesca a fare il push della associazione, risolvere!!!
+
     unsigned int idPV=this->nuovaAssociazione->getIdPV();
     unsigned int idHT=this->nuovaAssociazione->getIdHT();
+    unsigned int ruolo = this->nuovaAssociazione->getRuolo();
 
     //comunicare alla postazione di competenza la nuova associazione
     //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
-    if(pushAssociationToPV(idPV,idHT)){ //se la comunicazione dell'associazione alla PV è andata a buon fine
+    if(pushAssociationToPV(idPV,idHT, ruolo)){ //se la comunicazione dell'associazione alla PV è andata a buon fine
         //aggiungiamo la nuova associazione alla lista delle associazioni correnti
+        pushed = true;
         this->listAssociazioni.push_back(*this->nuovaAssociazione);
 
         //settiamo ad occupati ht e pv
         this->setBusyHT_PV();
+        //liberiamo la memoria della nuova associazione, nel caso in cui sia stata aggiunta alla lista delle associazioni ne è stata creata una copia nel vettore
+        delete this->nuovaAssociazione;
+        //resettiamo il puntatore membro di classe
+        this->nuovaAssociazione = NULL;
     }
 
-    //liberiamo la memoria della nuova associazione, nel caso in cui sia stata aggiunta alla lista delle associazioni ne è stata creata una copia nel vettore
-    delete this->nuovaAssociazione;
-    //resettiamo il puntatore membro di classe
-    this->nuovaAssociazione = NULL;
+    return pushed;
+
 }
 
 void Seggio::eliminaNuovaAssociazione(){
@@ -441,6 +444,48 @@ void Seggio::completaOperazioneVoto(uint idPV)
     else{
         cout << "Seggio: Unable to remove association from PV" << endl;
     }
+}
+
+void Seggio::tryVote(uint matricola)
+{
+    SSLClient * pv_client = new SSLClient(this);
+
+    if(pv_client->connectTo(ipUrna)!=nullptr){
+        uint ruolo;
+        uint esito = pv_client->queryTryVote(matricola,ruolo);
+        if(esito == esitoLock::locked){
+            nuovaAssociazione->setRuolo(ruolo);
+            emit allowVote();
+            //chiamo la funzione che aggiunge l'associazione alla lista delle associazione attuali e invia i dati alla postazione di voto
+            if(addAssociazioneHT_PV()){
+                emit allowVote();
+            }
+            else{
+                uint idPV = nuovaAssociazione->getIdPV();
+                setPVstate(idPV,statiPV::non_raggiungibile);
+                emit errorPV(idPV);
+            }
+        }
+        else{
+            switch(esito){
+            case esitoLock::alredyLocked:
+                emit forbidVote("sta già votando");
+                break;
+            case esitoLock::alredyVoted:
+                emit forbidVote("ha già votato");
+                break;
+            case esitoLock::notExist:
+                emit forbidVote("non presente nell'anagrafica");
+                break;
+            case esitoLock::errorLocking:
+                emit forbidVote("prenotazione di votazione non riuscita, riprovare");
+                break;
+            }
+
+        }
+    }
+
+    delete pv_client;
 }
 
 
@@ -686,7 +731,7 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
     return address_printable;
 }
 
-bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT){
+bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo){
 
 
     const char* ip_pv = this->IP_PV[idPV-1];
@@ -695,7 +740,7 @@ bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT){
     SSLClient *seggio_client = new SSLClient(this);
     if(seggio_client->connectTo(ip_pv)!= nullptr){
         //richiede il settaggio della associazione alla postazione di voto a cui il client del seggio si è connesso
-        res = seggio_client->querySetAssociation(idHT);
+        res = seggio_client->querySetAssociation(idHT,ruolo);
     }
     else{
 
@@ -776,16 +821,16 @@ void Seggio::aggiornaPVs(){
 void Seggio::validatePassKey(QString pass)
 {
     //TODO contattare il dbms degli accessi per controllare se la password è esatta
-//    if(pass == "qwerty"){
-//        cout << "Seggio: passKey corretta" << endl;
-//        emit validPass();
-//    }
-//    else {
-//        emit wrongPass();
-//    }
+    //    if(pass == "qwerty"){
+    //        cout << "Seggio: passKey corretta" << endl;
+    //        emit validPass();
+    //    }
+    //    else {
+    //        emit wrongPass();
+    //    }
     //contatto l'urna per validare la password
     // 11A47EC4465DD95FCD393075E7D3C4EB
-    const char * ipUrna = "192.168.19.129";
+
 
     SSLClient * pv_client = new SSLClient(this);
 
