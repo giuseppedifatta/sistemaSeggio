@@ -65,6 +65,12 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 
     qRegisterMetaType <std::string> ("std::string");
     QObject::connect(seggio,SIGNAL(forbidVote(std::string)),this,SLOT(showMessageForbidVote(std::string)),Qt::QueuedConnection);
+
+    QObject::connect(this,SIGNAL(needMatricolaInfo(uint)),seggio,SLOT(matricolaState(uint)),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(matricolaStateReceived(QString)),SLOT(showInfoMatricola(QString)),Qt::QueuedConnection);
+
+
+    QObject::connect(seggio,SIGNAL(urnaNonRaggiungibile()),this,SLOT(showErrorUrnaUnreachable()),Qt::QueuedConnection);
 }
 MainWindowSeggio::~MainWindowSeggio()
 {
@@ -365,6 +371,10 @@ void MainWindowSeggio::doLogout(){
 void MainWindowSeggio::showErrorLogout(){
     // implementare messaggio popup a schermo che avvisa di aspettare la fine delle operazioni di voto in corso
     cout << "View: logout non consentito, delle operazioni di voto sono in corso" << endl;
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Error");
+    msgBox.setInformativeText("Impossibile effettuare il logout, attendere la conclusione delle operazioni di voto in corso");
+    msgBox.exec();
 }
 
 void MainWindowSeggio::on_annullaAssociazione_button_clicked()
@@ -392,13 +402,13 @@ void MainWindowSeggio::showNewAssociation(unsigned int ht, unsigned int idPV){
     ui->annullaAssociazione_button->show();
     ui->associazioneDisponibile_label->show();
     ui->confermaAssociazione_button->show();
-    ui->lineEdit_matricolaElettore->show();
+    //ui->lineEdit_matricolaElettore->show();
     ui->pushButton_letVote->show();
 }
 
 void MainWindowSeggio::on_confermaAssociazione_button_clicked()
 {
-
+    on_pushButton_letVote_clicked();
 
 //    //completare associazione HT-PV
 //    emit confirmAssociation();
@@ -415,11 +425,11 @@ void MainWindowSeggio::on_confermaAssociazione_button_clicked()
 void MainWindowSeggio::hideCreaAssociazione(){
     ui->gestisci_HT_button->setEnabled(true);
 
-    ui->lineEdit_matricolaElettore->hide();
+
     ui->annullaAssociazione_button->hide();
     ui->associazioneDisponibile_label->hide();
     ui->confermaAssociazione_button->hide();
-    ui->lineEdit_matricolaElettore->hide();
+    //ui->lineEdit_matricolaElettore->hide();
     ui->pushButton_letVote->hide();
 }
 
@@ -483,6 +493,22 @@ void MainWindowSeggio::showMessageForbidVote(std::string esitoLock)
     QMessageBox msgBox(this);
     msgBox.setInformativeText("Non è possibile accordare il voto alla matricola " +
                               matricola + ", motivo: " + QString::fromStdString(esitoLock));
+    msgBox.exec();
+}
+
+void MainWindowSeggio::showInfoMatricola(QString info)
+{
+    QString matricola = ui->lineEdit_matricolaElettore->text();
+    QMessageBox msgBox(this);
+    msgBox.setInformativeText("Matricola " + matricola + ": " + info);
+    msgBox.exec();
+}
+
+void MainWindowSeggio::showErrorUrnaUnreachable()
+{
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Error");
+    msgBox.setInformativeText("Impossibile comunicare con l'urna, verificare la connessione");
     msgBox.exec();
 }
 
@@ -623,4 +649,19 @@ void MainWindowSeggio::on_pushButton_letVote_clicked()
         msgBox.setInformativeText("Matricola inserita non valida. La matricola deve essere numerica");
         msgBox.exec();
     }
+}
+
+void MainWindowSeggio::on_pushButton_infoMatricola_clicked()
+{
+    QString matricola = ui->lineEdit_matricolaElettore->text();
+    QRegExp re("\\d*");  // a digit (\d), zero or more times (*)
+    if (re.exactMatch(matricola)){
+        emit needMatricolaInfo(matricola.toUInt());
+    }
+    else {
+        QMessageBox msgBox(this);
+        msgBox.setInformativeText("Matricola inserita non valida. La matricola deve essere numerica");
+        msgBox.exec();
+    }
+
 }

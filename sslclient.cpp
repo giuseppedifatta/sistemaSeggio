@@ -468,11 +468,12 @@ bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante 
     cout << "ClientSeggio: Id Hardware token da associare alla PV: " << idHT << endl;
     seggioChiamante->mutex_stdout.unlock();
 
+    //TODO invio authenticationUsernameHT
 
     //invio ruoloVotante
     this->sendString_SSL(ssl,to_string(ruoloVotante));
 
-    //TODO invio authenticationUsernameHT
+    //TODO invio matricola votante
 
     //ricevi esito dell'operazione
     // 0 -> success
@@ -826,6 +827,45 @@ uint SSLClient::queryTryVote(uint matricola, uint &ruolo)
     }
 
     return esito;
+}
+
+bool SSLClient::queryInfoMatricola(uint matricola, string &nome, string &cognome, uint &statoVoto)
+{
+    //richiesta servizio
+    int serviceCod = serviziUrna::infoMatricola;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
+
+    //invio matricola
+    sendString_SSL(ssl,to_string(matricola));
+
+    bool matricolaPresente = false;
+    //ricevo informazione sulla presenza o assenza della matricola
+    string exist;
+    receiveString_SSL(ssl,exist);
+    if(atoi(exist.c_str()) == seggioChiamante->matricolaExist::si){
+        matricolaPresente = true;
+
+        //ricevo le informazioni relative alla matricola:stato, nome, cognome
+        string s;
+        receiveString_SSL(ssl,s);
+        statoVoto = atoi(s.c_str());
+
+        receiveString_SSL(ssl,nome);
+
+        receiveString_SSL(ssl,cognome);
+    }
+
+    //se la matricola non è presente il valore è rimasto a falso
+    return matricolaPresente;
+
+
 }
 
 void SSLClient::sendString_SSL(SSL* ssl, string s) {

@@ -484,7 +484,9 @@ void Seggio::tryVote(uint matricola)
 
         }
     }
-
+    else{
+        emit urnaNonRaggiungibile();
+    }
     delete pv_client;
 }
 
@@ -843,6 +845,43 @@ void Seggio::validatePassKey(QString pass)
         else{
             emit wrongPass();
         }
+    }
+    else{
+        emit urnaNonRaggiungibile();
+    }
+    delete pv_client;
+}
+
+void Seggio::matricolaState(uint matricola)
+{
+    SSLClient * pv_client = new SSLClient(this);
+
+    if(pv_client->connectTo(ipUrna)!=nullptr){
+        string nome, cognome;
+        uint stato;
+        if(pv_client->queryInfoMatricola(matricola,nome, cognome,stato)){
+            string s;
+            switch(stato){
+            case statoVoto::non_espresso:
+                s = "non ha votato";
+                break;
+            case statoVoto::votando:
+                s = "sta votando";
+                break;
+            case statoVoto::espresso:
+                s = "ha votato";
+
+            }
+
+            string info = nome + cognome + ", "+ s;
+            emit matricolaStateReceived(QString::fromStdString(info));
+        }
+        else{
+            emit matricolaStateReceived("assente");
+        }
+    }
+    else{
+        emit urnaNonRaggiungibile();
     }
 
     delete pv_client;

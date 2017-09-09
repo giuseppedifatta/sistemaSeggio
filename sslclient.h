@@ -58,6 +58,7 @@ public:
     bool queryAttivazioneSeggio(string sessionKey);
     bool queryRisultatiVoto();
     uint queryTryVote(uint matricola,uint &ruolo);
+    bool queryInfoMatricola(uint matricola, string &nome, string &cognome, uint &statoVoto);
 
     //utility per far terminare la funzione di esecuzione del thread server del seggio
     void stopLocalServer();
@@ -71,7 +72,8 @@ public:
         //invioSchedeCompilate = 5//, //postazionevoto
         //scrutinio = 6, //responsabile procedimento
         //autenticazioneRP = 7, //responsabile procedimento
-        tryVoteElettore = 8
+        tryVoteElettore = 8,
+        infoMatricola = 9
     };
 
 };

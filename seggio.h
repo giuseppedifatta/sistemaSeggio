@@ -64,13 +64,13 @@ signals:
     void allowVote();
     void forbidVote(std::string);
     void errorPV(uint idPV);
+    void matricolaStateReceived(QString infoMatricola);
+    void urnaNonRaggiungibile();
 
 public slots:
     void createAssociazioneHT_PV();
     void eliminaNuovaAssociazione();
-
-    void aggiornaPVs();
-    void validatePassKey(QString pass);
+    void aggiornaPVs();    
     void tryLogout();
     void calculateRemovableAssociations();
 
@@ -78,7 +78,11 @@ public slots:
 
     void removeAssociazioneHT_PV(unsigned int idPV);
     void completaOperazioneVoto(uint idPV);
+
+    //funzioni per richiedere servizi all'urna
     void tryVote(uint matricola);
+    void validatePassKey(QString pass);
+    void matricolaState(uint matricola);
 
     //void liberaHT_PV(unsigned int idPV);
     //bool feedbackFreeBusy(unsigned int idPV);
@@ -138,6 +142,15 @@ public:
             alredyVoted,
             notExist,
             errorLocking
+        };
+    enum matricolaExist{
+            si,
+            no
+        };
+    enum statoVoto{
+            non_espresso,
+            votando,
+            espresso
         };
     std::mutex mutex_stati;
     std::mutex mutex_stdout;

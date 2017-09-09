@@ -30,6 +30,7 @@ signals:
     void associationToRemove(uint pvToFree);
     void confirmVotazioneCompleta(uint pvToFree);
     void wantVote(uint matricola);
+    void needMatricolaInfo(uint matricola);
 public slots:
     //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
     void updateCreaAssociazioneButton(bool b);
@@ -44,6 +45,8 @@ public slots:
     void showMessageSessioneEnded();
     void showMessageSessionNotStarted();
     void showMessageForbidVote(std::string esitoLock);
+    void showInfoMatricola(QString info);
+    void showErrorUrnaUnreachable();
 
     void hideCreaAssociazione();
 private:
@@ -111,6 +114,7 @@ private slots:
     void on_pv2_button_clicked();
     void on_pv3_button_clicked();
     void on_pushButton_letVote_clicked();
+    void on_pushButton_infoMatricola_clicked();
 };
 
 #endif // MAINWINDOWSEGGIO_H
