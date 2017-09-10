@@ -12,6 +12,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 {
 
     this->logged = false;
+    emit seggioLogged(false);
     ui->setupUi(this);
     ui->stackedWidget->setCurrentIndex(loginSeggio);
 
@@ -42,7 +43,8 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     QObject::connect(this,SIGNAL(associationToRemove(uint)),seggio,SLOT(removeAssociazioneHT_PV(uint)),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(stateChanged(uint,uint)),this,SLOT(updatePVButtons(uint,uint)),Qt::QueuedConnection);//parametri: idPV, statoPV
     QObject::connect(this,SIGNAL(needNewAssociation()),seggio,SLOT(createAssociazioneHT_PV()),Qt::QueuedConnection);
-    QObject::connect(this,SIGNAL(needStatePVs()),seggio,SLOT(aggiornaPVs()),Qt::QueuedConnection);
+    //QObject::connect(this,SIGNAL(needStatePVs()),seggio,SLOT(aggiornaPVs()),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(seggioLogged(bool)),seggio,SLOT(setLogged(bool)),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(associationReady(uint,uint)),this,SLOT(showNewAssociation(uint,uint)),Qt::QueuedConnection);//parametri:idHT, idPV
     //QObject::connect(this,SIGNAL(confirmAssociation()),seggio,SLOT(addAssociazioneHT_PV()),Qt::QueuedConnection);
     QObject::connect(this,SIGNAL(abortAssociation()),seggio,SLOT(eliminaNuovaAssociazione()),Qt::QueuedConnection);
@@ -145,6 +147,7 @@ void MainWindowSeggio::on_accediGestioneSeggio_button_clicked(){
 void MainWindowSeggio::initSeggio(){
 
     this->logged = true;
+    emit seggioLogged(true);
 
     //inizializzazione interfaccia gestioneSeggio
     this->initGestioneSeggio();
@@ -163,7 +166,7 @@ void MainWindowSeggio::initSeggio(){
     seggio->start();
 
     //il segnale segnala la necessità di aggiornamento dello stato delle postazioni di voto
-    emit needStatePVs();
+    //emit needStatePVs();
 
 
 }
@@ -186,6 +189,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
     cout << "View: Aggiorno lo stato della postazione " << idPVtoUpdate << endl;
 
     switch(statoPV){
+
     case seggio->statiPV::attesa_attivazione :
         messaggioPV = "da attivare";
         break;
@@ -331,16 +335,21 @@ void MainWindowSeggio::on_gestisci_HT_button_clicked()
 {
     //sistemare rispetto al modello Model-View
     ui->token_attivi_comboBox->clear();
+
+    //PATTERN MVC ERROR
     array <unsigned int, 4> idHtAttivi = seggio->getArrayIdHTAttivi();
     seggio->mutex_stdout.lock();
     cout << "View: numero ht attivi: "  << idHtAttivi.size() << endl;
     seggio->mutex_stdout.unlock();
     for (unsigned int i  = 0; i < idHtAttivi.size();i++){
+        //PATTERN MVC ERROR
         if(!(seggio->isBusyHT(idHtAttivi[i]))){
             QString t = QString::number(idHtAttivi[i]);
             ui->token_attivi_comboBox->addItem(t);
         }
     }
+
+    //PATTERN MVC ERROR
     QString s = QString::number(seggio->getIdHTRiserva());
     ui->id_token_attivabile_label->setText(s);
 
@@ -363,7 +372,8 @@ void MainWindowSeggio::on_logout2_button_clicked()
 }
 
 void MainWindowSeggio::doLogout(){
-    this->logged=false;
+    this->logged = false;
+    emit seggioLogged(false);
     ui->stackedWidget->setCurrentIndex(loginSeggio);
 
 }
@@ -446,8 +456,8 @@ void MainWindowSeggio::showRemovableAssociations(vector<Associazione> associazio
 
     //vector < Associazione > associazioniCorrenti = seggio->getListAssociazioni();
     for(unsigned i=0; i< associazioniRimovibili.size(); ++i){
-        unsigned int idPV = associazioniRimovibili[i].getIdPV();
-        unsigned int idHT = associazioniRimovibili[i].getIdHT();
+        unsigned int idPV = associazioniRimovibili.at(i).getIdPV();
+        unsigned int idHT = associazioniRimovibili.at(i).getIdHT();
 
         //creiamo l'item per l'associazione che risulta eliminabile
         QString str = "HT ";
@@ -549,6 +559,7 @@ void MainWindowSeggio::on_annullaRimozione_button_clicked()
     ui->rimuovi_button->hide();
     ui->annullaRimozione_button->hide();
 
+    //PATTERN MVC ERROR chiamata funzione del seggio
     if(!(seggio->anyAssociazioneEliminabile())){
         ui->rimuoviAssociazione_button->setEnabled(false);
     }
@@ -576,12 +587,14 @@ void MainWindowSeggio::on_sostituisci_button_clicked()
     QString strHTDaDisattivare = ui->token_attivi_comboBox->currentText();
     //attiva il token di riserva e disabilita il token selezionato
     unsigned int idHTDaDisattivare = strHTDaDisattivare.toInt();
+
+    //PATTERN MVC ERROR
     if(!seggio->isBusyHT(idHTDaDisattivare)){
         seggio->disattivaHT(idHTDaDisattivare);
         ui->stackedWidget->setCurrentIndex(gestioneSeggio);
     }
     else{
-        //TODO aggiungere label in cui visualizzare il messaggio di errore
+        //messaggio di errore popup
         QMessageBox msgBox(this);
         msgBox.setInformativeText("Non è possibile disattivare il token selezionato, perché attualmente impegnato in una associazione");
         msgBox.exec();
@@ -664,4 +677,15 @@ void MainWindowSeggio::on_pushButton_infoMatricola_clicked()
         msgBox.exec();
     }
 
+}
+
+void MainWindowSeggio::on_lineEdit_matricolaElettore_textChanged(const QString &arg1)
+{
+    if(arg1 == ""){
+        ui->pushButton_infoMatricola->setEnabled(false);
+    }
+    else{
+        ui->pushButton_infoMatricola->setEnabled(true);
+
+    }
 }

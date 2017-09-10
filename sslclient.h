@@ -49,7 +49,7 @@ public:
     SSL* connectTo(const char* hostIP/*hostname*/);
 
     //richieste per le Postazioni di Voto
-    bool querySetAssociation(unsigned int idHT,unsigned int ruolo);
+    bool querySetAssociation(unsigned int idHT, unsigned int ruolo, uint matricola);
     int queryPullPVState();
     bool queryRemoveAssociation();
     bool queryFreePV();

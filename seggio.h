@@ -16,6 +16,7 @@
 #include <thread>
 #include <string>
 #include <mutex>
+#include <chrono>
 #include "sslserver.h"
 #include "sslclient.h"
 #include "mainwindowseggio.h"
@@ -70,8 +71,9 @@ signals:
 public slots:
     void createAssociazioneHT_PV();
     void eliminaNuovaAssociazione();
-    void aggiornaPVs();    
+
     void tryLogout();
+    void setLogged(bool value);
     void calculateRemovableAssociations();
 
     //funzioni per richiedere servizi alle postazioni voto
@@ -188,9 +190,18 @@ public:
 private:
     void run();
 
+    //thread in ascolto degli aggiornamenti dalle postazioni di voto
     SSLServer * seggio_server;
     std::thread thread_server;
+    void runServerPV();
+
+    //thread che ogni tot di secondi esegue il pull degli stati delle postazioni di voto
+    SSLClient * pull_client;
+    std::thread thread_pull;
+    void aggiornaPVs();
+
     bool stopServer;
+    bool logged;
     const char * ipUrna;
     //questi due arrey tengono traccia delle postazioni di voto e degli hardware token attualmente impegnati in associazioni PV_HT
     std::array <bool,NUM_HT_ATTIVI> busyHT;
@@ -224,14 +235,14 @@ private:
 
     //funzioni a solo uso del seggio
     void setBusyHT_PV();
-    bool pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo);
+    bool pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo, uint matricola);
     void pullStatePV(unsigned int idPV);
     bool removeAssociationFromPV(unsigned int idPV);
     bool freePVpostVotazione(unsigned int idPV);
-    bool addAssociazioneHT_PV();
+    bool addAssociazioneHT_PV(uint matricola);
 
     const char * calcolaIP_PVbyID(unsigned int idPV);
-    void runServerPV();
+
 
     //allo stato attuale un seggio prevede una composizione di 3 postazioni di voto e 4 hardware token attivi
 

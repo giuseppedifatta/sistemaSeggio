@@ -30,7 +30,7 @@ public:
     SSLServer(Seggio * s);
     ~SSLServer();
     void ascoltoNuovoStatoPV();
-    void setStopServer(bool b);
+    void setStopServer(bool value);
 
     enum servizi {
         aggiornamentoPV

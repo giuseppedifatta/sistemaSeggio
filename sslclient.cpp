@@ -448,7 +448,7 @@ void SSLClient::stopLocalServer(/*const char* localhosthostname*/){
 
 }
 
-bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante /*,string authenticationUsernameHT*/){
+bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante, uint matricola /*,string authenticationUsernameHT*/){
     bool res = false;
     //invia codice del servizio richiesto al PV_Server
     //setAssociation : 0
@@ -473,7 +473,8 @@ bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante 
     //invio ruoloVotante
     this->sendString_SSL(ssl,to_string(ruoloVotante));
 
-    //TODO invio matricola votante
+    //invio matricola votante
+    this->sendString_SSL(ssl,to_string(matricola));
 
     //ricevi esito dell'operazione
     // 0 -> success

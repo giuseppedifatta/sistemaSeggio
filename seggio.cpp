@@ -80,8 +80,11 @@ void Seggio::run(){
 
     thread_server = std::thread(&Seggio::runServerPV, this);
 
-    thread_server.join();
+    logged = true;
+    thread_pull = std::thread(&Seggio::aggiornaPVs,this);
+    thread_pull.join();
 
+    thread_server.join();
     cout << "Seggio: thread server ha terminato, esco dalla mia run()" << endl;
 }
 
@@ -265,7 +268,7 @@ void Seggio::createAssociazioneHT_PV(){
     }
 }
 
-bool Seggio::addAssociazioneHT_PV(){
+bool Seggio::addAssociazioneHT_PV(uint matricola){
     bool pushed = false;
     //aggiunge un'associazione alla lista e aggiorna i flag su PV e HT occupati
 
@@ -274,10 +277,12 @@ bool Seggio::addAssociazioneHT_PV(){
     unsigned int idPV=this->nuovaAssociazione->getIdPV();
     unsigned int idHT=this->nuovaAssociazione->getIdHT();
     unsigned int ruolo = this->nuovaAssociazione->getRuolo();
+    nuovaAssociazione->setMatricola(matricola);
+
 
     //comunicare alla postazione di competenza la nuova associazione
     //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
-    if(pushAssociationToPV(idPV,idHT, ruolo)){ //se la comunicazione dell'associazione alla PV è andata a buon fine
+    if(pushAssociationToPV(idPV,idHT, ruolo,matricola)){ //se la comunicazione dell'associazione alla PV è andata a buon fine
         //aggiungiamo la nuova associazione alla lista delle associazioni correnti
         pushed = true;
         this->listAssociazioni.push_back(*this->nuovaAssociazione);
@@ -324,12 +329,12 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
     unsigned int currentPV = 0;
     unsigned int idHT = 0;
     for (unsigned int i = 0; this->listAssociazioni.size();i++){
-        currentPV = this->listAssociazioni[i].getIdPV();
+        currentPV = this->listAssociazioni.at(i).getIdPV();
 
         //trova l'associazione che corrisponde alla postazione di voto per cui rimuovere l'associazione
         if(currentPV==idPV){
             //salva l'id dell'hardware token da rendere libero
-            idHT = this->listAssociazioni[i].getIdHT();
+            idHT = this->listAssociazioni.at(i).getIdHT();
             //salva l'indice corrispondente per la successiva eliminazione
             indexAss = i;
             break; //interrompe l'esecuzione del for in cui è immediatemente contenuto
@@ -384,12 +389,12 @@ void Seggio::completaOperazioneVoto(uint idPV)
     unsigned int currentPV = 0;
     unsigned int idHT = 0;
     for (unsigned int i = 0; this->listAssociazioni.size();i++){
-        currentPV = this->listAssociazioni[i].getIdPV();
+        currentPV = this->listAssociazioni.at(i).getIdPV();
 
         //trova l'associazione che corrisponde alla postazione di voto da liberare
         if(currentPV==idPV){
             //salva l'id dell'hardware token da rendere libero
-            idHT = this->listAssociazioni[i].getIdHT();
+            idHT = this->listAssociazioni.at(i).getIdHT();
             //salva l'indice corrispondente per l'operazione di liberazione da fare dopo aver comunicato alla postazione di voto l'azione da intraprendere
             indexAss = i;
             break; //interrompe l'esecuzione del for in cui è immediatemente contenuto
@@ -439,7 +444,6 @@ void Seggio::completaOperazioneVoto(uint idPV)
         emit anyAssociationRemovable(this->anyAssociazioneEliminabile());
 
         //TODO comunicare al database con gli elettori attivi, che l'elettore associato alla postazione per cui si è liberata la postazione ha votato
-
     }
     else{
         cout << "Seggio: Unable to remove association from PV" << endl;
@@ -457,7 +461,7 @@ void Seggio::tryVote(uint matricola)
             nuovaAssociazione->setRuolo(ruolo);
             emit allowVote();
             //chiamo la funzione che aggiunge l'associazione alla lista delle associazione attuali e invia i dati alla postazione di voto
-            if(addAssociazioneHT_PV()){
+            if(addAssociazioneHT_PV(matricola)){
                 emit allowVote();
             }
             else{
@@ -528,7 +532,7 @@ bool Seggio::anyAssociazioneEliminabile(){
         unsigned int statoPV = stateInfoPV(idPV);
 
         cout << "Seggio: pv #" << idPV << ": stato " << statoPV << endl;
-        if(( statoPV == Seggio::statiPV::attesa_abilitazione) || ( statoPV == Seggio::statiPV::errore)){
+        if(( statoPV == attesa_abilitazione) || ( statoPV == errore) || ( statoPV == offline)){
             cout << "Seggio: trovata almeno una associazione eliminabile" << endl;
             return true;
         }
@@ -733,7 +737,7 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
     return address_printable;
 }
 
-bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo){
+bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo, uint matricola){
 
 
     const char* ip_pv = this->IP_PV[idPV-1];
@@ -742,7 +746,7 @@ bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned 
     SSLClient *seggio_client = new SSLClient(this);
     if(seggio_client->connectTo(ip_pv)!= nullptr){
         //richiede il settaggio della associazione alla postazione di voto a cui il client del seggio si è connesso
-        res = seggio_client->querySetAssociation(idHT,ruolo);
+        res = seggio_client->querySetAssociation(idHT,ruolo,matricola);
     }
     else{
 
@@ -815,9 +819,26 @@ void Seggio::pullStatePV(unsigned int idPV){
     //return res;
 }
 void Seggio::aggiornaPVs(){
-    for (unsigned int i = 1; i <= NUM_PV; i++){
-        this->pullStatePV(i);
+
+
+    //funzione eseguita da un thread
+
+    this->mutex_stdout.lock();
+    cout << "Seggio: avviato il thread che richiede periodicamente lo stato delle postazioni di voto" << endl;
+    this->mutex_stdout.unlock();
+
+    while(this->logged){
+        for (unsigned int i = 1; i <= NUM_PV; i++){
+            this->pullStatePV(i);
+        }
+
+        std::this_thread::sleep_for (std::chrono::seconds(10));
     }
+
+    this->mutex_stdout.lock();
+    cout << "Seggio: pullClient: exit!" << endl;
+    this->mutex_stdout.unlock();
+    return;
 }
 
 void Seggio::validatePassKey(QString pass)
@@ -873,7 +894,7 @@ void Seggio::matricolaState(uint matricola)
 
             }
 
-            string info = nome + cognome + ", "+ s;
+            string info = nome + " " + cognome + ", "+ s;
             emit matricolaStateReceived(QString::fromStdString(info));
         }
         else{
@@ -924,6 +945,11 @@ void Seggio::tryLogout(){
     emit grantLogout();
 }
 
+void Seggio::setLogged(bool value)
+{
+    logged = value;
+}
+
 void Seggio::calculateRemovableAssociations()
 {
     //così mi sa che non funziona
@@ -933,16 +959,16 @@ void Seggio::calculateRemovableAssociations()
     for(unsigned i=0; i < listAssociazioni.size(); ++i){
         //cout << i << endl;
         //ottengo id postazione di voto dell'associazione corrente
-        unsigned int idPV = listAssociazioni[i].getIdPV();
+        unsigned int idPV = listAssociazioni.at(i).getIdPV();
         //ottengo lo stato della postazione di voto relativa
         unsigned int statoPV = this->stateInfoPV(idPV);
 
 
-        if(( statoPV == Seggio::attesa_abilitazione) || ( statoPV == Seggio::errore)){
+        if(( statoPV == attesa_abilitazione) || ( statoPV == errore)||( statoPV == offline)){
             //se la postazione di voto ha uno stato che consente la rimozione dell'associazione
             //aggiungo l'associazione al vettore delle associazioni rimovibili
             cout << "associazione rimovibile alla PV: "<< idPV << endl;
-            associazioniRimovibili.push_back(listAssociazioni[i]);
+            associazioniRimovibili.push_back(listAssociazioni.at(i));
 
         }
     }

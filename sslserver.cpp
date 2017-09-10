@@ -721,8 +721,8 @@ int SSLServer::myssl_fwrite(SSL *ssl, const char * infile) {
     return 0;
 }
 
-void SSLServer::setStopServer(bool b){
+void SSLServer::setStopServer(bool value){
 
     //proteggere con un mutex
-    this->stopServer=b;
+    this->stopServer=value;
 }

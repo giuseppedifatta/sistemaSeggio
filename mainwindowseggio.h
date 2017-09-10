@@ -31,6 +31,7 @@ signals:
     void confirmVotazioneCompleta(uint pvToFree);
     void wantVote(uint matricola);
     void needMatricolaInfo(uint matricola);
+    void seggioLogged(bool);
 public slots:
     //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
     void updateCreaAssociazioneButton(bool b);
@@ -115,6 +116,7 @@ private slots:
     void on_pv3_button_clicked();
     void on_pushButton_letVote_clicked();
     void on_pushButton_infoMatricola_clicked();
+    void on_lineEdit_matricolaElettore_textChanged(const QString &arg1);
 };
 
 #endif // MAINWINDOWSEGGIO_H
