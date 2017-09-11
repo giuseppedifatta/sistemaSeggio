@@ -32,6 +32,8 @@ signals:
     void wantVote(uint matricola);
     void needMatricolaInfo(uint matricola);
     void seggioLogged(bool);
+    void tryRemoveStateMatricola(uint matricola);
+
 public slots:
     //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
     void updateCreaAssociazioneButton(bool b);
@@ -48,8 +50,9 @@ public slots:
     void showMessageForbidVote(std::string esitoLock);
     void showInfoMatricola(QString info);
     void showErrorUrnaUnreachable();
-
+    void showErrorAbortVoting(uint matricola);
     void hideCreaAssociazione();
+    void showMessageAssociationRemoved();
 private:
     Ui::MainWindowSeggio *ui;
     Seggio *seggio;

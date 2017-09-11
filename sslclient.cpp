@@ -869,6 +869,35 @@ bool SSLClient::queryInfoMatricola(uint matricola, string &nome, string &cognome
 
 }
 
+bool SSLClient::queryResetMatricolaState(uint matricola)
+{
+    //richiesta servizio
+    int serviceCod = serviziUrna::resetMatricolaStatoVoto;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
+
+    //invio matricola da resettare
+    sendString_SSL(ssl, to_string(matricola));
+
+    //ricevi esito operazione
+    string s;
+    receiveString_SSL(ssl, s);
+    int success = atoi(s.c_str());
+    if(success == 0){
+        return true;
+    }
+    else
+        return false;
+
+
+}
+
 void SSLClient::sendString_SSL(SSL* ssl, string s) {
     int length = strlen(s.c_str());
     string length_str = std::to_string(length);

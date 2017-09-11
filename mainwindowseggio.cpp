@@ -70,8 +70,9 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 
     QObject::connect(this,SIGNAL(needMatricolaInfo(uint)),seggio,SLOT(matricolaState(uint)),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(matricolaStateReceived(QString)),SLOT(showInfoMatricola(QString)),Qt::QueuedConnection);
-
-
+    QObject::connect(seggio,SIGNAL(errorAbortVoting(uint)),this,SLOT(showErrorAbortVoting(uint)),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(tryRemoveStateMatricola(uint)),seggio,SLOT(abortVoting(uint)),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(successAbortVoting()),this,SLOT(showMessageAssociationRemoved()),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(urnaNonRaggiungibile()),this,SLOT(showErrorUrnaUnreachable()),Qt::QueuedConnection);
 }
 MainWindowSeggio::~MainWindowSeggio()
@@ -181,10 +182,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
     //e la conseguente abilitazione o disabilitazione di bottoni, ovvero attivazione o
     //disattivazione di funzionalità relazionate allo stato delle postazioni di voto
 
-
     QString messaggioPV;
-
-
 
     cout << "View: Aggiorno lo stato della postazione " << idPVtoUpdate << endl;
 
@@ -443,6 +441,14 @@ void MainWindowSeggio::hideCreaAssociazione(){
     ui->pushButton_letVote->hide();
 }
 
+void MainWindowSeggio::showMessageAssociationRemoved()
+{
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Success");
+    msgBox.setInformativeText("Rimozione associazione completata con successo.");
+    msgBox.exec();
+}
+
 void MainWindowSeggio::on_rimuoviAssociazione_button_clicked()
 {
     ui->rimuoviAssociazione_button->setEnabled(false);
@@ -520,6 +526,15 @@ void MainWindowSeggio::showErrorUrnaUnreachable()
     msgBox.setWindowTitle("Error");
     msgBox.setInformativeText("Impossibile comunicare con l'urna, verificare la connessione");
     msgBox.exec();
+}
+
+void MainWindowSeggio::showErrorAbortVoting(uint matricola)
+{
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Error");
+    msgBox.setInformativeText("Non è stato possibile comunicare con l'urna e completare la rimozione dell'associazione. Verificare la connessione.");
+    msgBox.exec();
+    emit tryRemoveStateMatricola(matricola);
 }
 
 void MainWindowSeggio::on_rimuovi_button_clicked()

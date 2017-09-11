@@ -299,6 +299,8 @@ bool Seggio::addAssociazioneHT_PV(uint matricola){
 
 }
 
+
+
 void Seggio::eliminaNuovaAssociazione(){
     delete this->nuovaAssociazione;
     this->nuovaAssociazione = NULL;
@@ -345,8 +347,6 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
     //comunica alla postazione voto la rimozione dell'associazione
     if(removeAssociationFromPV(idPV)){
         //se la rimozione sulla postazione è andata a buon fine, prosegui con l'aggiornamento sul seggio
-
-
         this->busyPV[currentPV-1]=false;
 
         this->mutex_stdout.lock();
@@ -362,7 +362,11 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
                 break;
             }
         }
+        uint matricolaToReset;
+        matricolaToReset = this->listAssociazioni.at(indexAss).getMatricola();
 
+        //comunica all'urna l'annullamento dell'operazione di voto per la matricola estratta dall'associazione da eliminare
+        abortVoting(matricolaToReset);
 
         //elimino dall'heap vector l'istanza dell'associazione rimossa
         //l'eliminazione dal vettore di un elemento libera anche la memoria
@@ -907,7 +911,25 @@ void Seggio::matricolaState(uint matricola)
 
     delete pv_client;
 }
+void Seggio::abortVoting(uint matricola)
+{
+    SSLClient * pv_client = new SSLClient(this);
 
+    if(pv_client->connectTo(ipUrna)!=nullptr){
+        if (pv_client->queryResetMatricolaState(matricola)){
+            emit successAbortVoting();
+        }
+        else{
+            emit errorAbortVoting(matricola);
+        }
+
+    }
+    else{
+        emit errorAbortVoting(matricola);
+    }
+
+    delete pv_client;
+}
 void Seggio::tryLogout(){
     bool allowLogout = true;
     unsigned int statoPV;

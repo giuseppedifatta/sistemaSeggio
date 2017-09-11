@@ -67,7 +67,8 @@ signals:
     void errorPV(uint idPV);
     void matricolaStateReceived(QString infoMatricola);
     void urnaNonRaggiungibile();
-
+    void errorAbortVoting(uint matricola);
+    void successAbortVoting();
 public slots:
     void createAssociazioneHT_PV();
     void eliminaNuovaAssociazione();
@@ -85,6 +86,7 @@ public slots:
     void tryVote(uint matricola);
     void validatePassKey(QString pass);
     void matricolaState(uint matricola);
+    void abortVoting(uint matricola);
 
     //void liberaHT_PV(unsigned int idPV);
     //bool feedbackFreeBusy(unsigned int idPV);
@@ -158,7 +160,6 @@ public:
     std::mutex mutex_stdout;
 
     //questa funzione verrà chiamata dal thread che si mette in ascolto di aggiornamenti delle postazioni di voto
-
     void stopServerPV();
 
     QDateTime getDtAperturaSessione() const;
@@ -233,13 +234,16 @@ private:
     std::vector< Associazione > listAssociazioni;
     Associazione *nuovaAssociazione;
 
-    //funzioni a solo uso del seggio
+    //funzioni a solo uso del seggio, verso PV
     void setBusyHT_PV();
     bool pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo, uint matricola);
     void pullStatePV(unsigned int idPV);
     bool removeAssociationFromPV(unsigned int idPV);
     bool freePVpostVotazione(unsigned int idPV);
     bool addAssociazioneHT_PV(uint matricola);
+
+
+
 
     const char * calcolaIP_PVbyID(unsigned int idPV);
 
