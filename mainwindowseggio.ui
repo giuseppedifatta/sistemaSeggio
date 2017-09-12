@@ -173,7 +173,7 @@ border: 7px solid rgb(85,255,0);
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>62</height>
+              <height>64</height>
              </size>
             </property>
             <property name="maximumSize">
@@ -201,7 +201,7 @@ border: 7px solid rgb(85,255,0);
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>62</height>
+              <height>64</height>
              </size>
             </property>
             <property name="maximumSize">
@@ -320,8 +320,18 @@ border: 7px solid rgb(85,255,0);
       <widget class="QWidget" name="gestioneSeggio_page">
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <property name="spacing">
-         <number>30</number>
+         <number>6</number>
         </property>
+        <item>
+         <widget class="QLabel" name="label_descrizioneProcedura">
+          <property name="text">
+           <string>DESCRIZIONE PROCEDURA</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_5">
           <property name="sizeConstraint">
@@ -504,7 +514,7 @@ border: 7px solid rgb(85,255,0);
          </layout>
         </item>
         <item>
-         <layout class="QGridLayout" name="gridLayout_6" columnstretch="1,0,0">
+         <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,1,1">
           <property name="sizeConstraint">
            <enum>QLayout::SetFixedSize</enum>
           </property>
@@ -518,7 +528,7 @@ border: 7px solid rgb(85,255,0);
            <number>50</number>
           </property>
           <property name="verticalSpacing">
-           <number>0</number>
+           <number>6</number>
           </property>
           <item row="2" column="2">
            <widget class="QLabel" name="associazioniRimovibili_label">
@@ -543,13 +553,6 @@ color:black;</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QPushButton" name="rimuoviAssociazione_button">
-            <property name="text">
-             <string>Rimuovi Associazione</string>
             </property>
            </widget>
           </item>
@@ -611,19 +614,6 @@ color:black;
             </property>
            </widget>
           </item>
-          <item row="0" column="0" colspan="2">
-           <widget class="QPushButton" name="creaAssociazioneHTPV_button">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Crea associazione</string>
-            </property>
-           </widget>
-          </item>
           <item row="3" column="0" colspan="2">
            <widget class="QPushButton" name="confermaAssociazione_button">
             <property name="sizePolicy">
@@ -640,52 +630,7 @@ color:black;
             </property>
            </widget>
           </item>
-          <item row="8" column="2">
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <property name="spacing">
-             <number>50</number>
-            </property>
-            <item>
-             <widget class="QPushButton" name="annullaRimozione_button">
-              <property name="text">
-               <string>Annulla</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="rimuovi_button">
-              <property name="text">
-               <string>Rimuovi</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item row="8" column="0" colspan="2">
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <property name="spacing">
-             <number>50</number>
-            </property>
-            <property name="sizeConstraint">
-             <enum>QLayout::SetDefaultConstraint</enum>
-            </property>
-            <item>
-             <widget class="QPushButton" name="annullaAssociazione_button">
-              <property name="text">
-               <string>Annulla</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_letVote">
-              <property name="text">
-               <string>Fai votare</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item row="4" column="0" colspan="2">
+          <item row="4" column="0" rowspan="3" colspan="2">
            <layout class="QHBoxLayout" name="horizontalLayout_5">
             <property name="spacing">
              <number>50</number>
@@ -717,6 +662,71 @@ color:black;
              </widget>
             </item>
            </layout>
+          </item>
+          <item row="7" column="0" rowspan="2" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <property name="spacing">
+             <number>50</number>
+            </property>
+            <property name="sizeConstraint">
+             <enum>QLayout::SetDefaultConstraint</enum>
+            </property>
+            <item>
+             <widget class="QPushButton" name="annullaAssociazione_button">
+              <property name="text">
+               <string>Annulla</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_letVote">
+              <property name="text">
+               <string>Fai votare</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="7" column="2" rowspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <property name="spacing">
+             <number>20</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="annullaRimozione_button">
+              <property name="text">
+               <string>Annulla</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="rimuovi_button">
+              <property name="text">
+               <string>Rimuovi</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="0" column="0" rowspan="2" colspan="2">
+           <widget class="QPushButton" name="creaAssociazioneHTPV_button">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Crea associazione</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2" rowspan="2">
+           <widget class="QPushButton" name="rimuoviAssociazione_button">
+            <property name="text">
+             <string>Rimuovi Associazione</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
