@@ -12,7 +12,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 {
 
     this->logged = false;
-    emit seggioLogged(false);
+
     ui->setupUi(this);
     ui->stackedWidget->setCurrentIndex(loginSeggio);
 
@@ -36,6 +36,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
 
     //inizializzazione del model
     seggio = new Seggio(this);
+    emit seggioLogged(false);
 
     //inserire qui le connect tra model e view
     QObject::connect(seggio,SIGNAL(anyPVFree(bool)),this,SLOT(updateCreaAssociazioneButton(bool)),Qt::QueuedConnection);

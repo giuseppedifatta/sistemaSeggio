@@ -126,7 +126,7 @@ border: 7px solid rgb(85,255,0);
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="loginSeggio_page">
        <property name="sizePolicy">
@@ -385,7 +385,7 @@ border: 7px solid rgb(85,255,0);
                <string notr="true"/>
               </property>
               <property name="text">
-               <string>Attivare postazione</string>
+               <string>undefined</string>
               </property>
              </widget>
             </item>
@@ -440,7 +440,7 @@ border: 7px solid rgb(85,255,0);
                <string notr="true"/>
               </property>
               <property name="text">
-               <string>Attivare postazione</string>
+               <string>undefined</string>
               </property>
              </widget>
             </item>
@@ -495,7 +495,7 @@ border: 7px solid rgb(85,255,0);
                <string notr="true"/>
               </property>
               <property name="text">
-               <string>Attivare postazione</string>
+               <string>undefined</string>
               </property>
              </widget>
             </item>

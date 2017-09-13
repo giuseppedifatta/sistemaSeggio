@@ -19,7 +19,6 @@
 #include <chrono>
 #include "sslserver.h"
 #include "sslclient.h"
-#include "mainwindowseggio.h"
 
 #include "sslclient.h"
 #include "sslserver.h"

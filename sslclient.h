@@ -79,6 +79,13 @@ public:
         resetMatricolaStatoVoto = 12
     };
 
+    enum serviziPV{
+        setAssociation,
+        pullPVState,
+        removeAssociation,
+        freePV
+    };
+
 };
 
 

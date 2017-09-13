@@ -451,8 +451,7 @@ void SSLClient::stopLocalServer(/*const char* localhosthostname*/){
 bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante, uint matricola /*,string authenticationUsernameHT*/){
     bool res = false;
     //invia codice del servizio richiesto al PV_Server
-    //setAssociation : 0
-    int serviceCod = 0;
+    int serviceCod = serviziPV::setAssociation;
     stringstream ssCod;
     ssCod << serviceCod;
     string strCod = ssCod.str();
@@ -516,9 +515,7 @@ bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante,
 
 int SSLClient::queryPullPVState(){
     //invia codice del servizio richiesto al PV_Server
-    //pullPVState: 1
-
-    int serviceCod = 1;
+    int serviceCod = serviziPV::pullPVState;
     stringstream ssCod;
     ssCod << serviceCod;
     string strCod = ssCod.str();
@@ -562,8 +559,7 @@ int SSLClient::queryPullPVState(){
 bool SSLClient::queryRemoveAssociation() {
     bool res = false;
     //invia codice del servizio richiesto al PV_Server
-    //removeAssociation: 2
-    int serviceCod = 2;
+    int serviceCod = serviziPV::removeAssociation;
     stringstream ssCod;
     ssCod << serviceCod;
     string strCod = ssCod.str();
@@ -616,8 +612,7 @@ bool SSLClient::queryRemoveAssociation() {
 
 bool SSLClient::queryFreePV(){
     //invia codice del servizio richiesto al PV_Server
-    //freePV: 3
-    int serviceCod = 3;
+    int serviceCod = serviziPV::freePV;
     stringstream ssCod;
     ssCod << serviceCod;
     string strCod = ssCod.str();
