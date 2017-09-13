@@ -94,6 +94,8 @@ void MainWindowSeggio::sessioneDiVotoTerminata(){
 }
 
 void MainWindowSeggio::initGestioneSeggio(){
+    ui->pushButton_infoMatricola->setEnabled(false);
+
     //sezione nuove associazioni
     hideCreaAssociazione();
 

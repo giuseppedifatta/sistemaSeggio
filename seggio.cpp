@@ -82,7 +82,7 @@ void Seggio::run(){
 
     logged = true;
     thread_pull = std::thread(&Seggio::aggiornaPVs,this);
-    thread_pull.join();//provare ad impostarlo detach
+    thread_pull.detach();//provare ad impostarlo detach
 
     thread_server.join();
     cout << "Seggio: thread server ha terminato, esco dalla mia run()" << endl;
