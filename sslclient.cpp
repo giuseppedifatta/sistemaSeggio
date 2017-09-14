@@ -813,7 +813,7 @@ uint SSLClient::queryTryVote(uint matricola, uint &ruolo)
     string esitoStr;
     receiveString_SSL(ssl,esitoStr);
     esito = atoi(esitoStr.c_str());
-    cout << "esito lock: " << esito << endl;
+    cout << "Matricola " << matricola <<", esito lock: " << esito << endl;
 
     //ricevi eventualmente il ruolo se l'esito del lock al voto è positivo
     if(esito == seggioChiamante->esitoLock::locked){

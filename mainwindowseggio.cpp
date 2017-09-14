@@ -421,15 +421,15 @@ void MainWindowSeggio::on_confermaAssociazione_button_clicked()
 {
     on_pushButton_letVote_clicked();
 
-//    //completare associazione HT-PV
-//    emit confirmAssociation();
+    //    //completare associazione HT-PV
+    //    emit confirmAssociation();
 
 
-//    ui->gestisci_HT_button->setEnabled(true);
+    //    ui->gestisci_HT_button->setEnabled(true);
 
-//    ui->annullaAssociazione_button->hide();
-//    ui->associazioneDisponibile_label->hide();
-//    ui->confermaAssociazione_button->hide();
+    //    ui->annullaAssociazione_button->hide();
+    //    ui->associazioneDisponibile_label->hide();
+    //    ui->confermaAssociazione_button->hide();
 
 }
 
