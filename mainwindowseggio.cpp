@@ -110,9 +110,9 @@ void MainWindowSeggio::initGestioneSeggio(){
     ui->pv1_button->setEnabled(false);
     ui->pv2_button->setEnabled(false);
     ui->pv3_button->setEnabled(false);
-    ui->liberaPValert1_label->hide();
-    ui->liberaPValert2_label->hide();
-    ui->liberaPValert3_label->hide();
+    ui->liberaPValert1_label->setText("");
+    ui->liberaPValert2_label->setText("");
+    ui->liberaPValert3_label->setText("");
 
     ui->associazioneRimovibili_comboBox->clear();
 }
@@ -245,7 +245,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
             ui->pv1_button->update();
 
             ui->pv1_button->setEnabled(true);
-            ui->liberaPValert1_label->show();
+            ui->liberaPValert1_label->setText("clicca per liberare");
         }
         else{
             ui->pv1_button->setProperty("free",false);
@@ -275,7 +275,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
             ui->pv2_button->update();
 
             ui->pv2_button->setEnabled(true);
-            ui->liberaPValert2_label->show();
+            ui->liberaPValert2_label->setText("clicca per liberare");
         }
         else{
             ui->pv2_button->setProperty("free",false);
@@ -305,7 +305,7 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
             ui->pv3_button->update();
 
             ui->pv3_button->setEnabled(true);
-            ui->liberaPValert3_label->show();
+            ui->liberaPValert3_label->setText("clicca per liberare");
         }
         else{
             ui->pv3_button->setProperty("free",false);
@@ -650,7 +650,7 @@ void MainWindowSeggio::on_pv1_button_clicked()
 {
     //libera postazione 1
     emit confirmVotazioneCompleta(1);
-    ui->liberaPValert1_label->hide();
+    ui->liberaPValert1_label->setText("");
 
 }
 

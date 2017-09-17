@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1118</width>
-    <height>676</height>
+    <width>1280</width>
+    <height>725</height>
    </rect>
   </property>
   <property name="font">
@@ -318,7 +318,7 @@ border: 7px solid rgb(85,255,0);
        </layout>
       </widget>
       <widget class="QWidget" name="gestioneSeggio_page">
-       <layout class="QVBoxLayout" name="verticalLayout_7">
+       <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,1,0">
         <property name="spacing">
          <number>6</number>
         </property>
@@ -339,9 +339,9 @@ border: 7px solid rgb(85,255,0);
          </widget>
         </item>
         <item>
-         <layout class="QGridLayout" name="gridLayout_5">
+         <layout class="QGridLayout" name="gridLayout_5" columnstretch="1,1,1">
           <property name="sizeConstraint">
-           <enum>QLayout::SetFixedSize</enum>
+           <enum>QLayout::SetMaximumSize</enum>
           </property>
           <property name="leftMargin">
            <number>50</number>
@@ -520,7 +520,7 @@ border: 7px solid rgb(85,255,0);
          </layout>
         </item>
         <item>
-         <layout class="QGridLayout" name="gridLayout_6" columnstretch="0,1,1">
+         <layout class="QGridLayout" name="gridLayout_6" rowstretch="0,0,0,0,0,0,0,0,0,0,0" columnstretch="0,1,1">
           <property name="sizeConstraint">
            <enum>QLayout::SetFixedSize</enum>
           </property>
@@ -589,7 +589,7 @@ color:black;
             </property>
            </widget>
           </item>
-          <item row="3" column="2" rowspan="4" alignment="Qt::AlignTop">
+          <item row="3" column="2" rowspan="5" alignment="Qt::AlignTop">
            <widget class="QComboBox" name="associazioneRimovibili_comboBox">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -636,40 +636,27 @@ color:black;
             </property>
            </widget>
           </item>
-          <item row="4" column="0" rowspan="3" colspan="2">
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
-            <property name="spacing">
-             <number>50</number>
+          <item row="0" column="0" rowspan="2" colspan="2">
+           <widget class="QPushButton" name="creaAssociazioneHTPV_button">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
             </property>
-            <property name="topMargin">
-             <number>6</number>
+            <property name="text">
+             <string>Crea associazione</string>
             </property>
-            <property name="bottomMargin">
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLineEdit" name="lineEdit_matricolaElettore">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="placeholderText">
-               <string>Digita matricola votante</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_infoMatricola">
-              <property name="text">
-               <string>Info Matricola</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           </widget>
           </item>
-          <item row="7" column="0" rowspan="2" colspan="2">
+          <item row="0" column="2" rowspan="2">
+           <widget class="QPushButton" name="rimuoviAssociazione_button">
+            <property name="text">
+             <string>Rimuovi Associazione</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0" rowspan="4" colspan="2">
            <layout class="QHBoxLayout" name="horizontalLayout_4">
             <property name="spacing">
              <number>50</number>
@@ -693,7 +680,14 @@ color:black;
             </item>
            </layout>
           </item>
-          <item row="7" column="2" rowspan="2">
+          <item row="10" column="0" colspan="2">
+           <widget class="QPushButton" name="pushButton_infoMatricola">
+            <property name="text">
+             <string>Informazioni matricola</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="2" rowspan="3">
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <property name="spacing">
              <number>20</number>
@@ -714,25 +708,31 @@ color:black;
             </item>
            </layout>
           </item>
-          <item row="0" column="0" rowspan="2" colspan="2">
-           <widget class="QPushButton" name="creaAssociazioneHTPV_button">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
+          <item row="8" column="0" rowspan="2" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <property name="spacing">
+             <number>50</number>
             </property>
-            <property name="text">
-             <string>Crea associazione</string>
+            <property name="topMargin">
+             <number>6</number>
             </property>
-           </widget>
-          </item>
-          <item row="0" column="2" rowspan="2">
-           <widget class="QPushButton" name="rimuoviAssociazione_button">
-            <property name="text">
-             <string>Rimuovi Associazione</string>
+            <property name="bottomMargin">
+             <number>6</number>
             </property>
-           </widget>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_matricolaElettore">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="placeholderText">
+               <string>Digita matricola votante</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>
