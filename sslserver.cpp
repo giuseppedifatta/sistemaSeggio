@@ -127,7 +127,7 @@ void SSLServer::ascoltoNuovoStatoPV(){
 
 void SSLServer::Servlet(int client_sock_fd ,servizi servizio) {/* Serve the connection -- threadable */
     seggioChiamante->mutex_stdout.lock();
-    cout << "ServerSeggioThread: Servlet: inizio servlet" << endl;
+    cout << "ServerSeggio: ServerSeggioThread: Servlet: inizio servlet" << endl;
     seggioChiamante->mutex_stdout.unlock();
 
     SSL * ssl = SSL_new(ctx);
@@ -138,19 +138,19 @@ void SSLServer::Servlet(int client_sock_fd ,servizi servizio) {/* Serve the conn
 
     int ret = SSL_accept(ssl);
     if ( ret <= 0) {/* do SSL-protocol handshake */
-        cout << "ServerSeggioThread: error in handshake" << endl;
+        cout << "ServerSeggio: ServerSeggioThread: error in handshake" << endl;
         ERR_print_errors_fp(stderr);
 
     }
     else {
         seggioChiamante->mutex_stdout.lock();
-        cout << "ServerSeggioThread: handshake ok!" << endl;
+        cout << "ServerSeggio: ServerSeggioThread: handshake ok!" << endl;
         seggioChiamante->mutex_stdout.unlock();
         this->ShowCerts(ssl);
         this->verify_ClientCert(ssl);
 
         seggioChiamante->mutex_stdout.lock();
-        cout << "ServerSeggioThread: service starting..." << endl;
+        cout << "ServerSeggio: ServerSeggioThread: service starting..." << endl;
         seggioChiamante->mutex_stdout.unlock();
         this->service(ssl,servizio);
     }
@@ -163,10 +163,10 @@ void SSLServer::Servlet(int client_sock_fd ,servizi servizio) {/* Serve the conn
     //    int ret = SSL_shutdown(ssl);
     //    if(ret == 0){ // valore di ritorno uguale a 0 indica che lo shutdown non si è concluso , bisogna richiamare la SSL_shutdown una seconda volta
     //        SSL_shutdown(ssl); //if not done, resent close notify
-    //        cout << " richiamo la shutdown" << endl;
+    //        cout << "ServerSeggio:  richiamo la shutdown" << endl;
     //    }
     //    else if(ret == -1){
-    //        cout << "Fatal error: " << SSL_get_error(ssl,ret) << endl;
+    //        cout << "ServerSeggio: Fatal error: " << SSL_get_error(ssl,ret) << endl;
     //    }
 
 
@@ -177,13 +177,13 @@ void SSLServer::Servlet(int client_sock_fd ,servizi servizio) {/* Serve the conn
         cerr << "ClientSeggio: errore chiusura socket del client" << endl;
     }
     seggioChiamante->mutex_stdout.lock();
-    cout << "ServerSeggioThread: fine servlet" << endl;
+    cout << "ServerSeggio: ServerSeggioThread: fine servlet" << endl;
     seggioChiamante->mutex_stdout.unlock();
 }
 
 void SSLServer::service(SSL * ssl,servizi servizio) {
     seggioChiamante->mutex_stdout.lock();
-    cout << "ServerSeggioThread: service started: " << servizio << endl;
+    cout << "ServerSeggio: ServerSeggioThread: service started: " << servizio << endl;
     seggioChiamante->mutex_stdout.unlock();
     char buf[128];
 
@@ -198,10 +198,10 @@ void SSLServer::service(SSL * ssl,servizi servizio) {
         unsigned int idPV = 0;
         bytes = SSL_read(ssl, buf, sizeof(buf));
         if (bytes > 0){
-            //cout << "Received buffer: " << buf << endl;
+            //cout << "ServerSeggio: Received buffer: " << buf << endl;
             idPV = atoi(buf);
             seggioChiamante->mutex_stdout.lock();
-            cout << "ServerSeggioThread: idPV: " << idPV << endl;
+            cout << "ServerSeggio: ServerSeggioThread: idPV: " << idPV << endl;
             seggioChiamante->mutex_stdout.unlock();
         }
 
@@ -211,10 +211,10 @@ void SSLServer::service(SSL * ssl,servizi servizio) {
         unsigned int nuovoStato = 0;
         bytes = SSL_read(ssl, buf, sizeof(buf));
         if (bytes>0){
-            //cout << "Received buffer: " << buf << endl;
+            //cout << "ServerSeggio: Received buffer: " << buf << endl;
             nuovoStato = atoi(buf);
             seggioChiamante->mutex_stdout.lock();
-            cout << "ServerSeggioThread: nuovoStato: " << nuovoStato << endl;
+            cout << "ServerSeggio: ServerSeggioThread: nuovoStato: " << nuovoStato << endl;
             seggioChiamante->mutex_stdout.unlock();
         }
 
@@ -364,7 +364,7 @@ void SSLServer::print_cn_name(const char* label, X509_NAME* const name) {
             break; /* failed */
 
 
-        cout << "ServerSeggioThread:   " << label << ": " << utf8 << endl;
+        cout << "ServerSeggio: ServerSeggioThread:   " << label << ": " << utf8 << endl;
         success = 1;
 
     } while (0);
@@ -374,7 +374,7 @@ void SSLServer::print_cn_name(const char* label, X509_NAME* const name) {
     seggioChiamante->mutex_stdout.lock();
     if (!success){
 
-        cout << "ServerSeggioThread:   " << label << ": <not available>" << endl;
+        cout << "ServerSeggio: ServerSeggioThread:   " << label << ": <not available>" << endl;
     }
     seggioChiamante->mutex_stdout.unlock();
 }
@@ -422,7 +422,7 @@ void SSLServer::print_san_name(const char* label, X509* const cert) {
                 // indicates the client is under attack.
                 if (utf8 && len1 && len2 && (len1 == len2)) {
                     //lock_guard<std::mutex> guard(seggioChiamante->mutex_stdout);
-                    cout << "ServerSeggioThread:   " << label << ": " << utf8 << endl;
+                    cout << "ServerSeggio: ServerSeggioThread:   " << label << ": " << utf8 << endl;
                     success = 1;
                 }
 
@@ -444,14 +444,14 @@ void SSLServer::print_san_name(const char* label, X509* const cert) {
 
     if (!success){
         seggioChiamante->mutex_stdout.lock();
-        cout << "ServerSeggioThread:   " << label << ": <not available>\n" << endl;
+        cout << "ServerSeggio: ServerSeggioThread:   " << label << ": <not available>\n" << endl;
         seggioChiamante->mutex_stdout.unlock();
     }
 }
 
 int SSLServer::verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
 
-    /*cout << "ServerSeggioThread: preverify value: " << preverify <<endl;*/
+    /*cout << "ServerSeggio: ServerSeggioThread: preverify value: " << preverify <<endl;*/
     int depth = X509_STORE_CTX_get_error_depth(x509_ctx);
     int err = X509_STORE_CTX_get_error(x509_ctx);
 
@@ -460,7 +460,7 @@ int SSLServer::verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
     X509_NAME* sname = cert ? X509_get_subject_name(cert) : NULL;
 
     seggioChiamante->mutex_stdout.lock();
-    cout << "ServerSeggioThread: verify_callback (depth=" << depth << ")(preverify=" << preverify
+    cout << "ServerSeggio: ServerSeggioThread: verify_callback (depth=" << depth << ")(preverify=" << preverify
          << ")" << endl;
 
     /* Issuer is the authority we trust that warrants nothing useful */
@@ -479,30 +479,30 @@ int SSLServer::verify_callback(int preverify, X509_STORE_CTX* x509_ctx) {
     if (preverify == 0) {
         if (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY){
 
-            cout << "ServerSeggioThread:   Error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY\n";
+            cout << "ServerSeggio: ServerSeggioThread:   Error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY\n";
         }
         else if (err == X509_V_ERR_CERT_UNTRUSTED){
 
-            cout << "ServerSeggioThread:   Error = X509_V_ERR_CERT_UNTRUSTED\n";
+            cout << "ServerSeggio: ServerSeggioThread:   Error = X509_V_ERR_CERT_UNTRUSTED\n";
         }
         else if (err == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN){
 
-            cout << "ServerSeggioThread:   Error = X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN\n";}
+            cout << "ServerSeggio: ServerSeggioThread:   Error = X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN\n";}
         else if (err == X509_V_ERR_CERT_NOT_YET_VALID) {
 
-            cout << "ServerSeggioThread:   Error = X509_V_ERR_CERT_NOT_YET_VALID\n";
+            cout << "ServerSeggio: ServerSeggioThread:   Error = X509_V_ERR_CERT_NOT_YET_VALID\n";
         }
         else if (err == X509_V_ERR_CERT_HAS_EXPIRED){
 
-            cout << "ServerSeggioThread:   Error = X509_V_ERR_CERT_HAS_EXPIRED\n";
+            cout << "ServerSeggio: ServerSeggioThread:   Error = X509_V_ERR_CERT_HAS_EXPIRED\n";
         }
         else if (err == X509_V_OK){
 
-            cout << "ServerSeggioThread:   Error = X509_V_OK\n";
+            cout << "ServerSeggio: ServerSeggioThread:   Error = X509_V_OK\n";
         }
         else{
 
-            cout << "ServerSeggioThread:   Error = " << err << "\n";
+            cout << "ServerSeggio: ServerSeggioThread:   Error = " << err << "\n";
         }
     }
     seggioChiamante->mutex_stdout.unlock();
@@ -669,7 +669,7 @@ void SSLServer::verify_ClientCert(SSL *ssl) {
     //BIO_free_all(certbio);
 
     seggioChiamante->mutex_stdout.lock();
-    cout << "ServerSeggioThread: Fine --Verify Client Cert --" << endl;
+    cout << "ServerSeggio: ServerSeggioThread: Fine --Verify Client Cert --" << endl;
     seggioChiamante->mutex_stdout.unlock();
 }
 
@@ -688,17 +688,17 @@ int SSLServer::myssl_fwrite(SSL *ssl, const char * infile) {
         char * buffer = new char[length];
 
         //lock_guard<std::mutex> guard1(seggioChiamante->mutex_stdout);
-        cout << "ServerSeggioThread: Reading " << length << " characters... ";
+        cout << "ServerSeggio: ServerSeggioThread: Reading " << length << " characters... ";
         // read data as a block:
         is.read(buffer, length);
 
         if (is){
             //lock_guard<std::mutex> guard2(seggioChiamante->mutex_stdout);
-            cout << "ServerSeggioThread: all characters read successfully." << endl;
+            cout << "ServerSeggio: ServerSeggioThread: all characters read successfully." << endl;
         }
         else{
             // lock_guard<std::mutex> guard3(seggioChiamante->mutex_stdout);
-            cout << "ServerSeggioThread: error: only " << is.gcount() << " could be read";
+            cout << "ServerSeggio: ServerSeggioThread: error: only " << is.gcount() << " could be read";
         }
         is.close();
 
@@ -708,7 +708,7 @@ int SSLServer::myssl_fwrite(SSL *ssl, const char * infile) {
         strs << length;
         string temp_str = strs.str();
         const char *info = temp_str.c_str();
-        cout << "ServerSeggioThread: bytes to send:" << info << endl;
+        cout << "ServerSeggio: ServerSeggioThread: bytes to send:" << info << endl;
         SSL_write(ssl, info, strlen(info));
         SSL_write(ssl, buffer, length);
         //delete[] buffer;
@@ -716,7 +716,7 @@ int SSLServer::myssl_fwrite(SSL *ssl, const char * infile) {
     }
     else{
         //lock_guard<std::mutex> guard4(seggioChiamante->mutex_stdout);
-        cout << "ServerSeggioThread: file unreadable" << endl;
+        cout << "ServerSeggio: ServerSeggioThread: file unreadable" << endl;
     }
     return 0;
 }

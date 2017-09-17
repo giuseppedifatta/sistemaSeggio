@@ -195,7 +195,7 @@ void Seggio::setBusyHT_PV(){
     this->busyPV[idPV-1] = true;
 
     if(this->anyPostazioneLibera()){
-        cout << "almeno una postazione libera" << endl;
+        cout << "Seggio: almeno una postazione libera" << endl;
         emit anyPVFree(true);
         //mainWindow->disableCreaAssociazioneButton();
     }
@@ -204,7 +204,7 @@ void Seggio::setBusyHT_PV(){
     }
 
     if(anyAssociazioneEliminabile()){
-        cout << "almeno una associazione eliminabile" << endl;
+        cout << "Seggio: almeno una associazione eliminabile" << endl;
         emit anyAssociationRemovable(true);
     }
     else{
@@ -989,7 +989,7 @@ void Seggio::calculateRemovableAssociations()
         if(( statoPV == attesa_abilitazione) || ( statoPV == errore)||( statoPV == offline)){
             //se la postazione di voto ha uno stato che consente la rimozione dell'associazione
             //aggiungo l'associazione al vettore delle associazioni rimovibili
-            cout << "associazione rimovibile alla PV: "<< idPV << endl;
+            cout << "Seggio: associazione rimovibile alla PV: "<< idPV << endl;
             associazioniRimovibili.push_back(listAssociazioni.at(i));
 
         }
@@ -1003,7 +1003,7 @@ string Seggio::calcolaMAC(string encodedSessionKey, string plainText){
 
     //"11A47EC4465DD95FCD393075E7D3C4EB";
 
-    cout << "Session key: " << encodedSessionKey << endl;
+    cout << "Seggio: Session key: " << encodedSessionKey << endl;
     string decodedKey;
     StringSource (encodedSessionKey,true,
                   new HexDecoder(
@@ -1026,9 +1026,9 @@ string Seggio::calcolaMAC(string encodedSessionKey, string plainText){
                      new StringSink(encoded)
                      ) // HexEncoder
                  ); // StringSource
-    cout << "key encoded: " << encoded << endl;
+    cout << "Seggio: key encoded: " << encoded << endl;
 
-    cout << "plain text: " << plainText << endl;
+    cout << "Seggio: plain text: " << plainText << endl;
 
     /*********************************\
     \*********************************/
@@ -1059,7 +1059,7 @@ string Seggio::calcolaMAC(string encodedSessionKey, string plainText){
                      new StringSink(macEncoded)
                      ) // HexEncoder
                  ); // StringSource
-    cout << "hmac encoded: " << macEncoded << endl;
+    cout << "Seggio: hmac encoded: " << macEncoded << endl;
 
     verifyMAC(encodedSessionKey,plainText, macEncoded);
 
@@ -1068,11 +1068,11 @@ string Seggio::calcolaMAC(string encodedSessionKey, string plainText){
 
 int Seggio::verifyMAC(string encodedSessionKey,string data, string macEncoded){
     int success = 0;
-    cout << "Dati da verificare: " << data << endl;
-    cout << "mac da verificare: " << macEncoded << endl;
+    cout << "Seggio: Dati da verificare: " << data << endl;
+    cout << "Seggio: mac da verificare: " << macEncoded << endl;
 
     string decodedKey;
-    cout << "Session key: " << encodedSessionKey << endl;
+    cout << "Seggio: Session key: " << encodedSessionKey << endl;
 
     StringSource (encodedSessionKey,true,
                   new HexDecoder(
@@ -1088,7 +1088,7 @@ int Seggio::verifyMAC(string encodedSessionKey,string data, string macEncoded){
                      new StringSink(macDecoded)
                      ) // HexDecoder
                  ); // StringSource
-    cout << "hmac decoded: " << macDecoded << endl;
+    cout << "Seggio: hmac decoded: " << macDecoded << endl;
 
     try
     {
@@ -1101,7 +1101,7 @@ int Seggio::verifyMAC(string encodedSessionKey,string data, string macEncoded){
                      new HashVerificationFilter(hmac, NULL, flags)
                      ); // StringSource
 
-        cout << "Verified message" << endl;
+        cout << "Seggio: Verified message" << endl;
         success = 0;
     }
     catch(const CryptoPP::Exception& e)

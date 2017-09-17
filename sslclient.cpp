@@ -531,7 +531,7 @@ int SSLClient::queryPullPVState(){
     memset(buf, '\0', sizeof(buf));
     int bytes = SSL_read(ssl, buf, sizeof(buf));
     if (bytes>0){
-        //cout << "Received buffer: " << buf << endl;
+        //cout << "ClientSeggio: Received buffer: " << buf << endl;
         statoCorrente = atoi(buf);
 
         seggioChiamante->mutex_stdout.lock();
@@ -677,7 +677,7 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
     string strCod = ssCod.str();
     const char * charCod = strCod.c_str();
     seggioChiamante->mutex_stdout.lock();
-    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+    cout << "ClientSeggio: richiedo il servizio: " << charCod << endl;
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
@@ -692,7 +692,7 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
         //pvChiamante->setIdProceduraVoto(idProcedura);
     }
     else{
-        cerr << "ClientPV: non sono riuscito a ricevere l'idProcedura" << endl;
+        cerr << "ClientSeggio: non sono riuscito a ricevere l'idProcedura" << endl;
     }
 
     //SE L'ID PROCEDURA RICEVUTO È 0, NON C'È UNA PROCEDURA IN CORSO, ABORTISCO L'ATTIVAZIONE
@@ -710,7 +710,7 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
 
     const char * charIdProceduraMAC = idProceduraMAC.c_str();
     //uvChiamante->mutex_stdout.lock();
-    cout << "Invio il MAC all'Urna: " << charIdProceduraMAC << endl;
+    cout << "ClientSeggio: Invio il MAC all'Urna: " << charIdProceduraMAC << endl;
     //uvChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charIdProceduraMAC,strlen(charIdProceduraMAC));
 
@@ -739,42 +739,42 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
         //ricevi infoProcedura: descrizione,dtInizio,dtTermine,stato
         string descrizione;
         receiveString_SSL(ssl,descrizione);
-        cout << "descrizione: " << descrizione << endl;
+        cout << "ClientSeggio: descrizione: " << descrizione << endl;
         seggioChiamante->setDescrizioneProcedura(descrizione);
 
         string dtInizio;
         receiveString_SSL(ssl,dtInizio);
-        cout << "inizio Procedura: " << dtInizio << endl;
+        cout << "ClientSeggio: inizio Procedura: " << dtInizio << endl;
         seggioChiamante->setDtInizioProcedura(dtInizio);
 
         string dtTermine;
         receiveString_SSL(ssl,dtTermine);
-        cout << "termine Procedura: " << dtTermine << endl;
+        cout << "ClientSeggio: termine Procedura: " << dtTermine << endl;
         seggioChiamante->setDtTermineProcedura(dtTermine);
 
         string stato;
         receiveString_SSL(ssl,stato);
-        cout << "stato Procedura: " << stato << endl;
+        cout << "ClientSeggio: stato Procedura: " << stato << endl;
         seggioChiamante->setStatoProcedura(atoi(stato.c_str()));
 
 
         //ricevi infoSessione:idSessione,dataSessione, oraApertura, oraChiusura
         string idSessione;
         receiveString_SSL(ssl,idSessione);
-        cout << "id Sessione: " << idSessione << endl;
+        cout << "ClientSeggio: id Sessione: " << idSessione << endl;
         seggioChiamante->setIdSessione(atoi(idSessione.c_str()));
 
         string dataSessione;
         receiveString_SSL(ssl,dataSessione);
-        cout << "data Sessione: " << dataSessione << endl;
+        cout << "ClientSeggio: data Sessione: " << dataSessione << endl;
 
         string oraApertura;
         receiveString_SSL(ssl,oraApertura);
-        cout << "ora Apertura: " << oraApertura << endl;
+        cout << "ClientSeggio: ora Apertura: " << oraApertura << endl;
 
         string oraChiusura;
         receiveString_SSL(ssl,oraChiusura);
-        cout << "ora Chiusura: " << oraChiusura << endl;
+        cout << "ClientSeggio: ora Chiusura: " << oraChiusura << endl;
 
         seggioChiamante->setDtAperturaSessione(dataSessione + " " + oraApertura);
         seggioChiamante->setDtChiusuraSessione(dataSessione + " " + oraChiusura);
@@ -801,7 +801,7 @@ uint SSLClient::queryTryVote(uint matricola, uint &ruolo)
     string strCod = ssCod.str();
     const char * charCod = strCod.c_str();
     seggioChiamante->mutex_stdout.lock();
-    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+    cout << "ClientSeggio: richiedo il servizio: " << charCod << endl;
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
@@ -813,7 +813,7 @@ uint SSLClient::queryTryVote(uint matricola, uint &ruolo)
     string esitoStr;
     receiveString_SSL(ssl,esitoStr);
     esito = atoi(esitoStr.c_str());
-    cout << "Matricola " << matricola <<", esito lock: " << esito << endl;
+    cout << "ClientSeggio: Matricola " << matricola <<", esito lock: " << esito << endl;
 
     //ricevi eventualmente il ruolo se l'esito del lock al voto è positivo
     if(esito == seggioChiamante->esitoLock::locked){
@@ -834,7 +834,7 @@ bool SSLClient::queryInfoMatricola(uint matricola, string &nome, string &cognome
     string strCod = ssCod.str();
     const char * charCod = strCod.c_str();
     seggioChiamante->mutex_stdout.lock();
-    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+    cout << "ClientSeggio: richiedo il servizio: " << charCod << endl;
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
@@ -873,7 +873,7 @@ bool SSLClient::queryResetMatricolaState(uint matricola)
     string strCod = ssCod.str();
     const char * charCod = strCod.c_str();
     seggioChiamante->mutex_stdout.lock();
-    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+    cout << "ClientSeggio: richiedo il servizio: " << charCod << endl;
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
