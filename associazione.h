@@ -12,7 +12,7 @@ class Associazione {
 private:
 	unsigned int idPV;
     unsigned int idHT;
-    unsigned int ruolo;
+    unsigned int IdTipoVotante;
     unsigned int matricola;
 
 
@@ -22,11 +22,10 @@ public:
 
 	unsigned int getIdPV();
     unsigned int getIdHT();
-
-    unsigned int getRuolo() const;
-    void setRuolo(unsigned int value);
     unsigned int getMatricola() const;
     void setMatricola(unsigned int value);
+    unsigned int getIdTipoVotante() const;
+    void setIdTipoVotante(unsigned int value);
 };
 
 #endif /* ASSOCIAZIONE_H_ */

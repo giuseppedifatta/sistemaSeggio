@@ -123,7 +123,7 @@ unsigned int Seggio::getIdProceduraVoto() const
     return idProceduraVoto;
 }
 
-void Seggio::setIdProceduraVoto(unsigned int value)
+void Seggio::setIdProceduraVoto(unsigned int &value)
 {
     idProceduraVoto = value;
 }
@@ -276,13 +276,13 @@ bool Seggio::addAssociazioneHT_PV(uint matricola){
 
     unsigned int idPV=this->nuovaAssociazione->getIdPV();
     unsigned int idHT=this->nuovaAssociazione->getIdHT();
-    unsigned int ruolo = this->nuovaAssociazione->getRuolo();
+    unsigned int IdTipoVotante = this->nuovaAssociazione->getIdTipoVotante();
     nuovaAssociazione->setMatricola(matricola);
 
 
     //comunicare alla postazione di competenza la nuova associazione
     //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
-    if(pushAssociationToPV(idPV,idHT, ruolo,matricola)){ //se la comunicazione dell'associazione alla PV è andata a buon fine
+    if(pushAssociationToPV(idPV,idHT, IdTipoVotante,matricola)){ //se la comunicazione dell'associazione alla PV è andata a buon fine
         //aggiungiamo la nuova associazione alla lista delle associazioni correnti
         pushed = true;
         this->listAssociazioni.push_back(*this->nuovaAssociazione);
@@ -447,8 +447,7 @@ void Seggio::completaOperazioneVoto(uint idPV)
 
         emit anyAssociationRemovable(this->anyAssociazioneEliminabile());
 
-        //TODO comunicare al database con gli elettori attivi, che l'elettore associato alla postazione per cui si è liberata la postazione ha votato
-    }
+        }
     else{
         cout << "Seggio: Unable to remove association from PV" << endl;
     }
@@ -459,10 +458,10 @@ void Seggio::tryVote(uint matricola)
     SSLClient * pv_client = new SSLClient(this);
 
     if(pv_client->connectTo(ipUrna)!=nullptr){
-        uint ruolo;
-        uint esito = pv_client->queryTryVote(matricola,ruolo);
+        uint IdTipoVotante;
+        uint esito = pv_client->queryTryVote(matricola,IdTipoVotante);
         if(esito == esitoLock::locked){
-            nuovaAssociazione->setRuolo(ruolo);
+            nuovaAssociazione->setIdTipoVotante(IdTipoVotante);
             emit allowVote();
             //chiamo la funzione che aggiunge l'associazione alla lista delle associazione attuali e invia i dati alla postazione di voto
             if(addAssociazioneHT_PV(matricola)){
@@ -843,6 +842,16 @@ void Seggio::aggiornaPVs(){
     cout << "Seggio: pullClient: exit!" << endl;
     this->mutex_stdout.unlock();
     return;
+}
+
+string Seggio::getSessionKey_Seggio_Urna() const
+{
+    return sessionKey_Seggio_Urna;
+}
+
+void Seggio::setSessionKey_Seggio_Urna(const string &value)
+{
+    sessionKey_Seggio_Urna = value;
 }
 
 void Seggio::validatePassKey(QString pass)

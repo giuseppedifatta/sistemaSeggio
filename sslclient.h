@@ -6,6 +6,13 @@
 #include <openssl/ssl.h>
 #include <openssl/conf.h>
 #include <string>
+#include <ifaddrs.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include "seggio.h"
 
@@ -41,6 +48,7 @@ private:
 
     void sendString_SSL(SSL *ssl, string s);
     int receiveString_SSL(SSL *ssl, string &s);
+    string getIPbyInterface(const char *interfaceName);
 public:
     SSLClient(Seggio * s);
     ~SSLClient();
@@ -57,7 +65,7 @@ public:
     //richieste per l'Urna
     bool queryAttivazioneSeggio(string sessionKey);
     bool queryRisultatiVoto();
-    uint queryTryVote(uint matricola,uint &ruolo);
+    uint queryTryVote(uint matricola, uint &idTipoVotante);
     bool queryInfoMatricola(uint matricola, string &nome, string &cognome, uint &statoVoto);
     bool queryResetMatricolaState(uint matricola);
     //utility per far terminare la funzione di esecuzione del thread server del seggio

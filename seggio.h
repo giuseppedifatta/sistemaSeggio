@@ -174,7 +174,7 @@ public:
     void setDtTermineProcedura(const string &value);
 
     unsigned int getIdProceduraVoto() const;
-    void setIdProceduraVoto(unsigned int value);
+    void setIdProceduraVoto(unsigned int &value);
 
     string calcolaMAC(string encodedSessionKey, string plainText);
     int verifyMAC(string encodedSessionKey, string data, string macEncoded);
@@ -186,6 +186,9 @@ public:
 
     uint getIdSessione() const;
     void setIdSessione(const uint &value);
+
+    string getSessionKey_Seggio_Urna() const;
+    void setSessionKey_Seggio_Urna(const string &value);
 
 private:
     void run();

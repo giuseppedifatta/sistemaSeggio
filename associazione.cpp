@@ -7,15 +7,6 @@
 
 #include "associazione.h"
 
-unsigned int Associazione::getRuolo() const
-{
-    return ruolo;
-}
-
-void Associazione::setRuolo(unsigned int value)
-{
-    ruolo = value;
-}
 
 unsigned int Associazione::getMatricola() const
 {
@@ -25,6 +16,16 @@ unsigned int Associazione::getMatricola() const
 void Associazione::setMatricola(unsigned int value)
 {
     matricola = value;
+}
+
+unsigned int Associazione::getIdTipoVotante() const
+{
+    return IdTipoVotante;
+}
+
+void Associazione::setIdTipoVotante(unsigned int value)
+{
+    IdTipoVotante = value;
 }
 
 Associazione::Associazione(unsigned int idPostazioneVoto, unsigned int idTokenOTP) {

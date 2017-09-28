@@ -7,17 +7,7 @@
  *      Author: giuseppe
  */
 
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <openssl/ssl.h>
-#include <openssl/conf.h>
-#include <unistd.h>
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-using namespace std;
 
 #define SERVER_PORT "4433"
 #define LOCALHOST "127.0.0.1"
@@ -492,6 +482,8 @@ bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante,
             res = true;
         }
 
+    }else{
+        cerr << "ClientSeggio: Errore ricezione del risultato associazione" << endl;
     }
 
 
@@ -537,6 +529,10 @@ int SSLClient::queryPullPVState(){
         seggioChiamante->mutex_stdout.lock();
         cout << "ClientSeggio: statoCorrente: " << statoCorrente << endl;
         seggioChiamante->mutex_stdout.unlock();
+    }
+    else{
+        cerr << "ClientSeggio: Errore ricezione dello stato corrente" << endl;
+        statoCorrente = seggioChiamante->statiPV::non_raggiungibile;
     }
 
 
@@ -589,6 +585,10 @@ bool SSLClient::queryRemoveAssociation() {
         }
 
     }
+    else{
+        cerr << "ClientSeggio: Errore ricezione del risultato rimozione associazione" << endl;
+
+    }
 
     //chiusura connessione
     seggioChiamante->mutex_stdout.lock();
@@ -638,7 +638,7 @@ bool SSLClient::queryFreePV(){
         int result = atoi(buffer);
 
         seggioChiamante->mutex_stdout.lock();
-        cout << "ClientSeggio: Risultato rimozione: " << result << endl;
+        cout << "ClientSeggio: Risultato postazione liberata: " << result << endl;
         seggioChiamante->mutex_stdout.unlock();
 
         if (result == 0){
@@ -646,6 +646,11 @@ bool SSLClient::queryFreePV(){
         }
 
     }
+    else{
+        cerr << "ClientSeggio: Errore ricezione del risultato postazione liberata" << endl;
+
+    }
+
 
     //end do stuff
 
@@ -680,6 +685,10 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
     cout << "ClientSeggio: richiedo il servizio: " << charCod << endl;
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
+
+    //invio mio ip
+    string my_ip = this->getIPbyInterface("enp0s8");
+    sendString_SSL(ssl,my_ip);
 
     //ricevo idProceduraVoto
     uint idProcedura;
@@ -729,6 +738,10 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
         if (result == 0){
             attivata = true;
         }
+
+    }
+    else{
+        cerr << "ClientSeggio: Errore ricezione esito attivazione" << endl;
 
     }
 
@@ -781,6 +794,10 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
 
         //ricevi info HT associati al seggio
 
+        for (uint i = 0; i < 5; i++){
+
+        }
+
 
 
     }
@@ -789,10 +806,25 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
 
 bool SSLClient::queryRisultatiVoto()
 {
+    //richiesta servizio
+    int serviceCod = serviziUrna::risultatiVoto;
+    stringstream ssCod;
+    ssCod << serviceCod;
+    string strCod = ssCod.str();
+    const char * charCod = strCod.c_str();
+    seggioChiamante->mutex_stdout.lock();
+    cout << "ClientSeggio: richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
+
+    //invio mio ip
+    string my_ip = this->getIPbyInterface("enp0s8");
+    sendString_SSL(ssl,my_ip);
+
     return true;
 }
 
-uint SSLClient::queryTryVote(uint matricola, uint &ruolo)
+uint SSLClient::queryTryVote(uint matricola, uint &idTipoVotante)
 {
     //richiesta servizio
     int serviceCod = serviziUrna::tryVoteElettore;
@@ -805,21 +837,33 @@ uint SSLClient::queryTryVote(uint matricola, uint &ruolo)
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
+    //invio mio ip
+    string my_ip = this->getIPbyInterface("enp0s8");
+    sendString_SSL(ssl,my_ip);
+
     //invia matricola
     sendString_SSL(ssl,std::to_string(matricola));
 
+    //invio MAC matricola
+    string encodedMac = seggioChiamante->calcolaMAC(seggioChiamante->getSessionKey_Seggio_Urna(),to_string(matricola));
+    sendString_SSL(ssl,encodedMac);
+
     //ricevi esito
-    uint esito;
+    uint esito = seggioChiamante->esitoLock::errorLocking;
     string esitoStr;
     receiveString_SSL(ssl,esitoStr);
-    esito = atoi(esitoStr.c_str());
-    cout << "ClientSeggio: Matricola " << matricola <<", esito lock: " << esito << endl;
-
-    //ricevi eventualmente il ruolo se l'esito del lock al voto è positivo
+    if(esitoStr != ""){
+        esito = atoi(esitoStr.c_str());
+        cout << "ClientSeggio: Matricola " << matricola <<", esito lock: " << esito << endl;
+    }
+    else{
+        cerr << "ClientSeggio: Errore ricezione esito lock" << endl;
+    }
+    //ricevi eventualmente il ruolo/tipoVotante se l'esito del lock al voto è positivo
     if(esito == seggioChiamante->esitoLock::locked){
         string ruoloStr;
         receiveString_SSL(ssl,ruoloStr);
-        ruolo = atoi(ruoloStr.c_str());
+        idTipoVotante = atoi(ruoloStr.c_str());
     }
 
     return esito;
@@ -838,27 +882,43 @@ bool SSLClient::queryInfoMatricola(uint matricola, string &nome, string &cognome
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
+    //invio mio ip
+    string my_ip = this->getIPbyInterface("enp0s8");
+    sendString_SSL(ssl,my_ip);
+
     //invio matricola
     sendString_SSL(ssl,to_string(matricola));
+
+    //inviare MAC della matricola
+    string encodedMac = seggioChiamante->calcolaMAC(seggioChiamante->getSessionKey_Seggio_Urna(),to_string(matricola));
+    sendString_SSL(ssl,encodedMac);
 
     bool matricolaPresente = false;
     //ricevo informazione sulla presenza o assenza della matricola
     string exist;
     receiveString_SSL(ssl,exist);
-    if(atoi(exist.c_str()) == seggioChiamante->matricolaExist::si){
-        matricolaPresente = true;
 
-        //ricevo le informazioni relative alla matricola:stato, nome, cognome
-        string s;
-        receiveString_SSL(ssl,s);
-        statoVoto = atoi(s.c_str());
+    if(exist != ""){
+        if(atoi(exist.c_str()) == seggioChiamante->matricolaExist::si){
+            matricolaPresente = true;
 
-        receiveString_SSL(ssl,nome);
+            //ricevo le informazioni relative alla matricola:stato, nome, cognome
+            string s;
+            receiveString_SSL(ssl,s);
+            statoVoto = atoi(s.c_str());
 
-        receiveString_SSL(ssl,cognome);
+            receiveString_SSL(ssl,nome);
+
+            receiveString_SSL(ssl,cognome);
+        }
+    }
+    else{
+        cerr << "ClientSeggio: Errore ricezione valore di esistenza della matricola" << endl;
     }
 
-    //se la matricola non è presente il valore è rimasto a falso
+
+
+    //se la matricola non è presente il valore è rimasto a false
     return matricolaPresente;
 
 
@@ -877,18 +937,32 @@ bool SSLClient::queryResetMatricolaState(uint matricola)
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
+    //invio mio ip
+    string my_ip = this->getIPbyInterface("enp0s8");
+    sendString_SSL(ssl,my_ip);
+
     //invio matricola da resettare
     sendString_SSL(ssl, to_string(matricola));
+
+    //invio mac matricola
+    string encodedMac = seggioChiamante->calcolaMAC(seggioChiamante->getSessionKey_Seggio_Urna(),to_string(matricola));
+    sendString_SSL(ssl,encodedMac);
 
     //ricevi esito operazione
     string s;
     receiveString_SSL(ssl, s);
-    int success = atoi(s.c_str());
-    if(success == 0){
-        return true;
+    if(s!=""){
+        int success = atoi(s.c_str());
+        if(success == 0){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
-    else
+    else{
         return false;
+    }
 
 
 }
@@ -919,4 +993,40 @@ int SSLClient::receiveString_SSL(SSL* ssl, string &s){
         }
     }
     return bytes; //bytes read for the string received
+}
+
+string SSLClient::getIPbyInterface(const char * interfaceName){
+    struct ifaddrs *ifaddr, *ifa;
+    int /*family,*/ s;
+    char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+        exit(EXIT_FAILURE);
+    }
+
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        s=getnameinfo(ifa->ifa_addr,sizeof(struct sockaddr_in),host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+        if((strcmp(ifa->ifa_name,interfaceName)==0)&&(ifa->ifa_addr->sa_family==AF_INET))
+        {
+            if (s != 0)
+            {
+                printf("getnameinfo() failed: %s\n", gai_strerror(s));
+                exit(EXIT_FAILURE);
+            }
+            printf("\tInterface : <%s>\n",ifa->ifa_name );
+            printf("\t  Address : <%s>\n", host);
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    string ip_host = host;
+    return ip_host;
 }
