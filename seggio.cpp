@@ -33,16 +33,16 @@ Seggio::Seggio(QObject *parent):
     //solo per test, gli ht attivi per un certo seggio saranno impostati all'atto della creazione del seggio
     //non può essere il seggio a decidere, al momento dell'avvio del seggio stesso, quali sono gli HT attivi e quale quello di riserva
     //prevedere
-    idHTAttivi[0]=1;
-    idHTAttivi[1]=2;
-    idHTAttivi[2]=3;
-    idHTAttivi[3]=4;
-    idHTRiserva = 5;
+//    idHTAttivi[0]=1;
+//    idHTAttivi[1]=2;
+//    idHTAttivi[2]=3;
+//    idHTAttivi[3]=4;
+//    idHTRiserva = 5;
 
     for(unsigned int i = 0; i < NUM_PV; i++){
         idPostazioniVoto[i]=i+1;
         //busyPV[i]=true;
-        PV_lastUsedHT[i] = 0;
+        PV_lastUsedHT[i] = "";
         statoPV[i]=0;
     }
 
@@ -179,16 +179,17 @@ void Seggio::setDtAperturaSessione(const string &value)
 
 void Seggio::setBusyHT_PV(){
     unsigned int idPV=this->nuovaAssociazione->getIdPV();
-    unsigned int idHT=this->nuovaAssociazione->getIdHT();
+    string snHT=this->nuovaAssociazione->getSnHT();
 
     for(unsigned int index = 0; index < this->busyHT.size(); index++){
-        if(this->idHTAttivi[index] == idHT){ //se l'id dell'HTAttivo corrente corrisponde con l'id dell'HT da impegnare
+        if(this->snHTAttivi[index] == snHT){ //se l'id dell'HTAttivo corrente corrisponde con l'id dell'HT da impegnare
             this->busyHT[index] = true; //lo settiamo ad occupato nell'indice degli HT occupati
+            break;
         }
     }
-    this->PV_lastUsedHT[idPV-1]=idHT;
+    this->PV_lastUsedHT[idPV-1]=snHT;
     this->mutex_stdout.lock();
-    cout << "Seggio: Hardware token: " << idHT << ", utilizzo su PV: " << idPV << endl;
+    cout << "Seggio: Hardware token: " << snHT << ", utilizzo su PV: " << idPV << endl;
     this->mutex_stdout.unlock();
 
 
@@ -226,7 +227,7 @@ void Seggio::createAssociazioneHT_PV(){
     //crea un associazione in base alle risorse disponibili
     //lo stesso HT non viene assegnato due volte consecutive alla stessa PV
     unsigned int idPV = 0;
-    unsigned int idHT = 0;
+    string snHT = "";
     bool associationFound = false;
     for(unsigned int indexPV = 0; indexPV < this->busyPV.size();indexPV++){
         if (associationFound==true){
@@ -246,14 +247,14 @@ void Seggio::createAssociazioneHT_PV(){
                 for (unsigned int indexHT = 0; indexHT < this->busyHT.size();indexHT++){
                     if (this->busyHT[indexHT]==false){ // se l'HT non è impegnato
 
-                        if(this->PV_lastUsedHT[indexPV]!=this->idHTAttivi[indexHT]){ //e l'HT non è stato utilizzato l'ultima volta su questa postazione, si può selezionare
+                        if(this->PV_lastUsedHT[indexPV]!=this->snHTAttivi[indexHT]){ //e l'HT non è stato utilizzato l'ultima volta su questa postazione, si può selezionare
                             cout << "Seggio: sulla postazione PV " << indexPV+1 << " l'ultimo token utilizzato è stato il " << this->PV_lastUsedHT[indexPV] << endl;
-                            idHT=this->idHTAttivi[indexHT]; //seleziona l'i-esimo HT tra quelli attivi
-                            cout << "Seggio: HT " << idHT << " selezionato" << endl;
+                            snHT=this->snHTAttivi[indexHT]; //seleziona l'i-esimo HT tra quelli attivi
+                            cout << "Seggio: HT " << snHT << " selezionato" << endl;
                             associationFound = true; //associazione trovata
 
                             //creazione della nuova associazione
-                            this->nuovaAssociazione = new Associazione(idPV,idHT);
+                            this->nuovaAssociazione = new Associazione(idPV,snHT);
                             cout << "Seggio: nuova associazione creata" << endl;
                             break; //interrompe il ciclo for
                         }
@@ -263,8 +264,8 @@ void Seggio::createAssociazioneHT_PV(){
         }
     }
 
-    if(idHT !=0 && idPV != 0){
-        emit associationReady(idHT,idPV);
+    if(snHT !="" && idPV != 0){
+        emit associationReady(snHT,idPV);
     }
 }
 
@@ -275,14 +276,17 @@ bool Seggio::addAssociazioneHT_PV(uint matricola){
     //bug nel caso in cui non si riesca a fare il push della associazione, risolvere!!!
 
     unsigned int idPV=this->nuovaAssociazione->getIdPV();
-    unsigned int idHT=this->nuovaAssociazione->getIdHT();
+    string snHT=this->nuovaAssociazione->getSnHT();
     unsigned int IdTipoVotante = this->nuovaAssociazione->getIdTipoVotante();
     nuovaAssociazione->setMatricola(matricola);
 
+    uint indexHT = this->getIndexHTBySN(snHT);
+    string usernameHT = generatoriOTP.at(indexHT).getUsername();
+    string passwordHT = generatoriOTP.at(indexHT).getPassword();
 
     //comunicare alla postazione di competenza la nuova associazione
     //const char* IP_PV = this->calcolaIP_PVbyID(idPV);
-    if(pushAssociationToPV(idPV,idHT, IdTipoVotante,matricola)){ //se la comunicazione dell'associazione alla PV è andata a buon fine
+    if(pushAssociationToPV(idPV,snHT, IdTipoVotante,matricola, usernameHT,passwordHT)){ //se la comunicazione dell'associazione alla PV è andata a buon fine
         //aggiungiamo la nuova associazione alla lista delle associazioni correnti
         pushed = true;
         this->listAssociazioni.push_back(*this->nuovaAssociazione);
@@ -329,14 +333,14 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
 
     unsigned int indexAss = 0;
     unsigned int currentPV = 0;
-    unsigned int idHT = 0;
+    string snHT = "";
     for (unsigned int i = 0; this->listAssociazioni.size();i++){
         currentPV = this->listAssociazioni.at(i).getIdPV();
 
         //trova l'associazione che corrisponde alla postazione di voto per cui rimuovere l'associazione
         if(currentPV==idPV){
             //salva l'id dell'hardware token da rendere libero
-            idHT = this->listAssociazioni.at(i).getIdHT();
+            snHT = this->listAssociazioni.at(i).getSnHT();
             //salva l'indice corrispondente per la successiva eliminazione
             indexAss = i;
             break; //interrompe l'esecuzione del for in cui è immediatemente contenuto
@@ -354,10 +358,10 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
         this->mutex_stdout.unlock();
 
         for(unsigned int index = 0; index < this->busyHT.size(); index++){
-            if(this->idHTAttivi[index] == idHT){ //se l'idHTAttivo corrente corrisponde con l'id dell'HT da liberare
+            if(this->snHTAttivi[index] == snHT){ //se l'idHTAttivo corrente corrisponde con l'id dell'HT da liberare
                 this->busyHT[index] = false; //lo settiamo a libero nell'indice degli HT occupati
                 this->mutex_stdout.lock();
-                cout << "Seggio: token: " << idHT <<" -> liberato" << endl;
+                cout << "Seggio: token: " << snHT <<" -> liberato" << endl;
                 this->mutex_stdout.unlock();
                 break;
             }
@@ -391,14 +395,14 @@ void Seggio::completaOperazioneVoto(uint idPV)
 
     unsigned int indexAss = 0;
     unsigned int currentPV = 0;
-    unsigned int idHT = 0;
+    string snHT = "";
     for (unsigned int i = 0; this->listAssociazioni.size();i++){
         currentPV = this->listAssociazioni.at(i).getIdPV();
 
         //trova l'associazione che corrisponde alla postazione di voto da liberare
         if(currentPV==idPV){
             //salva l'id dell'hardware token da rendere libero
-            idHT = this->listAssociazioni.at(i).getIdHT();
+            snHT = this->listAssociazioni.at(i).getSnHT();
             //salva l'indice corrispondente per l'operazione di liberazione da fare dopo aver comunicato alla postazione di voto l'azione da intraprendere
             indexAss = i;
             break; //interrompe l'esecuzione del for in cui è immediatemente contenuto
@@ -419,10 +423,10 @@ void Seggio::completaOperazioneVoto(uint idPV)
 
         bool relaesedHT = false;
         for(unsigned int index = 0; index < this->busyHT.size(); index++){
-            if(this->idHTAttivi[index] == idHT){ //se l'idHTAttivo corrente corrisponde con l'id dell'HT da liberare
+            if(this->snHTAttivi[index] == snHT){ //se il sn dell'HTAttivo corrente corrisponde con il sn dell'HT da liberare
                 this->busyHT[index] = false; //lo settiamo a libero nell'indice degli HT occupati
                 this->mutex_stdout.lock();
-                cout << "Seggio: token: " << idHT <<" -> liberato" << endl;
+                cout << "Seggio: token: " << snHT <<" -> liberato" << endl;
                 this->mutex_stdout.unlock();
                 relaesedHT = true;
                 break;
@@ -545,41 +549,43 @@ bool Seggio::anyAssociazioneEliminabile(){
     return false;
 }
 
-array<unsigned int, NUM_HT_ATTIVI> &Seggio::getArrayIdHTAttivi(){
-    return this->idHTAttivi;
-}
-
-unsigned int Seggio::getIdHTRiserva(){
-    return this->idHTRiserva;
-}
-
-void Seggio::disattivaHT(unsigned int tokenAttivo){
+void Seggio::disattivaHT(string snHTdaDisattivare){
     //disattiva l'HT passato come parametro e attiva quello di riserva
-    //MANCANTE!!! comunicazione modifica all'OTP server provider
-    unsigned int temp = this->idHTRiserva;
-    this->idHTRiserva=tokenAttivo;
-    for (unsigned int i = 0; i < this->idHTAttivi.size(); i++){
-        if(this->idHTAttivi[i] == tokenAttivo){
-            this->idHTAttivi[i] = temp;
-            this->mutex_stdout.lock();
-            cout << "Seggio: token: " << tokenAttivo << " -> disabilitato" <<endl;
-
-            cout << "Seggio: token: " << temp << " -> abilitato" <<endl;
-            this->mutex_stdout.unlock();
+    for (uint i = 0; i < snHTAttivi.size(); i++){
+        if(snHTAttivi.at(i) == snHTdaDisattivare){
+            snHTAttivi.at(i) = snHTRiserva;
+            snHTRiserva = snHTdaDisattivare;
+            cout << "Token: " << snHTRiserva << " -> disattivato" << endl;
+            cout << "Token: " << snHTAttivi.at(i) << " -> attivato" << endl;
+            emit scambiati(snHTdaDisattivare,snHTAttivi.at(i));
             break;
         }
     }
+    emit
 }
 
-bool Seggio::isBusyHT(unsigned int idHT){
+bool Seggio::isBusyHT(string  snHT){
     for(unsigned int index = 0; index < this->busyHT.size(); index++){
-        if(this->idHTAttivi[index] == idHT){
+        if(this->snHTAttivi[index] == snHT){
 
             return this->busyHT[index];
         }
     }
     cerr << "Seggio: isBusyHT: verifica stato HT fallita" << endl;
-    return true;
+    return false;
+}
+
+void Seggio::calcolaHTdisattivabili(){
+    vector <string> htDisattivabili;
+
+    for (unsigned int i  = 0; i < snHTAttivi.size();i++){
+
+        if(!isBusyHT(snHTAttivi.at(i))){
+            htDisattivabili.push_back(snHTAttivi.at(i));
+        }
+    }
+
+    emit readyHTDisattivabili(htDisattivabili,snHTRiserva);
 }
 
 void Seggio::setPVstate(unsigned int idPV, unsigned int nuovoStatoPV){
@@ -740,7 +746,7 @@ const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
     return address_printable;
 }
 
-bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo, uint matricola){
+bool Seggio::pushAssociationToPV(unsigned int idPV, string snHT, unsigned int idTipoVotante, uint matricola, string usernameHT, string passwordHT){
 
 
     const char* ip_pv = this->IP_PV[idPV-1];
@@ -749,7 +755,7 @@ bool Seggio::pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned 
     SSLClient *seggio_client = new SSLClient(this);
     if(seggio_client->connectTo(ip_pv)!= nullptr){
         //richiede il settaggio della associazione alla postazione di voto a cui il client del seggio si è connesso
-        res = seggio_client->querySetAssociation(idHT,ruolo,matricola);
+        res = seggio_client->querySetAssociation(snHT,idTipoVotante,matricola,usernameHT,passwordHT);
     }
     else{
 
@@ -844,6 +850,29 @@ void Seggio::aggiornaPVs(){
     return;
 }
 
+uint Seggio::getIndexHTBySN(string sn)
+{
+    uint indexHT = 0;
+    for (uint i = 0; i < generatoriOTP.size(); i++){
+        if(sn == generatoriOTP.at(i).getSN()){
+            //indice ht token trovato
+            indexHT = i;
+            break;
+        }
+    }
+    return indexHT;
+}
+
+string Seggio::getSnHTRiserva() const
+{
+    return snHTRiserva;
+}
+
+void Seggio::setSnHTRiserva(const string &value)
+{
+    snHTRiserva = value;
+}
+
 string Seggio::getSessionKey_Seggio_Urna() const
 {
     return sessionKey_Seggio_Urna;
@@ -856,18 +885,6 @@ void Seggio::setSessionKey_Seggio_Urna(const string &value)
 
 void Seggio::validatePassKey(QString pass)
 {
-    //TODO contattare il dbms degli accessi per controllare se la password è esatta
-    //    if(pass == "qwerty"){
-    //        cout << "Seggio: passKey corretta" << endl;
-    //        emit validPass();
-    //    }
-    //    else {
-    //        emit wrongPass();
-    //    }
-    //contatto l'urna per validare la password
-    // 11A47EC4465DD95FCD393075E7D3C4EB
-
-
     SSLClient * pv_client = new SSLClient(this);
 
     if(pv_client->connectTo(ipUrna)!=nullptr){

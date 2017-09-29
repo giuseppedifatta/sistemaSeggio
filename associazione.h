@@ -7,25 +7,27 @@
 
 #ifndef ASSOCIAZIONE_H_
 #define ASSOCIAZIONE_H_
-
+#include <string>
+using namespace std;
 class Associazione {
 private:
 	unsigned int idPV;
-    unsigned int idHT;
+    string snHT;
     unsigned int IdTipoVotante;
     unsigned int matricola;
 
 
 public:
-    Associazione(unsigned int idPostazioneVoto, unsigned int idTokenOTP);
+    Associazione(unsigned int idPostazioneVoto, string snHT);
 	virtual ~Associazione();
 
 	unsigned int getIdPV();
-    unsigned int getIdHT();
     unsigned int getMatricola() const;
     void setMatricola(unsigned int value);
     unsigned int getIdTipoVotante() const;
     void setIdTipoVotante(unsigned int value);
+    string getSnHT() const;
+    void setSnHT(const string &value);
 };
 
 #endif /* ASSOCIAZIONE_H_ */

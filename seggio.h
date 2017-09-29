@@ -19,9 +19,7 @@
 #include <chrono>
 #include "sslserver.h"
 #include "sslclient.h"
-
-#include "sslclient.h"
-#include "sslserver.h"
+#include "hardwaretoken.h"
 
 
 #include "cryptopp/osrng.h"
@@ -53,7 +51,7 @@ signals:
     void stateChanged(unsigned int idPV,unsigned int stato);
     void anyPVFree(bool);
     void anyAssociationRemovable(bool);
-    void associationReady(unsigned int idHT, unsigned int idPV);
+    void associationReady(string idHT, unsigned int idPV);
     void validPass();
     void wrongPass();
     void forbidLogout();
@@ -62,12 +60,14 @@ signals:
     void sessionEnded();
     void sessionNotYetStarted();
     void allowVote();
-    void forbidVote(std::string);
+    void forbidVote(string);
     void errorPV(uint idPV);
     void matricolaStateReceived(QString infoMatricola);
     void urnaNonRaggiungibile();
     void errorAbortVoting(uint matricola);
     void successAbortVoting();
+    void scambiati(string HTdisattivato, string HTattivato);
+    void readyHTDisattivabili(std::vector <string> htDisattivabili, string htDisattivo);
 public slots:
     void createAssociazioneHT_PV();
     void eliminaNuovaAssociazione();
@@ -87,11 +87,8 @@ public slots:
     void matricolaState(uint matricola);
     void abortVoting(uint matricola);
 
-    //void liberaHT_PV(unsigned int idPV);
-    //bool feedbackFreeBusy(unsigned int idPV);
-    //servizio da richiedere all'urna virtuale
-    //void readVoteResults(unsigned int idProceduraVoto);
-
+    void calcolaHTdisattivabili();
+    void disattivaHT(string snHTdaDisattivare);
 public:
     Seggio(QObject *parent = 0);
     ~Seggio();
@@ -100,13 +97,13 @@ public:
     Associazione *getNuovaAssociazione();
 
     //metodi pubblici
-    bool isBusyHT(unsigned int idHT);
-    void disattivaHT(unsigned int tokenAttivo);
+    bool isBusyHT(string snHT);
+
 
     void setPVstate(unsigned int idPV, unsigned int nuovoStatoPV);
 
     std::vector< Associazione > getListAssociazioni();
-    std::array<unsigned int, NUM_HT_ATTIVI>& getArrayIdHTAttivi();
+
     unsigned int getIdHTRiserva();
     const char * getIP_PV(unsigned int idPV);
 
@@ -190,6 +187,9 @@ public:
     string getSessionKey_Seggio_Urna() const;
     void setSessionKey_Seggio_Urna(const string &value);
 
+    string getSnHTRiserva() const;
+    void setSnHTRiserva(const string &value);
+
 private:
     void run();
 
@@ -223,22 +223,26 @@ private:
     string descrizioneProcedura;
     uint statoProcedura;
     uint idSessione;
-    //gli id degli HT non vanno da 1 a 5, ma sono relativi agli identificativi propri HT
-    std::array <unsigned int,NUM_HT_ATTIVI> idHTAttivi;
-    std::array <string, NUM_HT_ATTIVI> authenticationUsernameHT;
-    unsigned int idHTRiserva;
+
+    vector <HardwareToken> generatoriOTP;
+    uint getIndexHTBySN(string sn);
+
+    //gli id degli HT non vanno da 1 a 5, ma sono relativi agli identificativi propri degli HT
+    array <string,NUM_HT_ATTIVI> snHTAttivi;
+    string snHTRiserva;
+
     unsigned int numeroSeggio;
 
-    //idPostazioniVoto vanno da 1 in poi, al massimo 7
+    //idPostazioniVoto vanno da 1 a 3
 
-    std::array <unsigned int,NUM_PV> idPostazioniVoto;
-    std::array <unsigned int,NUM_PV> PV_lastUsedHT;
+    array <unsigned int,NUM_PV> idPostazioniVoto;
+    array <string,NUM_PV> PV_lastUsedHT;
     std::vector< Associazione > listAssociazioni;
     Associazione *nuovaAssociazione;
 
     //funzioni a solo uso del seggio, verso PV
     void setBusyHT_PV();
-    bool pushAssociationToPV(unsigned int idPV, unsigned int idHT, unsigned int ruolo, uint matricola);
+    bool pushAssociationToPV(unsigned int idPV, string snHT, unsigned int idTipoVotante, uint matricola, string usernameHT, string passwordHT);
     void pullStatePV(unsigned int idPV);
     bool removeAssociationFromPV(unsigned int idPV);
     bool freePVpostVotazione(unsigned int idPV);

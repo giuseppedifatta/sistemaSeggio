@@ -438,7 +438,7 @@ void SSLClient::stopLocalServer(/*const char* localhosthostname*/){
 
 }
 
-bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante, uint matricola /*,string authenticationUsernameHT*/){
+bool SSLClient::querySetAssociation(string snHT, unsigned int idTipoVotante, uint matricola , string usernameHT, string passwordHT){
     bool res = false;
     //invia codice del servizio richiesto al PV_Server
     int serviceCod = serviziPV::setAssociation;
@@ -451,23 +451,27 @@ bool SSLClient::querySetAssociation(unsigned int idHT,unsigned int ruoloVotante,
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
-    //invio idHT da associare alla postazione di voto per l'avvio della funzionalità di abilitazione al voto
-    this->sendString_SSL(ssl,to_string(idHT));
+    //invio snHT da associare alla postazione di voto per l'avvio della funzionalità di abilitazione al voto
+    this->sendString_SSL(ssl,snHT);
     seggioChiamante->mutex_stdout.lock();
-    cout << "ClientSeggio: Id Hardware token da associare alla PV: " << idHT << endl;
+    cout << "ClientSeggio: Id Hardware token da associare alla PV: " << snHT << endl;
     seggioChiamante->mutex_stdout.unlock();
 
     //TODO invio authenticationUsernameHT
+    this->sendString_SSL(ssl,usernameHT);
 
-    //invio ruoloVotante
-    this->sendString_SSL(ssl,to_string(ruoloVotante));
+    //TODO invio authenticationPasswordHT
+    this->sendString_SSL(ssl,passwordHT);
+
+    //invio idTipoVotante
+    this->sendString_SSL(ssl,to_string(idTipoVotante));
 
     //invio matricola votante
     this->sendString_SSL(ssl,to_string(matricola));
 
     //ricevi esito dell'operazione
     // 0 -> success
-    // -1 -> error
+    // 1 -> error
     int bytes;
     char buffer[8];
     memset(buffer, '\0', sizeof(buffer));
@@ -567,7 +571,7 @@ bool SSLClient::queryRemoveAssociation() {
 
     //ricevi esito dell'operazione
     // 0 -> success
-    // -1 -> error
+    // 1 -> error
     int bytes;
     char buffer[8];
     memset(buffer, '\0', sizeof(buffer));
@@ -627,7 +631,7 @@ bool SSLClient::queryFreePV(){
     //do stuff
     //ricevi esito dell'operazione
     // 0 -> success
-    // -1 -> error
+    // 1 -> error
     bool res;
     int bytes;
     char buffer[8];

@@ -20,7 +20,8 @@ HEADERS += \
     associazione.h \
     sslclient.h \
     sslserver.h \
-    aggiornamentostatopv.h
+    aggiornamentostatopv.h \
+    hardwaretoken.h
 
 SOURCES += \
     mainwindowseggio.cpp \
@@ -28,7 +29,8 @@ SOURCES += \
     seggio.cpp \
     associazione.cpp \
     sslclient.cpp \
-    sslserver.cpp
+    sslserver.cpp \
+    hardwaretoken.cpp
 
 
 

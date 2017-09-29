@@ -33,13 +33,14 @@ signals:
     void needMatricolaInfo(uint matricola);
     void seggioLogged(bool);
     void tryRemoveStateMatricola(uint matricola);
-
+    void needStatoGeneratori();
+    void disattivaHT(string snHT);
 public slots:
     //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
     void updateCreaAssociazioneButton(bool b);
     void updateRimuoviAssociazioneButton(bool b);
     void updatePVButtons(unsigned int idPVtoUpdate, unsigned int statoPV); 
-    void showNewAssociation(unsigned int ht, unsigned int idPV);
+    void showNewAssociation(string ht, unsigned int idPV);
     void initSeggio();
     void showErrorPass();
     void doLogout();
@@ -47,17 +48,19 @@ public slots:
     void showRemovableAssociations(std::vector<Associazione> associazioniRimovibili);
     void showMessageSessioneEnded();
     void showMessageSessionNotStarted();
-    void showMessageForbidVote(std::string esitoLock);
+    void showMessageForbidVote(string esitoLock);
     void showInfoMatricola(QString info);
     void showErrorUrnaUnreachable();
     void showErrorAbortVoting(uint matricola);
     void hideCreaAssociazione();
     void showMessageAssociationRemoved();
+    void showManageToken(std::vector<string> snHTdisattivabili, string snHTdisattivo);
+    void showTokenScambiati(string disativato, string attivato);
 private:
     Ui::MainWindowSeggio *ui;
     Seggio *seggio;
     bool logged;
-    enum InterfaccieSeggio{
+    enum InterfacceSeggio{
         loginSeggio,
         loginPassword,
         gestioneSeggio,

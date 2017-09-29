@@ -28,9 +28,19 @@ void Associazione::setIdTipoVotante(unsigned int value)
     IdTipoVotante = value;
 }
 
-Associazione::Associazione(unsigned int idPostazioneVoto, unsigned int idTokenOTP) {
+string Associazione::getSnHT() const
+{
+    return snHT;
+}
+
+void Associazione::setSnHT(const string &value)
+{
+    snHT = value;
+}
+
+Associazione::Associazione(unsigned int idPostazioneVoto, string snHT) {
     this->idPV=idPostazioneVoto;
-    this->idHT=idTokenOTP;
+    this->snHT=snHT;
     
 }
 
@@ -42,7 +52,4 @@ unsigned int Associazione::getIdPV(){
     return this->idPV;
 }
 
-unsigned int Associazione::getIdHT(){
-    return this->idHT;
-}
 
