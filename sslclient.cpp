@@ -691,7 +691,7 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = this->getIPbyInterface("enp0s8");
+    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
     sendString_SSL(ssl,my_ip);
 
     //ricevo idProceduraVoto
@@ -799,7 +799,40 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
         //ricevi info HT associati al seggio
 
         for (uint i = 0; i < 5; i++){
+            string sn;
+            string user;
+            string pass;
+            receiveString_SSL(ssl,sn);
+            receiveString_SSL(ssl,user);
+            receiveString_SSL(ssl,pass);
+            string encodedMAC;
+            receiveString_SSL(ssl, encodedMAC);
 
+            if(seggioChiamante->verifyMAC(sessionKey,sn+user+pass,encodedMAC) != 0){
+                attivata = false;
+                break;
+            }
+            else{
+                HardwareToken ht;
+                ht.setSN(sn);
+                ht.setUsername(user);
+                ht.setPassword(pass);
+                seggioChiamante->addGeneratoreOTP(ht);
+            }
+
+        }
+
+        //ricevi chiave publica RP
+        string publicKeyRP;
+        receiveString_SSL(ssl,publicKeyRP);
+        string encodedMAC;
+        receiveString_SSL(ssl,encodedMAC);
+
+        if(seggioChiamante->verifyMAC(sessionKey,publicKeyRP,encodedMAC) != 0 ){
+            attivata = false;
+        }
+        else{
+            seggioChiamante->setPublicKeyRP(publicKeyRP);
         }
 
 
@@ -822,7 +855,7 @@ bool SSLClient::queryRisultatiVoto()
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = this->getIPbyInterface("enp0s8");
+    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
     sendString_SSL(ssl,my_ip);
 
     return true;
@@ -842,7 +875,7 @@ uint SSLClient::queryTryVote(uint matricola, uint &idTipoVotante)
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = this->getIPbyInterface("enp0s8");
+    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
     sendString_SSL(ssl,my_ip);
 
     //invia matricola
@@ -887,7 +920,7 @@ bool SSLClient::queryInfoMatricola(uint matricola, string &nome, string &cognome
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = this->getIPbyInterface("enp0s8");
+    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
     sendString_SSL(ssl,my_ip);
 
     //invio matricola
@@ -942,7 +975,7 @@ bool SSLClient::queryResetMatricolaState(uint matricola)
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = this->getIPbyInterface("enp0s8");
+    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
     sendString_SSL(ssl,my_ip);
 
     //invio matricola da resettare
@@ -999,38 +1032,4 @@ int SSLClient::receiveString_SSL(SSL* ssl, string &s){
     return bytes; //bytes read for the string received
 }
 
-string SSLClient::getIPbyInterface(const char * interfaceName){
-    struct ifaddrs *ifaddr, *ifa;
-    int /*family,*/ s;
-    char host[NI_MAXHOST];
 
-    if (getifaddrs(&ifaddr) == -1)
-    {
-        perror("getifaddrs");
-        exit(EXIT_FAILURE);
-    }
-
-
-    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
-    {
-        if (ifa->ifa_addr == NULL)
-            continue;
-
-        s=getnameinfo(ifa->ifa_addr,sizeof(struct sockaddr_in),host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-
-        if((strcmp(ifa->ifa_name,interfaceName)==0)&&(ifa->ifa_addr->sa_family==AF_INET))
-        {
-            if (s != 0)
-            {
-                printf("getnameinfo() failed: %s\n", gai_strerror(s));
-                exit(EXIT_FAILURE);
-            }
-            printf("\tInterface : <%s>\n",ifa->ifa_name );
-            printf("\t  Address : <%s>\n", host);
-        }
-    }
-
-    freeifaddrs(ifaddr);
-    string ip_host = host;
-    return ip_host;
-}

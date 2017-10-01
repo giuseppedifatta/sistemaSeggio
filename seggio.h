@@ -190,6 +190,14 @@ public:
     string getSnHTRiserva() const;
     void setSnHTRiserva(const string &value);
 
+    vector<HardwareToken> getGeneratoriOTP() const;
+    void setGeneratoriOTP(const vector<HardwareToken> &value);
+    void addGeneratoreOTP(HardwareToken &ht);
+
+    string getPublicKeyRP() const;
+    void setPublicKeyRP(const string &value);
+
+    string getIPbyInterface(const char *interfaceName);
 private:
     void run();
 
@@ -223,6 +231,7 @@ private:
     string descrizioneProcedura;
     uint statoProcedura;
     uint idSessione;
+    string publicKeyRP;
 
     vector <HardwareToken> generatoriOTP;
     uint getIndexHTBySN(string sn);
@@ -249,15 +258,11 @@ private:
     bool addAssociazioneHT_PV(uint matricola);
 
 
-
-
-    const char * calcolaIP_PVbyID(unsigned int idPV);
-
-
     //allo stato attuale un seggio prevede una composizione di 3 postazioni di voto e 4 hardware token attivi
 
 
     std::vector <Associazione> associazioniRimovibili;
+    string calcolaIP_PVbyID(uint idPostazione);
 };
 
 #endif /* SEGGIO_H_ */

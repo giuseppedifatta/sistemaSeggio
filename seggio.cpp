@@ -18,32 +18,12 @@ using namespace std;
 Seggio::Seggio(QObject *parent):
     QThread(parent){
     ipUrna = "192.168.19.130";
-    //    idProceduraVoto = 1;
-    //    dataAperturaSessione.tm_mday = 15;
-    //    dataAperturaSessione.tm_mon = 6;
-    //    dataAperturaSessione.tm_year = 2017;
-    //    dataAperturaSessione.tm_hour = 9;
-
-    //    dataChiusuraSessione.tm_mday = 15;
-    //    dataChiusuraSessione.tm_mon = 6;
-    //    dataChiusuraSessione.tm_year = 2017;
-    //    dataChiusuraSessione.tm_hour = 17;
-
-
-    //solo per test, gli ht attivi per un certo seggio saranno impostati all'atto della creazione del seggio
-    //non può essere il seggio a decidere, al momento dell'avvio del seggio stesso, quali sono gli HT attivi e quale quello di riserva
-    //prevedere
-//    idHTAttivi[0]=1;
-//    idHTAttivi[1]=2;
-//    idHTAttivi[2]=3;
-//    idHTAttivi[3]=4;
-//    idHTRiserva = 5;
 
     for(unsigned int i = 0; i < NUM_PV; i++){
-        idPostazioniVoto[i]=i+1;
+        idPostazioniVoto.at(i)=i+1;
         //busyPV[i]=true;
-        PV_lastUsedHT[i] = "";
-        statoPV[i]=0;
+        PV_lastUsedHT.at(i) = "";
+        statoPV.at(i)=0;
     }
 
     //    for(unsigned int i = 0; i < NUM_HT_ATTIVI; i++){
@@ -52,11 +32,11 @@ Seggio::Seggio(QObject *parent):
     //    }
     nuovaAssociazione = NULL;
 
-    //TODO calcolare usando come indirizzo base l'IP pubblico del seggio
-    ////const char* IP_PV = this->calcolaIP_PVbyID(idPV);
-    IP_PV[idPostazioniVoto[0]-1] = "192.168.56.101";
-    IP_PV[idPostazioniVoto[1]-1] = "192.168.56.102";
-    IP_PV[idPostazioniVoto[2]-1] = "192.168.56.103";
+    //calcolare usando come indirizzo base l'IP pubblico del seggio
+
+   for (uint i = 0; i < IP_PV.size(); i++){
+       IP_PV.at(i) = this->calcolaIP_PVbyID(i+1).c_str();
+   }
 
 }
 
@@ -689,62 +669,6 @@ void Seggio::stopServerPV(){
     delete seggio_client;
 }
 
-const char * Seggio::calcolaIP_PVbyID(unsigned int idPV){
-    cout << idPV << endl;
-    struct hostent *host;
-    host = gethostbyname("localhost");
-    struct sockaddr_in local_address;
-    local_address.sin_family = AF_INET;
-    local_address.sin_addr.s_addr = *(long*) (host->h_addr);
-    /* ---------------------------------------------------------- *
-             * Zeroing the rest of the struct                             *
-             * ---------------------------------------------------------- */
-    memset(&(local_address.sin_zero), '\0', 8);
-
-    const char * address_printable = inet_ntoa(local_address.sin_addr);
-
-
-    this->mutex_stdout.lock();
-    cout << "Seggio: IP locale del Seggio: " << address_printable << endl;
-
-
-    struct ifaddrs * ifAddrStruct=NULL;
-    struct ifaddrs * ifa=NULL;
-    void * tmpAddrPtr=NULL;
-
-    int ret = getifaddrs(&ifAddrStruct);
-    if (ret == 0){
-        cout << "Seggio: getifaddrs success"<< endl;
-    }
-    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
-        if (!ifa->ifa_addr) {
-            continue;
-        }
-        if (ifa->ifa_addr->sa_family == AF_INET) { // check it is IP4
-            // is a valid IP4 Address
-            tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-            char addressBuffer[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-        }
-        /*else if (ifa->ifa_addr->sa_family == AF_INET6) { // check it is IP6
-                    // is a valid IP6 Address
-                    tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
-                    char addressBuffer[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-                    printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-                }*/
-    }
-    if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
-    this->mutex_stdout.unlock();
-
-
-    //delete ifAddrStruct;
-    //delete ifa;
-
-    //delete host;
-    return address_printable;
-}
 
 bool Seggio::pushAssociationToPV(unsigned int idPV, string snHT, unsigned int idTipoVotante, uint matricola, string usernameHT, string passwordHT){
 
@@ -848,6 +772,31 @@ void Seggio::aggiornaPVs(){
     cout << "Seggio: pullClient: exit!" << endl;
     this->mutex_stdout.unlock();
     return;
+}
+
+string Seggio::getPublicKeyRP() const
+{
+    return publicKeyRP;
+}
+
+void Seggio::setPublicKeyRP(const string &value)
+{
+    publicKeyRP = value;
+}
+
+vector<HardwareToken> Seggio::getGeneratoriOTP() const
+{
+    return generatoriOTP;
+}
+
+void Seggio::setGeneratoriOTP(const vector<HardwareToken> &value)
+{
+    generatoriOTP = value;
+}
+
+void Seggio::addGeneratoreOTP(HardwareToken &ht)
+{
+    this->generatoriOTP.push_back(ht);
 }
 
 uint Seggio::getIndexHTBySN(string sn)
@@ -1137,4 +1086,60 @@ int Seggio::verifyMAC(string encodedSessionKey,string data, string macEncoded){
         exit(1);
     }
     return success;
+}
+
+
+string Seggio::getIPbyInterface(const char * interfaceName){
+    struct ifaddrs *ifaddr, *ifa;
+    int /*family,*/ s;
+    char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1)
+    {
+        perror("getifaddrs");
+        exit(EXIT_FAILURE);
+    }
+
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        s=getnameinfo(ifa->ifa_addr,sizeof(struct sockaddr_in),host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+
+        if((strcmp(ifa->ifa_name,interfaceName)==0)&&(ifa->ifa_addr->sa_family==AF_INET))
+        {
+            if (s != 0)
+            {
+                printf("getnameinfo() failed: %s\n", gai_strerror(s));
+                exit(EXIT_FAILURE);
+            }
+            printf("\tInterface : <%s>\n",ifa->ifa_name );
+            printf("\t  Address : <%s>\n", host);
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    string ip_host = host;
+    return ip_host;
+}
+
+string Seggio::calcolaIP_PVbyID(uint idPostazione)
+{
+    string ipSeggio = this->getIPbyInterface("enp0s8");
+    int byte1, byte2, byte3, byte4;
+    char dot;
+    istringstream s(ipSeggio);  // input stream that now contains the ip address string
+
+    s >> byte1 >> dot >> byte2 >> dot >> byte3 >> dot >> byte4 >> dot;
+
+
+
+    //aggiungendo l'idPostazione all byte meno significativo dell'ipSeggio si ottiene l'ip della postazione di voto con un certo id
+    int byte4PV = byte4 + idPostazione;
+
+    string ipPV = to_string(byte1) + "." + to_string(byte2) + "." + to_string(byte3) + "." +  to_string(byte4PV);
+    cout << "PV: ip postazione voto " << idPostazione << ": " << ipPV << endl;
+    return ipPV;
 }

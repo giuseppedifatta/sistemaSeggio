@@ -48,7 +48,7 @@ private:
 
     void sendString_SSL(SSL *ssl, string s);
     int receiveString_SSL(SSL *ssl, string &s);
-    string getIPbyInterface(const char *interfaceName);
+
 public:
     SSLClient(Seggio * s);
     ~SSLClient();
