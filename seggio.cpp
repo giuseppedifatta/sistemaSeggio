@@ -17,7 +17,7 @@ using namespace std;
 
 Seggio::Seggio(QObject *parent):
     QThread(parent){
-    ipUrna = "192.168.19.130";
+    ipUrna = "192.168.19.134";
 
     for(unsigned int i = 0; i < NUM_PV; i++){
         idPostazioniVoto.at(i)=i+1;
@@ -34,8 +34,12 @@ Seggio::Seggio(QObject *parent):
 
     //calcolare usando come indirizzo base l'IP pubblico del seggio
 
+   for (uint i = 0; i < NUM_PV; i++){
+       IP_PV.push_back(this->calcolaIP_PVbyID(i+1));
+   }
+   cout << "IP delle postazioni voto, dentro il costruttore" << endl;
    for (uint i = 0; i < IP_PV.size(); i++){
-       IP_PV.at(i) = this->calcolaIP_PVbyID(i+1).c_str();
+       cout << IP_PV.at(i) << endl;
    }
 
 }
@@ -55,6 +59,11 @@ void Seggio::run(){
     this->listAssociazioni.clear();
     for (uint i = 0; i < busyHT.size(); i++){
         busyHT.at(i) = false;
+    }
+
+    cout << "IP delle postazioni voto, dentro la run" << endl;
+    for (uint i = 0; i < IP_PV.size(); i++){
+        cout << IP_PV.at(i) << endl;
     }
     this->nuovaAssociazione = NULL;
 
@@ -278,6 +287,9 @@ bool Seggio::addAssociazioneHT_PV(uint matricola){
         //resettiamo il puntatore membro di classe
         this->nuovaAssociazione = NULL;
     }
+    else{
+        this->abortVoting(matricola, motivoAbort::erroreConfigurazioneAssociazione);
+    }
 
     return pushed;
 
@@ -350,7 +362,7 @@ void Seggio::removeAssociazioneHT_PV(unsigned int idPV){
         matricolaToReset = this->listAssociazioni.at(indexAss).getMatricola();
 
         //comunica all'urna l'annullamento dell'operazione di voto per la matricola estratta dall'associazione da eliminare
-        abortVoting(matricolaToReset);
+        this->abortVoting(matricolaToReset,motivoAbort::rimozioneAssociazione);
 
         //elimino dall'heap vector l'istanza dell'associazione rimossa
         //l'eliminazione dal vettore di un elemento libera anche la memoria
@@ -439,11 +451,11 @@ void Seggio::completaOperazioneVoto(uint idPV)
 
 void Seggio::tryVote(uint matricola)
 {
-    SSLClient * pv_client = new SSLClient(this);
+    SSLClient * seggio_client = new SSLClient(this);
 
-    if(pv_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna)!=nullptr){
         uint IdTipoVotante;
-        uint esito = pv_client->queryTryVote(matricola,IdTipoVotante);
+        uint esito = seggio_client->queryTryVote(matricola,IdTipoVotante);
         if(esito == esitoLock::locked){
             nuovaAssociazione->setIdTipoVotante(IdTipoVotante);
             emit allowVote();
@@ -478,7 +490,7 @@ void Seggio::tryVote(uint matricola)
     else{
         emit urnaNonRaggiungibile();
     }
-    delete pv_client;
+    delete seggio_client;
 }
 
 
@@ -514,7 +526,7 @@ bool Seggio::anyPostazioneLibera(){
 
 bool Seggio::anyAssociazioneEliminabile(){
     for(unsigned int i=0; i< this->listAssociazioni.size(); ++i){
-        unsigned int idPV = this->listAssociazioni[i].getIdPV();
+        unsigned int idPV = this->listAssociazioni.at(i).getIdPV();
 
         unsigned int statoPV = stateInfoPV(idPV);
 
@@ -616,8 +628,8 @@ void Seggio::setPVstate(unsigned int idPV, unsigned int nuovoStatoPV){
 
 }
 
-const char *Seggio::getIP_PV(unsigned int idPV){
-    return this->IP_PV[idPV-1];
+string Seggio::getIP_PV(unsigned int idPV){
+    return this->IP_PV.at(idPV-1);
 }
 
 void Seggio::runServerPV(){
@@ -673,11 +685,11 @@ void Seggio::stopServerPV(){
 bool Seggio::pushAssociationToPV(unsigned int idPV, string snHT, unsigned int idTipoVotante, uint matricola, string usernameHT, string passwordHT){
 
 
-    const char* ip_pv = this->IP_PV[idPV-1];
-
+    cout << this->IP_PV.at(idPV - 1);
+    string ip_pv = this->IP_PV.at(idPV - 1);
     bool res = false;
     SSLClient *seggio_client = new SSLClient(this);
-    if(seggio_client->connectTo(ip_pv)!= nullptr){
+    if(seggio_client->connectTo(ip_pv.c_str())!= nullptr){
         //richiede il settaggio della associazione alla postazione di voto a cui il client del seggio si è connesso
         res = seggio_client->querySetAssociation(snHT,idTipoVotante,matricola,usernameHT,passwordHT);
     }
@@ -687,14 +699,15 @@ bool Seggio::pushAssociationToPV(unsigned int idPV, string snHT, unsigned int id
 
     }
     delete seggio_client;
+
     return res;
 }
 
 bool Seggio::removeAssociationFromPV(unsigned int idPV){
-    const char* ip_pv = this->IP_PV[idPV-1];
+    string ip_pv = this->IP_PV.at(idPV-1);
     bool res = false;
     SSLClient *seggio_client = new SSLClient(this);
-    if(seggio_client->connectTo(ip_pv)!= nullptr){
+    if(seggio_client->connectTo(ip_pv.c_str())!= nullptr){
 
         //richiede la rimozione della associazione alla postazione di voto a cui il client del seggio si è connesso
         res = seggio_client->queryRemoveAssociation();
@@ -705,10 +718,10 @@ bool Seggio::removeAssociationFromPV(unsigned int idPV){
 
 bool Seggio::freePVpostVotazione(unsigned int idPV)
 {
-    const char* ip_pv = this->IP_PV[idPV-1];
+    string ip_pv = this->IP_PV.at(idPV-1);
     bool res = false;
     SSLClient *seggio_client = new SSLClient(this);
-    if(seggio_client->connectTo(ip_pv)!= nullptr){
+    if(seggio_client->connectTo(ip_pv.c_str())!= nullptr){
 
         //richiede la rimozione della associazione alla postazione di voto a cui il client del seggio si è connesso
         res = seggio_client->queryFreePV();
@@ -718,7 +731,7 @@ bool Seggio::freePVpostVotazione(unsigned int idPV)
 }
 
 void Seggio::pullStatePV(unsigned int idPV){
-    const char* ip_pv = this->IP_PV[idPV-1];
+    const char* ip_pv = this->calcolaIP_PVbyID(idPV).c_str();
 
     //bool res = false;
     this->mutex_stdout.lock();
@@ -834,13 +847,17 @@ void Seggio::setSessionKey_Seggio_Urna(const string &value)
 
 void Seggio::validatePassKey(QString pass)
 {
-    SSLClient * pv_client = new SSLClient(this);
+    SSLClient * seggio_client = new SSLClient(this);
 
-    if(pv_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna)!=nullptr){
 
-        if(pv_client->queryAttivazioneSeggio(pass.toStdString())){
+        if(seggio_client->queryAttivazioneSeggio(pass.toStdString())){
             emit validPass();
             sessionKey_Seggio_Urna = pass.toStdString();
+            for (uint i = 0; i < NUM_HT_ATTIVI; i++){
+                this->snHTAttivi.at(i) = this->generatoriOTP.at(i).getSN();
+            }
+            this->snHTRiserva = this->generatoriOTP.at(NUM_HT_ATTIVI).getSN();
         }
         else{
             emit wrongPass();
@@ -849,17 +866,17 @@ void Seggio::validatePassKey(QString pass)
     else{
         emit urnaNonRaggiungibile();
     }
-    delete pv_client;
+    delete seggio_client;
 }
 
 void Seggio::matricolaState(uint matricola)
 {
-    SSLClient * pv_client = new SSLClient(this);
+    SSLClient * seggio_client = new SSLClient(this);
 
-    if(pv_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna)!=nullptr){
         string nome, cognome;
         uint stato;
-        if(pv_client->queryInfoMatricola(matricola,nome, cognome,stato)){
+        if(seggio_client->queryInfoMatricola(matricola,nome, cognome,stato)){
             string s;
             switch(stato){
             case statoVoto::non_espresso:
@@ -884,15 +901,15 @@ void Seggio::matricolaState(uint matricola)
         emit urnaNonRaggiungibile();
     }
 
-    delete pv_client;
+    delete seggio_client;
 }
-void Seggio::abortVoting(uint matricola)
+void Seggio::abortVoting(uint matricola, uint situazione)
 {
-    SSLClient * pv_client = new SSLClient(this);
+    SSLClient * seggio_client = new SSLClient(this);
 
-    if(pv_client->connectTo(ipUrna)!=nullptr){
-        if (pv_client->queryResetMatricolaState(matricola)){
-            emit successAbortVoting();
+    if(seggio_client->connectTo(ipUrna)!=nullptr){
+        if (seggio_client->queryResetMatricolaState(matricola)){
+            emit successAbortVoting(situazione);
         }
         else{
             emit errorAbortVoting(matricola);
@@ -903,7 +920,7 @@ void Seggio::abortVoting(uint matricola)
         emit errorAbortVoting(matricola);
     }
 
-    delete pv_client;
+    delete seggio_client;
 }
 void Seggio::tryLogout(){
     bool allowLogout = true;

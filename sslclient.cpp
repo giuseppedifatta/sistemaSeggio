@@ -451,17 +451,13 @@ bool SSLClient::querySetAssociation(string snHT, unsigned int idTipoVotante, uin
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
+
     //invio snHT da associare alla postazione di voto per l'avvio della funzionalità di abilitazione al voto
     this->sendString_SSL(ssl,snHT);
     seggioChiamante->mutex_stdout.lock();
     cout << "ClientSeggio: Id Hardware token da associare alla PV: " << snHT << endl;
     seggioChiamante->mutex_stdout.unlock();
 
-    //TODO invio authenticationUsernameHT
-    this->sendString_SSL(ssl,usernameHT);
-
-    //TODO invio authenticationPasswordHT
-    this->sendString_SSL(ssl,passwordHT);
 
     //invio idTipoVotante
     this->sendString_SSL(ssl,to_string(idTipoVotante));
@@ -469,21 +465,27 @@ bool SSLClient::querySetAssociation(string snHT, unsigned int idTipoVotante, uin
     //invio matricola votante
     this->sendString_SSL(ssl,to_string(matricola));
 
+    //TODO invio authenticationUsernameHT
+    this->sendString_SSL(ssl,usernameHT);
+
+    //TODO invio authenticationPasswordHT
+    this->sendString_SSL(ssl,passwordHT);
+
     //ricevi esito dell'operazione
     // 0 -> success
     // 1 -> error
-    int bytes;
-    char buffer[8];
-    memset(buffer, '\0', sizeof(buffer));
-    bytes = SSL_read(ssl,buffer,sizeof(buffer));
-    if(bytes > 0){
-        buffer[bytes] = 0;
-        int result = atoi(buffer);
+    string buffer;
+    if(receiveString_SSL(ssl,buffer)!=0){
+        int result = atoi(buffer.c_str());
         seggioChiamante->mutex_stdout.lock();
         cout << "ClientSeggio: Risultato associazione: " << result << endl;
         seggioChiamante->mutex_stdout.unlock();
         if (result == 0){
             res = true;
+        }
+        else{
+
+            res = false; //configurazione associazione non riuscita
         }
 
     }else{
@@ -986,6 +988,8 @@ bool SSLClient::queryResetMatricolaState(uint matricola)
     sendString_SSL(ssl,encodedMac);
 
     //ricevi esito operazione
+
+    // TODO gestire la situazione in cui sul database delle anagrafiche risulti che il voto è stato espresso
     string s;
     receiveString_SSL(ssl, s);
     if(s!=""){

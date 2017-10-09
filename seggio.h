@@ -65,7 +65,7 @@ signals:
     void matricolaStateReceived(QString infoMatricola);
     void urnaNonRaggiungibile();
     void errorAbortVoting(uint matricola);
-    void successAbortVoting();
+    void successAbortVoting(uint situazione);
     void scambiati(string HTdisattivato, string HTattivato);
     void readyHTDisattivabili(std::vector <string> htDisattivabili, string htDisattivo);
 public slots:
@@ -85,7 +85,7 @@ public slots:
     void tryVote(uint matricola);
     void validatePassKey(QString pass);
     void matricolaState(uint matricola);
-    void abortVoting(uint matricola);
+    void abortVoting(uint matricola, uint situazione);
 
     void calcolaHTdisattivabili();
     void disattivaHT(string snHTdaDisattivare);
@@ -105,7 +105,7 @@ public:
     std::vector< Associazione > getListAssociazioni();
 
     unsigned int getIdHTRiserva();
-    const char * getIP_PV(unsigned int idPV);
+    string getIP_PV(unsigned int idPV);
 
     bool anyAssociazioneEliminabile();
     unsigned int stateInfoPV(unsigned int idPV);
@@ -152,6 +152,11 @@ public:
             votando,
             espresso
         };
+    enum motivoAbort{
+        erroreConfigurazioneAssociazione,
+        rimozioneAssociazione
+    };
+
     std::mutex mutex_stati;
     std::mutex mutex_stdout;
 
@@ -219,7 +224,7 @@ private:
     std::array <bool,NUM_PV> busyPV;
 
     std::array <unsigned int, NUM_PV> statoPV; //usare mutex per accedere al dato, accedono stateInfoPV (per ottenere lo stato della singola postazione e il thread che aggiorna i valori con quelli che riceve dalla i-esima PV
-    std::array <const char *, NUM_PV> IP_PV;
+    vector <string> IP_PV;
 
     string sessionKey_Seggio_Urna;
     //Dati da ottenere dall'urna centrale

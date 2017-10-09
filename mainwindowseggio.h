@@ -32,7 +32,7 @@ signals:
     void wantVote(uint matricola);
     void needMatricolaInfo(uint matricola);
     void seggioLogged(bool);
-    void tryRemoveStateMatricola(uint matricola);
+    void tryRemoveStateMatricola(uint matricola, uint motivoAbort);
     void needStatoGeneratori();
     void disattivaHT(string snHT);
 public slots:
@@ -53,7 +53,7 @@ public slots:
     void showErrorUrnaUnreachable();
     void showErrorAbortVoting(uint matricola);
     void hideCreaAssociazione();
-    void showMessageAssociationRemoved();
+    void showMessageAssociationRemoved(uint motivoAbort);
     void showManageToken(std::vector<string> snHTdisattivabili, string snHTdisattivo);
     void showTokenScambiati(string disativato, string attivato);
 private:
