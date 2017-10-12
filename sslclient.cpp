@@ -843,7 +843,7 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
     return attivata;
 }
 
-bool SSLClient::queryRisultatiVoto()
+bool SSLClient::queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioXML,string &encodedSignRP)
 {
     //richiesta servizio
     int serviceCod = serviziUrna::risultatiVoto;
@@ -856,11 +856,27 @@ bool SSLClient::queryRisultatiVoto()
     seggioChiamante->mutex_stdout.unlock();
     SSL_write(ssl,charCod,strlen(charCod));
 
-    //invio mio ip
-    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
-    sendString_SSL(ssl,my_ip);
+    sendString_SSL(ssl,to_string(idProcedura));
 
-    return true;
+    uint esito = 1;
+    string s;
+    if(receiveString_SSL(ssl,s) != 0){
+        esito = atoi(s.c_str());
+    }
+    else {return false;}
+
+    if (esito == 0){
+        if(receiveString_SSL(ssl, risultatiScrutinioXML)==0){
+            return false;
+        }
+        if(receiveString_SSL(ssl,encodedSignRP) == 0){
+            return false;
+        }
+    }
+
+
+
+return true;
 }
 
 uint SSLClient::queryTryVote(uint matricola, uint &idTipoVotante)

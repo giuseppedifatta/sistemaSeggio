@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>725</height>
+    <width>1080</width>
+    <height>744</height>
    </rect>
   </property>
   <property name="font">
@@ -126,7 +126,7 @@ border: 7px solid rgb(85,255,0);
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="loginSeggio_page">
        <property name="sizePolicy">
@@ -149,81 +149,108 @@ border: 7px solid rgb(85,255,0);
          <number>9</number>
         </property>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_15">
-          <property name="spacing">
-           <number>150</number>
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>LOGIN SEGGIO</string>
           </property>
-          <property name="leftMargin">
-           <number>50</number>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
-          <property name="topMargin">
-           <number>0</number>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <property name="rightMargin">
-           <number>50</number>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
           </property>
-          <item>
-           <widget class="QPushButton" name="loginCS_button">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>62</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>62</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">font-size:21px;</string>
-            </property>
-            <property name="text">
-             <string>Login Componenti del Seggio</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="quitSystem_button">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>62</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="cursor">
-             <cursorShape>ArrowCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>Exit</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="loginCS_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>62</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>62</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-size:21px;</string>
+          </property>
+          <property name="text">
+           <string>Login Componenti del Seggio</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="quitSystem_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>62</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>ArrowCursor</cursorShape>
+          </property>
+          <property name="text">
+           <string>Exit</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
       <widget class="QWidget" name="loginPassword_page">
-       <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0">
+       <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0,0">
         <property name="spacing">
          <number>6</number>
         </property>
@@ -239,6 +266,23 @@ border: 7px solid rgb(85,255,0);
         <property name="bottomMargin">
          <number>9</number>
         </property>
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>ATTIVAZIONE SEGGIO</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_4">
           <property name="leftMargin">
@@ -318,7 +362,7 @@ border: 7px solid rgb(85,255,0);
        </layout>
       </widget>
       <widget class="QWidget" name="gestioneSeggio_page">
-       <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,1,0">
+       <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,0,1,0,0">
         <property name="spacing">
          <number>6</number>
         </property>
@@ -330,11 +374,112 @@ border: 7px solid rgb(85,255,0);
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="palette">
+           <palette>
+            <active>
+             <colorrole role="WindowText">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+             <colorrole role="Text">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+             <colorrole role="ButtonText">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </active>
+            <inactive>
+             <colorrole role="WindowText">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+             <colorrole role="Text">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+             <colorrole role="ButtonText">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </inactive>
+            <disabled>
+             <colorrole role="WindowText">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+             <colorrole role="Text">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+             <colorrole role="ButtonText">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>255</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </disabled>
+           </palette>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
           <property name="text">
-           <string>DESCRIZIONE PROCEDURA</string>
+           <string>GESTIONE SEGGIO</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
@@ -518,6 +663,13 @@ border: 7px solid rgb(85,255,0);
            </layout>
           </item>
          </layout>
+        </item>
+        <item>
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
         </item>
         <item>
          <layout class="QGridLayout" name="gridLayout_6" rowstretch="0,0,0,0,0,0,0,0,0,0,0" columnstretch="0,1,1">
@@ -737,6 +889,13 @@ color:black;
          </layout>
         </item>
         <item>
+         <widget class="Line" name="line_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <property name="spacing">
            <number>50</number>
@@ -770,6 +929,23 @@ color:black;
       </widget>
       <widget class="QWidget" name="gestione_HT_page">
        <layout class="QVBoxLayout" name="verticalLayout_9">
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>GESTIONE HARDWARE TOKEN</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_8">
           <property name="spacing">
@@ -867,6 +1043,19 @@ font-size: 10pt;</string>
            </layout>
           </item>
           <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <property name="spacing">
              <number>50</number>
@@ -894,61 +1083,95 @@ font-size: 10pt;</string>
       <widget class="QWidget" name="sessioneConclusa_page">
        <layout class="QVBoxLayout" name="verticalLayout_12">
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_10">
-          <property name="spacing">
-           <number>150</number>
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>RICHIESTA RISULTATI VOTO</string>
           </property>
-          <property name="leftMargin">
-           <number>50</number>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
-          <property name="rightMargin">
-           <number>50</number>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_7">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <item>
-           <widget class="QPushButton" name="letturaRisultatiCS_button">
-            <property name="text">
-             <string>Lettura risultati di voto</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="logoutCS_button">
-            <property name="text">
-             <string>Logout</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="letturaRisultatiCS_button">
+          <property name="text">
+           <string>Risultati di voto</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="logoutCS_button">
+          <property name="text">
+           <string>Logout</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
       <widget class="QWidget" name="risultatiVoto_page">
        <layout class="QVBoxLayout" name="verticalLayout_23">
         <property name="leftMargin">
-         <number>50</number>
+         <number>9</number>
         </property>
         <property name="topMargin">
-         <number>50</number>
+         <number>9</number>
         </property>
         <property name="rightMargin">
-         <number>50</number>
+         <number>9</number>
         </property>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_4">
-          <property name="spacing">
-           <number>50</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="idScheda_label">
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_descrizioneScheda">
             <property name="text">
-             <string>ID_SCHEDA</string>
+             <string>Descrizione Sheda:</string>
             </property>
            </widget>
           </item>
-          <item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_descrizioneSchedaValue">
+            <property name="text">
+             <string>textValue</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
            <widget class="QTableWidget" name="risultatiVoto_tableWidget"/>
           </item>
-          <item>
+          <item row="3" column="0">
            <layout class="QHBoxLayout" name="horizontalLayout_10">
             <property name="spacing">
              <number>50</number>
@@ -983,6 +1206,16 @@ font-size: 10pt;</string>
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1080</width>
+     <height>19</height>
+    </rect>
+   </property>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

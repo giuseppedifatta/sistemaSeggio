@@ -32,6 +32,7 @@
 #include "cryptopp/aes.h"
 #include "cryptopp/modes.h"
 #include <cryptopp/rsa.h>
+#include <cryptopp/pssr.h>
 
 #include <QtCore>
 #include <QThread>
@@ -268,6 +269,7 @@ private:
 
     std::vector <Associazione> associazioniRimovibili;
     string calcolaIP_PVbyID(uint idPostazione);
+    int verifySignString_RP(string data, string encodedSignature, string encodedPublicKey);
 };
 
 #endif /* SEGGIO_H_ */

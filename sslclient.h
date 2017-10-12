@@ -64,7 +64,7 @@ public:
 
     //richieste per l'Urna
     bool queryAttivazioneSeggio(string sessionKey);
-    bool queryRisultatiVoto();
+    bool queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioXML, string &encodedSignRP);
     uint queryTryVote(uint matricola, uint &idTipoVotante);
     bool queryInfoMatricola(uint matricola, string &nome, string &cognome, uint &statoVoto);
     bool queryResetMatricolaState(uint matricola);

@@ -34,13 +34,13 @@ Seggio::Seggio(QObject *parent):
 
     //calcolare usando come indirizzo base l'IP pubblico del seggio
 
-   for (uint i = 0; i < NUM_PV; i++){
-       IP_PV.push_back(this->calcolaIP_PVbyID(i+1));
-   }
-   cout << "IP delle postazioni voto, dentro il costruttore" << endl;
-   for (uint i = 0; i < IP_PV.size(); i++){
-       cout << IP_PV.at(i) << endl;
-   }
+    for (uint i = 0; i < NUM_PV; i++){
+        IP_PV.push_back(this->calcolaIP_PVbyID(i+1));
+    }
+    cout << "IP delle postazioni voto, dentro il costruttore" << endl;
+    for (uint i = 0; i < IP_PV.size(); i++){
+        cout << IP_PV.at(i) << endl;
+    }
 
 }
 
@@ -443,7 +443,7 @@ void Seggio::completaOperazioneVoto(uint idPV)
 
         emit anyAssociationRemovable(this->anyAssociazioneEliminabile());
 
-        }
+    }
     else{
         cout << "Seggio: Unable to remove association from PV" << endl;
     }
@@ -956,6 +956,10 @@ void Seggio::tryLogout(){
     //interruzione del thread server
     this->stopServerPV();
 
+    //verificare se la sessione conclusa è l'ultima
+
+
+
     emit grantLogout();
 }
 
@@ -1159,4 +1163,51 @@ string Seggio::calcolaIP_PVbyID(uint idPostazione)
     string ipPV = to_string(byte1) + "." + to_string(byte2) + "." + to_string(byte3) + "." +  to_string(byte4PV);
     cout << "PV: ip postazione voto " << idPostazione << ": " << ipPV << endl;
     return ipPV;
+}
+
+int Seggio::verifySignString_RP(string data, string encodedSignature,
+                                string encodedPublicKey) {
+
+    int success = 1; //non verificato
+    string signature;
+    StringSource(encodedSignature,true,
+                 new HexDecoder(
+                     new StringSink(signature)
+                     )//HexDecoder
+                 );//StringSource
+    cout << "Signature encoded: " << encodedSignature << endl;
+    cout << "Signature decoded: " << signature << endl;
+
+    string decodedPublicKey;
+    StringSource(encodedPublicKey,true,
+                 new HexDecoder(
+                     new StringSink(decodedPublicKey)
+                     )//HexDecoder
+                 );//StringSource
+
+    ////------ verifica signature
+    StringSource ss(decodedPublicKey,true /*pumpAll*/);
+    CryptoPP::RSA::PublicKey publicKey;
+    publicKey.Load(ss);
+
+    cout << "PublicKey encoded: " << encodedPublicKey << endl;
+    ////////////////////////////////////////////////
+    try{
+        // Verify and Recover
+        CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Verifier verifier(publicKey);
+        cout << "Data to sign|signature: " << data + signature << endl;
+        StringSource(data + signature, true,
+                     new SignatureVerificationFilter(verifier, NULL,
+                                                     SignatureVerificationFilter::THROW_EXCEPTION) // SignatureVerificationFilter
+                     );// StringSource
+
+        cout << "Verified signature on message" << endl;
+        success = 0; //verificato
+    } // try
+
+    catch (CryptoPP::Exception& e) {
+        cerr << "Error: " << e.what() << endl;
+        success = 1;
+    }
+    return success;
 }
