@@ -269,42 +269,45 @@ void MainWindowSeggio::updatePVButtons(unsigned int idPVtoUpdate, unsigned int s
         }
         break;
     }
-    case 2:{
-        //aggiornamento bottone PV2
-        ui->pv2_button->setText(messaggioPV);
-        if(statoPV == seggio->statiPV::libera){
-            cout << "View: PV2: set green border" << endl;
-            ui->pv2_button->setProperty("free",true);
-            ui->pv2_button->style()->unpolish(ui->pv2_button);
-            ui->pv2_button->style()->polish(ui->pv2_button);
-            ui->pv2_button->update();
+    case 2:
+    {
+            //aggiornamento bottone PV2
+            ui->pv2_button->setText(messaggioPV);
+            if(statoPV == seggio->statiPV::libera){
+                cout << "View: PV2: set green border" << endl;
+                ui->pv2_button->setProperty("free",true);
+                ui->pv2_button->setProperty("freeable", false);
+                ui->pv2_button->style()->unpolish(ui->pv2_button);
+                ui->pv2_button->style()->polish(ui->pv2_button);
+                ui->pv2_button->update();
 
-            ui->creaAssociazioneHTPV_button->setEnabled(true);
-        }
-        else if (statoPV == seggio->statiPV::votazione_completata){
-            cout << "View: PV2: set green background" << endl;
-            ui->pv2_button->setProperty("freeable",true);
-            ui->pv2_button->style()->unpolish(ui->pv2_button);
-            ui->pv2_button->style()->polish(ui->pv2_button);
-            ui->pv2_button->update();
+                ui->creaAssociazioneHTPV_button->setEnabled(true);
+            }
+            else if (statoPV == seggio->statiPV::votazione_completata){
+                cout << "View: PV2: set green background" << endl;
+                ui->pv2_button->setProperty("freeable",true);
+                ui->pv2_button->style()->unpolish(ui->pv2_button);
+                ui->pv2_button->style()->polish(ui->pv2_button);
+                ui->pv2_button->update();
 
-            ui->pv2_button->setEnabled(true);
-            ui->liberaPValert2_label->setText("clicca per liberare");
+                ui->pv2_button->setEnabled(true);
+                ui->liberaPValert2_label->setText("clicca per liberare");
+            }
+            else{
+                ui->pv2_button->setProperty("free",false);
+                ui->pv2_button->style()->unpolish(ui->pv2_button);
+                ui->pv2_button->style()->polish(ui->pv2_button);
+                ui->pv2_button->update();
+            }
+            break;
         }
-        else{
-            ui->pv2_button->setProperty("free",false);
-            ui->pv2_button->style()->unpolish(ui->pv2_button);
-            ui->pv2_button->style()->polish(ui->pv2_button);
-            ui->pv2_button->update();
-        }
-        break;
-    }
     case 3:{
         //aggiornamento bottone PV3
         ui->pv3_button->setText(messaggioPV);
         if(statoPV == seggio->statiPV::libera){
             cout << "View: PV3: set green border" << endl;
             ui->pv3_button->setProperty("free",true);
+            ui->pv3_button->setProperty("freeable", false);
             ui->pv3_button->style()->unpolish(ui->pv3_button);
             ui->pv3_button->style()->polish(ui->pv3_button);
             ui->pv3_button->update();
@@ -667,14 +670,14 @@ void MainWindowSeggio::on_pv2_button_clicked()
 {
     //libera postazione 2
     emit confirmVotazioneCompleta(2);
-    ui->liberaPValert2_label->hide();
+    ui->liberaPValert2_label->setText("");
 }
 
 void MainWindowSeggio::on_pv3_button_clicked()
 {
     //libera postazione 3
     emit confirmVotazioneCompleta(3);
-    ui->liberaPValert3_label->hide();
+    ui->liberaPValert3_label->setText("");
 }
 
 void MainWindowSeggio::on_pushButton_letVote_clicked()

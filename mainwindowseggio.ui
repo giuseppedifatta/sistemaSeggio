@@ -90,13 +90,15 @@ border: 7px solid red;
 background-color:white;
 color:black;
 font-size:18px;
-
 }
 
 QPushButton#pv2_button[free = &quot;true&quot;] {
 border: 7px solid rgb(85,255,0);
 }
 
+QPushButton#pv2_button[freeable = &quot;true&quot;] {
+background-color: rgb(85,255,0);
+}
 
 QPushButton#pv3_button{
 width:180; 
@@ -105,11 +107,13 @@ border: 7px solid red;
 background-color:white;
 color:black;
 font-size:18px;
-
 }
 
 QPushButton#pv3_button[free = &quot;true&quot;] {
 border: 7px solid rgb(85,255,0);
+}
+QPushButton#pv3_button[freeable = &quot;true&quot;] {
+background-color: rgb(85,255,0);
 }</string>
   </property>
   <widget class="QWidget" name="centralWidget">
