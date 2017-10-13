@@ -55,8 +55,7 @@ signals:
     void associationReady(string idHT, unsigned int idPV);
     void validPass();
     void wrongPass();
-    void forbidLogout();
-    void grantLogout();
+
     void removableAssociationsReady(std::vector <Associazione> associazioniRimovibili);
     void sessionEnded();
     void sessionNotYetStarted();
@@ -69,6 +68,10 @@ signals:
     void successAbortVoting(uint situazione);
     void scambiati(string HTdisattivato, string HTattivato);
     void readyHTDisattivabili(std::vector <string> htDisattivabili, string htDisattivo);
+    void toPageRisultati();
+    void forbidLogout();
+    void grantLogout();
+    void grantLogout(QDateTime dtApSessione, QDateTime dtChSessione);
 public slots:
     void createAssociazioneHT_PV();
     void eliminaNuovaAssociazione();

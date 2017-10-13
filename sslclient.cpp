@@ -863,7 +863,9 @@ bool SSLClient::queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioX
     if(receiveString_SSL(ssl,s) != 0){
         esito = atoi(s.c_str());
     }
-    else {return false;}
+    else {
+        return false;
+    }
 
     if (esito == 0){
         if(receiveString_SSL(ssl, risultatiScrutinioXML)==0){
@@ -873,10 +875,54 @@ bool SSLClient::queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioX
             return false;
         }
     }
+    else if (esito == 2){
+        //scrutinio non ancora effettuato
+        cout << "ClientSeggio: scrutinio non ancora eseguito da RP" << endl;
+        return false;
+    }
 
 
 
-return true;
+    return true;
+}
+
+bool SSLClient::queryNextSessione(uint idProcedura, uint &esito)
+{
+    esito = 1;
+    //richiesta servizio
+    int serviceCod = serviziUrna::tryVoteElettore;
+    string strCod = to_string(serviceCod);
+    const char * charCod = strCod.c_str();
+
+    seggioChiamante->mutex_stdout.lock();
+    cout << "ClientSeggio: richiedo il servizio: " << charCod << endl;
+    seggioChiamante->mutex_stdout.unlock();
+    SSL_write(ssl,charCod,strlen(charCod));
+
+    sendString_SSL(ssl,to_string(idProcedura));
+
+    string str;
+    if(receiveString_SSL(ssl,str)==0){
+        return false;
+    }
+    esito = atoi(str.c_str());
+
+    string dataSessione;
+    receiveString_SSL(ssl,dataSessione);
+    cout << "ClientSeggio: data Sessione: " << dataSessione << endl;
+
+    string oraApertura;
+    receiveString_SSL(ssl,oraApertura);
+    cout << "ClientSeggio: ora Apertura: " << oraApertura << endl;
+
+    string oraChiusura;
+    receiveString_SSL(ssl,oraChiusura);
+    cout << "ClientSeggio: ora Chiusura: " << oraChiusura << endl;
+
+    seggioChiamante->setDtAperturaSessione(dataSessione + " " + oraApertura);
+    seggioChiamante->setDtChiusuraSessione(dataSessione + " " + oraChiusura);
+
+    return true;
 }
 
 uint SSLClient::queryTryVote(uint matricola, uint &idTipoVotante)

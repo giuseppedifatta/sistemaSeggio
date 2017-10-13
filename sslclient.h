@@ -65,6 +65,7 @@ public:
     //richieste per l'Urna
     bool queryAttivazioneSeggio(string sessionKey);
     bool queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioXML, string &encodedSignRP);
+    bool queryNextSessione(uint idProcedura, uint &esito);
     uint queryTryVote(uint matricola, uint &idTipoVotante);
     bool queryInfoMatricola(uint matricola, string &nome, string &cognome, uint &statoVoto);
     bool queryResetMatricolaState(uint matricola);
@@ -75,7 +76,7 @@ public:
         //attivazionePV = 0, //postazionevoto
         attivazioneSeggio = 1, //seggio
         //infoProcedura, //seggio
-        //infoSessione, //seggio
+        nextSessione = 3, //seggio
         risultatiVoto  = 4, //seggio
         //invioSchedeCompilate = 5//, //postazionevoto
         //scrutinio = 6, //responsabile procedimento

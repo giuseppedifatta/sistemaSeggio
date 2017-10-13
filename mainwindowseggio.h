@@ -56,6 +56,8 @@ public slots:
     void showMessageAssociationRemoved(uint motivoAbort);
     void showManageToken(std::vector<string> snHTdisattivabili, string snHTdisattivo);
     void showTokenScambiati(string disativato, string attivato);
+    void showMessageNextSessione(QDateTime inizioProssimaSessione,QDateTime fineProssimaSessione);
+    void showViewRisultati();
 private:
     Ui::MainWindowSeggio *ui;
     Seggio *seggio;
@@ -93,7 +95,7 @@ private slots:
 
     void on_sostituisci_button_clicked();
 
-    void on_logoutCS_button_clicked();
+    void on_logoutRisultatiVoto_button_clicked();
 
     void on_creaAssociazioneHTPV_button_clicked();
 
@@ -111,7 +113,7 @@ private slots:
 
     void on_backToLogin_button_clicked();
 
-    void on_logout2_button_clicked();
+    void on_logoutRV_button_clicked();
 
     void on_annullaRimozione_button_clicked();
 

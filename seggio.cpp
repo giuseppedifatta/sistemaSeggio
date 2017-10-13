@@ -929,6 +929,7 @@ void Seggio::tryLogout(){
         statoPV = this->stateInfoPV(idPV);
 
         switch(statoPV){
+
         case this->statiPV::attesa_abilitazione:
         case this->statiPV::votazione_in_corso:
         case this->statiPV::votazione_completata:
@@ -957,10 +958,30 @@ void Seggio::tryLogout(){
     this->stopServerPV();
 
     //verificare se la sessione conclusa è l'ultima
+    SSLClient * seggio_client = new SSLClient(this);
+
+    if(seggio_client->connectTo(ipUrna)!=nullptr){
+        uint esito = 0;
+        if(seggio_client->queryNextSessione(this->idProceduraVoto,esito)){
+            if(esito == 1){
+                //altra sessione
+                emit grantLogout(this->dtAperturaSessione,this->dtChiusuraSessione);
+            }
+            else if(esito == 2){
+                emit toPageRisultati();
+            }
+        }
+        else{
+            emit grantLogout();
+        }
+    }
+    else{
+        emit urnaNonRaggiungibile();
+    }
+    delete seggio_client;
 
 
 
-    emit grantLogout();
 }
 
 void Seggio::setLogged(bool value)
