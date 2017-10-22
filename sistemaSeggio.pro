@@ -21,7 +21,11 @@ HEADERS += \
     sslclient.h \
     sslserver.h \
     aggiornamentostatopv.h \
-    hardwaretoken.h
+    hardwaretoken.h \
+    risultatiSeggio.h \
+    schedavoto.h \
+    candidato.h \
+    listaelettorale.h
 
 SOURCES += \
     mainwindowseggio.cpp \
@@ -30,7 +34,11 @@ SOURCES += \
     associazione.cpp \
     sslclient.cpp \
     sslserver.cpp \
-    hardwaretoken.cpp
+    hardwaretoken.cpp \
+    risultatiSeggio.cpp \
+    schedavoto.cpp \
+    candidato.cpp \
+    listaelettorale.cpp
 
 
 
@@ -52,3 +60,7 @@ win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../usr/lib/x86_64
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/debug/ -lcryptopp
 else:unix: LIBS += -L$$PWD/../../../../usr/lib/x86_64-linux-gnu/ -lcryptopp
 
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../usr/lib/i386-linux-gnu/release/ -ltinyxml2
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../usr/lib/i386-linux-gnu/debug/ -ltinyxml2
+else:unix: LIBS += -L$$PWD/../../../../usr/lib/i386-linux-gnu/ -ltinyxml2

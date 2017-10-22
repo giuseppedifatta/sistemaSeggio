@@ -20,6 +20,7 @@
 #include "sslserver.h"
 #include "sslclient.h"
 #include "hardwaretoken.h"
+#include "risultatiSeggio.h"
 
 
 #include "cryptopp/osrng.h"
@@ -69,6 +70,9 @@ signals:
     void scambiati(string HTdisattivato, string HTattivato);
     void readyHTDisattivabili(std::vector <string> htDisattivabili, string htDisattivo);
     void toPageRisultati();
+    void readyRisultatiSeggi(vector <RisultatiSeggio> risultatiSeggi);
+    void notScrutinio();
+
     void forbidLogout();
     void grantLogout();
     void grantLogout(QDateTime dtApSessione, QDateTime dtChSessione);
@@ -90,6 +94,7 @@ public slots:
     void validatePassKey(QString pass);
     void matricolaState(uint matricola);
     void abortVoting(uint matricola, uint situazione);
+    void risultatiVoto();
 
     void calcolaHTdisattivabili();
     void disattivaHT(string snHTdaDisattivare);
@@ -273,6 +278,7 @@ private:
     std::vector <Associazione> associazioniRimovibili;
     string calcolaIP_PVbyID(uint idPostazione);
     int verifySignString_RP(string data, string encodedSignature, string encodedPublicKey);
+    void parsingScrutinioXML(string &risultatiVotoXML, vector<RisultatiSeggio> *risultatiSeggi);
 };
 
 #endif /* SEGGIO_H_ */

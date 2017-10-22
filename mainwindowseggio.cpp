@@ -20,12 +20,6 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     //impostazione interfaccia inserimento password
     ui->wrongPassword_label->hide();
     
-    
-    
-    //setWindowFlags(  Qt::WindowMinMaxButtonsHint);
-    
-    //initTableRV();
-    
     setWindowFlags(Qt::FramelessWindowHint);
     
     setWindowTitle("Voto digitale UNIPA");
@@ -44,6 +38,7 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     qRegisterMetaType <string> ("string");
     qRegisterMetaType <std::vector <string>>("<std::vector <string>");
     qRegisterMetaType< std::vector<Associazione>>( "std::vector<Associazione>" );
+    qRegisterMetaType<vector<RisultatiSeggio>>("vector<RisultatiSeggio>");
     
     QObject::connect(seggio,SIGNAL(anyPVFree(bool)),this,SLOT(updateCreaAssociazioneButton(bool)),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(anyAssociationRemovable(bool)),this,SLOT(updateRimuoviAssociazioneButton(bool)),Qt::QueuedConnection);
@@ -62,7 +57,10 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     QObject::connect(seggio,SIGNAL(forbidLogout()),this,SLOT(showErrorLogout()),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(grantLogout()),this,SLOT(doLogout()),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(grantLogout(QDateTime,QDateTime)),this,SLOT(showMessageNextSessione(QDateTime,QDateTime)),Qt::QueuedConnection);
-    QObject::connect(seggio,SIGNAL(toPageRisultati()),this,SLOT(showViewRisultati()),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(toPageRisultati()),this,SLOT(showViewAskRisultati()),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(needRisultatiVoto()),seggio,SLOT(risultatiVoto()),Qt::QueuedConnection);
+
+    QObject::connect(seggio,SIGNAL(readyRisultatiSeggi(vector<RisultatiSeggio>)),this,SLOT(showRisultatiProcedura(vector<RisultatiSeggio>)),Qt::QueuedConnection);
     QObject::connect(this, SIGNAL(needRemovableAssociations()),seggio,SLOT(calculateRemovableAssociations()),Qt::QueuedConnection);
     QObject::connect(this, SIGNAL(confirmVotazioneCompleta(uint)),seggio,SLOT(completaOperazioneVoto(uint)),Qt::QueuedConnection);
     
@@ -105,9 +103,7 @@ MainWindowSeggio::~MainWindowSeggio()
     delete seggio;
     delete ui;
 }
-void MainWindowSeggio::sessioneDiVotoTerminata(){
-    ui->stackedWidget->setCurrentIndex(sessioneConclusa);
-}
+
 
 void MainWindowSeggio::initGestioneSeggio(){
     ui->pushButton_infoMatricola->setEnabled(false);
@@ -388,9 +384,24 @@ void MainWindowSeggio::showMessageNextSessione(QDateTime inizioProssimaSessione,
     doLogout();
 }
 
-void MainWindowSeggio::showViewRisultati()
+void MainWindowSeggio::showViewAskRisultati()
 {
-    ui->stackedWidget->setCurrentIndex(InterfacceSeggio::risultatiVoto);
+    ui->stackedWidget->setCurrentIndex(InterfacceSeggio::proceduraConclusa);
+}
+
+void MainWindowSeggio::showRisultatiProcedura(vector<RisultatiSeggio> risultatiSeggi)
+{
+    risultatiSeggioOttenuti = risultatiSeggi;
+    initTableRV();
+
+
+    indexSchedaRisultatoDaMostrare = 0;
+    RisultatiSeggio rs = risultatiSeggioOttenuti.at(0);
+    uint numSchede = rs.getSchedeVotoRisultato().size();
+    if(numSchede > 1 ){
+        ui->pushButton_schedaSuccessiva->setEnabled(true);
+    }
+    showSchedaRisultato(indexSchedaRisultatoDaMostrare, risultatiSeggioOttenuti);
 }
 
 void MainWindowSeggio::on_logout_button_clicked(){
@@ -625,12 +636,13 @@ void MainWindowSeggio::on_annullaRimozione_button_clicked()
 
 void MainWindowSeggio::on_letturaRisultatiCS_button_clicked()
 {
+    emit needRisultatiVoto();
     ui->stackedWidget->setCurrentIndex(risultatiVoto);
 }
 
 void MainWindowSeggio::on_goBackFromRisultatiVoto_button_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(sessioneConclusa);
+    ui->stackedWidget->setCurrentIndex(proceduraConclusa);
 }
 
 void MainWindowSeggio::on_schedaSuccessiva_button_clicked()
@@ -656,23 +668,25 @@ void MainWindowSeggio::on_goBackToGestioneSeggio_button_clicked()
 }
 
 void MainWindowSeggio::initTableRV(){
-    ui->risultatiVoto_tableWidget->verticalHeader()->setVisible(false);
-    ui->risultatiVoto_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->risultatiVoto_tableWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    ui->tableWidget_risultatiVoto->verticalHeader()->setVisible(false);
+    ui->tableWidget_risultatiVoto->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableWidget_risultatiVoto->setSelectionMode(QAbstractItemView::NoSelection);
     QStringList tableHeaders;
-    tableHeaders << "Candidati" << "Numero voti ricevuti";
-    ui->risultatiVoto_tableWidget->setColumnCount(2);
-    ui->risultatiVoto_tableWidget->setHorizontalHeaderLabels(tableHeaders);
+    tableHeaders << "id Seggio" << "Candidato" << "Data di nascita" << "Luogo di Nascita " << "Voti Ricevuti" << "Lista" ;
+
+    ui->tableWidget_risultatiVoto->setColumnCount(6);
+    ui->tableWidget_risultatiVoto->setHorizontalHeaderLabels(tableHeaders);
+    //ui->tableWidget_lista_procedure->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableWidget_risultatiVoto->resizeColumnsToContents();
+    ui->tableWidget_risultatiVoto->setEditTriggers(QAbstractItemView::NoEditTriggers);
     
-    ui->risultatiVoto_tableWidget->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);
-    ui->risultatiVoto_tableWidget->horizontalHeader()->setSectionResizeMode(1,QHeaderView::Stretch);
-    QFont font = ui->risultatiVoto_tableWidget->horizontalHeader()->font();
+    //    ui->tableWidget_risultatiVoto->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);
+    //    ui->tableWidget_risultatiVoto->horizontalHeader()->setSectionResizeMode(1,QHeaderView::Stretch);
+    QFont font = ui->tableWidget_risultatiVoto->horizontalHeader()->font();
     font.setPointSize(18);
-    ui->risultatiVoto_tableWidget->horizontalHeader()->setFont( font );
-    ui->risultatiVoto_tableWidget->horizontalHeader()->setStyleSheet(".QHeaderView{}");
-    
-    QFont fontItem("Sans Serif",18);
-    ui->risultatiVoto_tableWidget->setFont(fontItem);
+    font.setBold(true);
+    ui->tableWidget_risultatiVoto->horizontalHeader()->setFont( font );
+
 }
 
 
@@ -735,5 +749,100 @@ void MainWindowSeggio::on_lineEdit_matricolaElettore_textChanged(const QString &
     else{
         ui->pushButton_infoMatricola->setEnabled(true);
         
+    }
+}
+
+void MainWindowSeggio::on_pushButton_schedaSuccessiva_clicked()
+{
+    RisultatiSeggio rs = risultatiSeggioOttenuti.at(0);
+    uint numSchede = rs.getSchedeVotoRisultato().size();
+    uint indexSchedaRisultatoMostrata = indexSchedaRisultatoDaMostrare;
+    if(indexSchedaRisultatoMostrata < (numSchede-1) ){
+        indexSchedaRisultatoDaMostrare++;
+    }
+    else{ //visualizziamo di nuovo la prima scheda
+        indexSchedaRisultatoDaMostrare = 0;
+    }
+    showSchedaRisultato(indexSchedaRisultatoDaMostrare, risultatiSeggioOttenuti);
+}
+
+void MainWindowSeggio::showSchedaRisultato(uint indexScheda, vector <RisultatiSeggio> &risultatiSeggi){
+    ui->tableWidget_risultatiVoto->model()->removeRows(0,ui->tableWidget_risultatiVoto->rowCount());
+
+    uint numRow, indexNewRow, addedRow;
+    numRow = ui->tableWidget_risultatiVoto->rowCount();
+    indexNewRow = numRow-1;
+
+    QFont serifFontSeggio("Times", 20, QFont::Bold);
+    QFont serifFontCandidato("Times", 14, QFont::Bold);
+
+    for (uint s = 0; s <risultatiSeggi.size(); s++){
+        ui->tableWidget_risultatiVoto->insertRow(indexNewRow++);
+        addedRow = ui->tableWidget_risultatiVoto->rowCount()-1;
+
+        //ottengo i risultati del seggio
+        RisultatiSeggio rs = risultatiSeggi.at(s);
+
+        uint idSeggio = rs.getIdSeggio();
+        QTableWidgetItem *itemIdSeggio;
+        if(idSeggio != 0){
+            itemIdSeggio  = new QTableWidgetItem("Seggio " + QString::number(idSeggio));
+        }
+        else{
+            itemIdSeggio  = new QTableWidgetItem("Urna Virtuale");
+        }
+        itemIdSeggio->setFont(serifFontSeggio);
+        itemIdSeggio->setTextColor(Qt::blue);
+        ui->tableWidget_risultatiVoto->setItem(addedRow,SEGGIO,itemIdSeggio);
+
+
+        //estraggo la scheda risultato da visualizzare
+        SchedaVoto sv = rs.getSchedeVotoRisultato().at(indexScheda);
+        vector <ListaElettorale> liste = sv.getListeElettorali();
+        for (uint l = 0; l< liste.size(); l++){
+            ListaElettorale lista = liste.at(l);
+            vector <Candidato> candidati = lista.getCandidati();
+
+            for (uint i = 0; i < candidati.size(); i++){
+                ui->tableWidget_risultatiVoto->insertRow(indexNewRow++);
+                addedRow = ui->tableWidget_risultatiVoto->rowCount()-1;
+
+                QTableWidgetItem *item;
+                QString nomeLista = QString::fromStdString(lista.getNome());
+                if(nomeLista!="nessuna lista"){
+                    //creazione item nome della lista di appartenenza del candidato
+                    item = new QTableWidgetItem(nomeLista);
+                    item->setFont(serifFontCandidato);
+                    item->setTextColor(Qt::black);
+                    ui->tableWidget_risultatiVoto->setItem(addedRow,LISTA,item);
+                }
+
+                Candidato c = candidati.at(i);
+
+                string candidato = c.getNome() + " " +c.getCognome();
+                item = new QTableWidgetItem(QString::fromStdString(candidato));
+                item->setFont(serifFontCandidato);
+                item->setTextColor(Qt::black);
+                ui->tableWidget_risultatiVoto->setItem(addedRow,CANDIDATO,item);
+
+                string luogo = c.getLuogoNascita();
+                item = new QTableWidgetItem(QString::fromStdString(luogo));
+                item->setFont(serifFontCandidato);
+                item->setTextColor(Qt::black);
+                ui->tableWidget_risultatiVoto->setItem(addedRow,LUOGO,item);
+
+                string data = c.getDataNascita();
+                item = new QTableWidgetItem(QString::fromStdString(data));
+                item->setFont(serifFontCandidato);
+                item->setTextColor(Qt::black);
+                ui->tableWidget_risultatiVoto->setItem(addedRow,DATA,item);
+
+                string numVoti = to_string(c.getNumVoti());
+                item = new QTableWidgetItem(QString::fromStdString(numVoti));
+                item->setFont(serifFontCandidato);
+                item->setTextColor(Qt::black);
+                ui->tableWidget_risultatiVoto->setItem(addedRow,NUM_VOTI,item);
+            }
+        }
     }
 }

@@ -1183,51 +1183,58 @@ font-size: 10pt;</string>
          <number>9</number>
         </property>
         <item>
-         <layout class="QGridLayout" name="gridLayout">
-          <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout" columnstretch="0,1">
+          <item row="0" column="0" rowspan="4">
            <widget class="QLabel" name="label_descrizioneScheda">
             <property name="text">
              <string>Descrizione Sheda:</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
+          <item row="0" column="1" rowspan="4">
            <widget class="QLabel" name="label_descrizioneSchedaValue">
             <property name="text">
              <string>textValue</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QTableWidget" name="risultatiVoto_tableWidget"/>
-          </item>
-          <item row="3" column="0">
-           <layout class="QHBoxLayout" name="horizontalLayout_10">
-            <property name="spacing">
-             <number>50</number>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="tableWidget_risultatiVoto">
+          <property name="minimumSize">
+           <size>
+            <width>1042</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <property name="spacing">
+           <number>50</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="goBackFromRisultatiVoto_button">
+            <property name="text">
+             <string>Indietro</string>
             </property>
-            <item>
-             <widget class="QPushButton" name="goBackFromRisultatiVoto_button">
-              <property name="text">
-               <string>Indietro</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="schedaSuccessiva_button">
-              <property name="text">
-               <string>Scheda Successiva</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="logoutRV_button">
-              <property name="text">
-               <string>Logout</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_schedaSuccessiva">
+            <property name="text">
+             <string>Scheda Successiva</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="logoutRV_button">
+            <property name="text">
+             <string>Logout</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>

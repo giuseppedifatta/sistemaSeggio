@@ -845,6 +845,8 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
 
 bool SSLClient::queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioXML,string &encodedSignRP)
 {
+    //restituisce false se lo scrutinio non è ancora stato eseguito
+
     //richiesta servizio
     int serviceCod = serviziUrna::risultatiVoto;
     stringstream ssCod;

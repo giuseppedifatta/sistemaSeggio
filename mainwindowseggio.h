@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include "seggio.h"
 #include "associazione.h"
+#include "risultatiSeggio.h"
 #include <thread>
 #include <vector>
 #include <QObject>
@@ -35,6 +36,7 @@ signals:
     void tryRemoveStateMatricola(uint matricola, uint motivoAbort);
     void needStatoGeneratori();
     void disattivaHT(string snHT);
+    void needRisultatiVoto();
 public slots:
     //aggiornamento bottoni crea_associazione, rimuovi associazione e postazioni voto
     void updateCreaAssociazioneButton(bool b);
@@ -57,7 +59,8 @@ public slots:
     void showManageToken(std::vector<string> snHTdisattivabili, string snHTdisattivo);
     void showTokenScambiati(string disativato, string attivato);
     void showMessageNextSessione(QDateTime inizioProssimaSessione,QDateTime fineProssimaSessione);
-    void showViewRisultati();
+    void showViewAskRisultati();
+    void showRisultatiProcedura(vector<RisultatiSeggio> risultatiSeggi);
 private:
     Ui::MainWindowSeggio *ui;
     Seggio *seggio;
@@ -67,13 +70,25 @@ private:
         loginPassword,
         gestioneSeggio,
         gestioneHT,
-        sessioneConclusa,
+        proceduraConclusa,
         risultatiVoto
     };
+
+    enum columnRisultatiVoto{
+        SEGGIO,
+        CANDIDATO,
+        DATA,
+        LUOGO,
+        NUM_VOTI,
+        LISTA
+    };
+
+    vector <RisultatiSeggio> risultatiSeggioOttenuti;
+    uint indexSchedaRisultatoDaMostrare;
+    void showSchedaRisultato(uint indexScheda, vector<RisultatiSeggio> &risultatiSeggi);
 public:
     explicit MainWindowSeggio(QWidget *parent = 0);
     ~MainWindowSeggio();
-    void sessioneDiVotoTerminata();
 
     
     //void initTableHT();
@@ -125,6 +140,7 @@ private slots:
     void on_pushButton_letVote_clicked();
     void on_pushButton_infoMatricola_clicked();
     void on_lineEdit_matricolaElettore_textChanged(const QString &arg1);
+    void on_pushButton_schedaSuccessiva_clicked();
 };
 
 #endif // MAINWINDOWSEGGIO_H
