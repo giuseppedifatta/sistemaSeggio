@@ -1264,11 +1264,12 @@ void Seggio::parsingScrutinioXML(string &risultatiVotoXML, vector <RisultatiSegg
     XMLDocument xmlDoc;
     xmlDoc.Parse(risultatiVotoXML.c_str());
 
+    //nodo Scrutinio
     XMLNode *rootNode = xmlDoc.FirstChild();
 
     XMLNode *risultatiNode = rootNode->FirstChild();
 
-    XMLElement * risultatoElement = risultatiNode->FirstChildElement("risulatoSeggio");
+    XMLElement * risultatoElement = risultatiNode->FirstChildElement("risultatoSeggio");
     bool oneMoreRisultatoElement = true;
     while(oneMoreRisultatoElement){
         oneMoreRisultatoElement = false;
@@ -1404,8 +1405,8 @@ void Seggio::parsingScrutinioXML(string &risultatiVotoXML, vector <RisultatiSegg
 
         risultatiSeggi->push_back(rs);
 
-        if(risultatoElement->NextSiblingElement("risulatoSeggio")!=nullptr){
-            risultatoElement = risultatoElement->NextSiblingElement("risulatoSeggio");
+        if(risultatoElement->NextSiblingElement("risultatoSeggio")!=nullptr){
+            risultatoElement = risultatoElement->NextSiblingElement("risultatoSeggio");
             oneMoreRisultatoElement = true;
         }
     }
