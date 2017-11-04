@@ -40,12 +40,9 @@ SSLServer::SSLServer(Seggio *s){
 
     this->createServerContext();
 
-    char certFile[] =
-            "/home/giuseppe/myCA/intermediate/certs/localhost.cert.pem";
-    char keyFile[] =
-            "/home/giuseppe/myCA/intermediate/private/localhost.key.pem";
-    char chainFile[] =
-            "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
+    const char *certFile = getConfig("clientCertPem").c_str();
+    const char *keyFile = getConfig("clientKeyPem").c_str();
+    const char *chainFile = getConfig("chainFilePem").c_str();
 
     configure_context(certFile, keyFile, chainFile);
 
@@ -293,7 +290,7 @@ void SSLServer::createServerContext() {
 
 }
 
-void SSLServer::configure_context(char* CertFile, char* KeyFile, char* ChainFile) {
+void SSLServer::configure_context(const char* CertFile,const char* KeyFile,const char* ChainFile) {
     SSL_CTX_set_ecdh_auto(this->ctx, 1);
 
     SSL_CTX_load_verify_locations(this->ctx, ChainFile, ChainFile);

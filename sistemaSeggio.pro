@@ -25,7 +25,8 @@ HEADERS += \
     risultatiSeggio.h \
     schedavoto.h \
     candidato.h \
-    listaelettorale.h
+    listaelettorale.h \
+    conf.h
 
 SOURCES += \
     mainwindowseggio.cpp \
@@ -38,7 +39,8 @@ SOURCES += \
     risultatiSeggio.cpp \
     schedavoto.cpp \
     candidato.cpp \
-    listaelettorale.cpp
+    listaelettorale.cpp \
+    conf.cpp
 
 
 

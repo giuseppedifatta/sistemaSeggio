@@ -14,13 +14,14 @@
 #include "sslclient.h"
 #include "sslserver.h"
 #include "risultatiSeggio.h"
+#include "conf.h"
 
 using namespace std;
 using namespace tinyxml2;
 
 Seggio::Seggio(QObject *parent):
     QThread(parent){
-    ipUrna = "192.168.19.134";
+    ipUrna = getConfig("ipUrna").c_str();
 
     for(unsigned int i = 0; i < NUM_PV; i++){
         idPostazioniVoto.at(i)=i+1;

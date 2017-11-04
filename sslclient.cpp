@@ -29,10 +29,9 @@ SSLClient::SSLClient(Seggio * s){
 
     createClientContext();
 
-    char certFile[] = "/home/giuseppe/myCA/intermediate/certs/client.cert.pem";
-    char keyFile[] = "/home/giuseppe/myCA/intermediate/private/client.key.pem";
-    char chainFile[] =
-            "/home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem";
+    const char *certFile = getConfig("clientCertPem").c_str();
+    const char *keyFile = getConfig("clientKeyPem").c_str();
+    const char *chainFile = getConfig("chainFilePem").c_str();
 
     this->configure_context(certFile, keyFile, chainFile);
     seggioChiamante->mutex_stdout.lock();
@@ -386,7 +385,7 @@ void SSLClient::createClientContext(){
     SSL_CTX_set_options(this->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 }
 
-void SSLClient::configure_context(char* CertFile, char* KeyFile, char * ChainFile) {
+void SSLClient::configure_context(const char* CertFile,const char* KeyFile,const char * ChainFile) {
     SSL_CTX_set_ecdh_auto(this->ctx, 1);
 
     //---il chainfile dovrà essere ricevuto dal peer che si connette? non so se è necessario su entrambi i peer----
