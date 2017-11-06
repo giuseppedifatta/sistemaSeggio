@@ -29,9 +29,14 @@ SSLClient::SSLClient(Seggio * s){
 
     createClientContext();
 
-    const char *certFile = getConfig("clientCertPem").c_str();
-    const char *keyFile = getConfig("clientKeyPem").c_str();
-    const char *chainFile = getConfig("chainFilePem").c_str();
+    string pathCertFilePem = getConfig("clientCertPem");
+    const char * certFile = pathCertFilePem.c_str();
+
+    string pathKeyFilePem = getConfig("clientKeyPem");
+    const char * keyFile = pathKeyFilePem.c_str();
+
+    string pathChainFilePem = getConfig("chainFilePem");
+    const char * chainFile = pathChainFilePem.c_str();
 
     this->configure_context(certFile, keyFile, chainFile);
     seggioChiamante->mutex_stdout.lock();
@@ -692,7 +697,8 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
+    string interfaceIP = getConfig("interfaceIP");
+    string my_ip = seggioChiamante->getIPbyInterface(interfaceIP.c_str());
     sendString_SSL(ssl,my_ip);
 
     //ricevo idProceduraVoto
@@ -940,7 +946,8 @@ uint SSLClient::queryTryVote(uint matricola, uint &idTipoVotante)
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
+    string interfaceIP = getConfig("interfaceIP");
+    string my_ip = seggioChiamante->getIPbyInterface(interfaceIP.c_str());
     sendString_SSL(ssl,my_ip);
 
     //invia matricola
@@ -985,7 +992,8 @@ bool SSLClient::queryInfoMatricola(uint matricola, string &nome, string &cognome
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
+    string interfaceIP = getConfig("interfaceIP");
+    string my_ip = seggioChiamante->getIPbyInterface(interfaceIP.c_str());
     sendString_SSL(ssl,my_ip);
 
     //invio matricola
@@ -1040,7 +1048,8 @@ bool SSLClient::queryResetMatricolaState(uint matricola)
     SSL_write(ssl,charCod,strlen(charCod));
 
     //invio mio ip
-    string my_ip = seggioChiamante->getIPbyInterface("enp0s8");
+    string interfaceIP = getConfig("interfaceIP");
+    string my_ip = seggioChiamante->getIPbyInterface(interfaceIP.c_str());
     sendString_SSL(ssl,my_ip);
 
     //invio matricola da resettare

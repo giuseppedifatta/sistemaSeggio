@@ -5,3 +5,5 @@ ipUrna 192.168.19.133
 clientCertPem /home/giuseppe/myCA/intermediate/certs/client.cert.pem
 clientKeyPem /home/giuseppe/myCA/intermediate/private/client.key.pem
 chainFilePem /home/giuseppe/myCA/intermediate/certs/ca-chain.cert.pem
+
+interfaceIP enp0s8

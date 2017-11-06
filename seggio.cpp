@@ -21,7 +21,7 @@ using namespace tinyxml2;
 
 Seggio::Seggio(QObject *parent):
     QThread(parent){
-    ipUrna = getConfig("ipUrna").c_str();
+    ipUrna = getConfig("ipUrna");
 
     for(unsigned int i = 0; i < NUM_PV; i++){
         idPostazioniVoto.at(i)=i+1;
@@ -39,6 +39,7 @@ Seggio::Seggio(QObject *parent):
     //calcolare usando come indirizzo base l'IP pubblico del seggio
 
     for (uint i = 0; i < NUM_PV; i++){
+
         IP_PV.push_back(this->calcolaIP_PVbyID(i+1));
     }
     cout << "IP delle postazioni voto, dentro il costruttore" << endl;
@@ -457,7 +458,7 @@ void Seggio::tryVote(uint matricola)
 {
     SSLClient * seggio_client = new SSLClient(this);
 
-    if(seggio_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna.c_str())!=nullptr){
         uint IdTipoVotante;
         uint esito = seggio_client->queryTryVote(matricola,IdTipoVotante);
         if(esito == esitoLock::locked){
@@ -853,7 +854,7 @@ void Seggio::validatePassKey(QString pass)
 {
     SSLClient * seggio_client = new SSLClient(this);
 
-    if(seggio_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna.c_str())!=nullptr){
 
         if(seggio_client->queryAttivazioneSeggio(pass.toStdString())){
             emit validPass();
@@ -877,7 +878,7 @@ void Seggio::matricolaState(uint matricola)
 {
     SSLClient * seggio_client = new SSLClient(this);
 
-    if(seggio_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna.c_str())!=nullptr){
         string nome, cognome;
         uint stato;
         if(seggio_client->queryInfoMatricola(matricola,nome, cognome,stato)){
@@ -911,7 +912,7 @@ void Seggio::abortVoting(uint matricola, uint situazione)
 {
     SSLClient * seggio_client = new SSLClient(this);
 
-    if(seggio_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna.c_str())!=nullptr){
         if (seggio_client->queryResetMatricolaState(matricola)){
             emit successAbortVoting(situazione);
         }
@@ -932,7 +933,7 @@ void Seggio::risultatiVoto()
     vector <RisultatiSeggio> risultatiSeggi;
     SSLClient * seggio_client = new SSLClient(this);
     string risultatiVotoXML, encodedSignRP;
-    if(seggio_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna.c_str())!=nullptr){
         if (seggio_client->queryRisultatiVoto(this->idProceduraVoto,risultatiVotoXML, encodedSignRP)){
             int verifica = this->verifySignString_RP(risultatiVotoXML, encodedSignRP,this->publicKeyRP);
             if(verifica == 0){
@@ -987,7 +988,7 @@ void Seggio::tryLogout(){
     //verificare se la sessione conclusa è l'ultima
     SSLClient * seggio_client = new SSLClient(this);
 
-    if(seggio_client->connectTo(ipUrna)!=nullptr){
+    if(seggio_client->connectTo(ipUrna.c_str())!=nullptr){
         uint esito = 0;
         if(seggio_client->queryNextSessione(this->idProceduraVoto,esito)){
             if(esito == 1){

@@ -649,13 +649,6 @@ void MainWindowSeggio::on_goBackFromRisultatiVoto_button_clicked()
     ui->stackedWidget->setCurrentIndex(proceduraConclusa);
 }
 
-void MainWindowSeggio::on_schedaSuccessiva_button_clicked()
-{
-    //TODO verificare la presenza di altre schede e visualizzare i relativi risultati di scrutinio
-    //se la scheda corrente è l'ultima visualizzare la prima scheda della lista
-    
-}
-
 void MainWindowSeggio::on_sostituisci_button_clicked()
 {
     QString strHTDaDisattivare = ui->token_disattivabili_comboBox->currentText();

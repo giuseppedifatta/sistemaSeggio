@@ -13,6 +13,7 @@ string getConfig(string value) {
     string founded;
 
     string line;
+
     ifstream myfile (".config.seggio");
     if (myfile.is_open())
     {
@@ -28,7 +29,7 @@ string getConfig(string value) {
                 if(startPos != std::string::npos){
                     startPos = startPos + value.length() + 1;
                     founded = line.substr(startPos);
-                    cout << founded << endl;
+                    cout << value << ": "  << founded << endl;
                     break;
                 }
             }
@@ -36,7 +37,7 @@ string getConfig(string value) {
         myfile.close();
     }
 
-    else cout << "Unable to open file";
+    else cerr << "Unable to open file" << endl;
 
     return founded;
 }

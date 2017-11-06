@@ -227,7 +227,7 @@ private:
 
     bool stopServer;
     bool logged;
-    const char * ipUrna;
+    string ipUrna;
     //questi due arrey tengono traccia delle postazioni di voto e degli hardware token attualmente impegnati in associazioni PV_HT
     std::array <bool,NUM_HT_ATTIVI> busyHT;
     std::array <bool,NUM_PV> busyPV;

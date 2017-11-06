@@ -118,8 +118,6 @@ private slots:
 
     void on_goBackFromRisultatiVoto_button_clicked();
 
-    void on_schedaSuccessiva_button_clicked();
-
     void on_rimuoviAssociazione_button_clicked();
 
     void on_rimuovi_button_clicked();

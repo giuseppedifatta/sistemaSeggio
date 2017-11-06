@@ -40,9 +40,14 @@ SSLServer::SSLServer(Seggio *s){
 
     this->createServerContext();
 
-    const char *certFile = getConfig("clientCertPem").c_str();
-    const char *keyFile = getConfig("clientKeyPem").c_str();
-    const char *chainFile = getConfig("chainFilePem").c_str();
+    string pathCertFilePem = getConfig("clientCertPem");
+    const char * certFile = pathCertFilePem.c_str();
+
+    string pathKeyFilePem = getConfig("clientKeyPem");
+    const char * keyFile = pathKeyFilePem.c_str();
+
+    string pathChainFilePem = getConfig("chainFilePem");
+    const char * chainFile = pathChainFilePem.c_str();
 
     configure_context(certFile, keyFile, chainFile);
 
