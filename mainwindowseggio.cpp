@@ -58,9 +58,10 @@ MainWindowSeggio::MainWindowSeggio(QWidget *parent) :
     QObject::connect(seggio,SIGNAL(grantLogout()),this,SLOT(doLogout()),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(grantLogout(QDateTime,QDateTime)),this,SLOT(showMessageNextSessione(QDateTime,QDateTime)),Qt::QueuedConnection);
     QObject::connect(seggio,SIGNAL(toPageRisultati()),this,SLOT(showViewAskRisultati()),Qt::QueuedConnection);
-    QObject::connect(this,SIGNAL(needRisultatiVoto()),seggio,SLOT(risultatiVoto()),Qt::QueuedConnection);
+    QObject::connect(this,SIGNAL(needRisultatiVoto()),seggio,SLOT(visualizzaRisultatiVoto()),Qt::QueuedConnection);
 
     QObject::connect(seggio,SIGNAL(readyRisultatiSeggi(vector<RisultatiSeggio>)),this,SLOT(showRisultatiProcedura(vector<RisultatiSeggio>)),Qt::QueuedConnection);
+    QObject::connect(seggio,SIGNAL(notScrutinio()),this,SLOT(showMessageNotScrutinio()),Qt::QueuedConnection);
     QObject::connect(this, SIGNAL(needRemovableAssociations()),seggio,SLOT(calculateRemovableAssociations()),Qt::QueuedConnection);
     QObject::connect(this, SIGNAL(confirmVotazioneCompleta(uint)),seggio,SLOT(completaOperazioneVoto(uint)),Qt::QueuedConnection);
     
@@ -180,9 +181,6 @@ void MainWindowSeggio::initSeggio(){
     
     //avvio del thread del model
     seggio->start();
-    
-    //il segnale segnala la necessità di aggiornamento dello stato delle postazioni di voto
-    //emit needStatePVs();
     
     
 }
@@ -377,11 +375,18 @@ void MainWindowSeggio::showMessageNextSessione(QDateTime inizioProssimaSessione,
 {
     QMessageBox msgBox(this);
     msgBox.setWindowTitle("Prossima Sessione Programmata");
-    msgBox.setInformativeText("Prossima sessione di voto: \n apertura Seggi:" + inizioProssimaSessione.toString("yyyy/MM/dd hh:mm")
-                              + "\n chiusura Seggi:  " + fineProssimaSessione.toString("yyyy/MM/dd hh:mm"));
+    msgBox.setInformativeText("Prossima sessione di voto: \n apertura Seggi:" + inizioProssimaSessione.toString("dd/MM/yyyy hh:mm")
+                              + "\n chiusura Seggi:  " + fineProssimaSessione.toString("dd/MM/yyyy hh:mm"));
     msgBox.exec();
 
     doLogout();
+}
+
+void MainWindowSeggio::showMessageNotScrutinio(){
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle("Risultati di voto");
+    msgBox.setInformativeText("Scrutinio non ancora eseguito, attendere che il Responsabile di Procedimento abbia concluso.");
+    msgBox.exec();
 }
 
 void MainWindowSeggio::showViewAskRisultati()

@@ -106,16 +106,16 @@ int SSLClient::create_socket(/*const char * hostIP*//*hostname*/const char * por
 
     if (res  == -1) {
         seggioChiamante->mutex_stdout.lock();
-        BIO_printf(this->outbio, "ClientSeggio: Error: Cannot connect to host %s [%s] on port %d.\n",
-                   this->PV_IPaddress/*hostname*/, address_printable, portCod);
+        BIO_printf(this->outbio, "ClientSeggio: Error: Cannot connect to host %s on port %d.\n",
+                    address_printable, portCod);
         seggioChiamante->mutex_stdout.unlock();
 
 
     }
     else {
         seggioChiamante->mutex_stdout.lock();
-        BIO_printf(this->outbio, "ClientSeggio: Successfully connect to host %s [%s] on port %d.\n",
-                   this->PV_IPaddress/*hostname*/, address_printable, portCod);
+        BIO_printf(this->outbio, "ClientSeggio: Successfully connect to host %s on port %d.\n",
+                   address_printable, portCod);
         cout << "ClientSeggio: Descrittore socket: " << this->server_sock << endl;
         seggioChiamante->mutex_stdout.unlock();
 
@@ -850,18 +850,17 @@ bool SSLClient::queryAttivazioneSeggio(string sessionKey)
 
 bool SSLClient::queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioXML,string &encodedSignRP)
 {
-    //restituisce false se lo scrutinio non è ancora stato eseguito
-
     //richiesta servizio
     int serviceCod = serviziUrna::risultatiVoto;
     stringstream ssCod;
     ssCod << serviceCod;
     string strCod = ssCod.str();
     const char * charCod = strCod.c_str();
-    seggioChiamante->mutex_stdout.lock();
-    cout << "ClientSeggio: richiedo il servizio: " << charCod << endl;
-    seggioChiamante->mutex_stdout.unlock();
+
+    cout << "ClientPV: richiedo il servizio: " << charCod << endl;
+
     SSL_write(ssl,charCod,strlen(charCod));
+
 
     sendString_SSL(ssl,to_string(idProcedura));
 
@@ -870,9 +869,7 @@ bool SSLClient::queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioX
     if(receiveString_SSL(ssl,s) != 0){
         esito = atoi(s.c_str());
     }
-    else {
-        return false;
-    }
+    else {return false;}
 
     if (esito == 0){
         if(receiveString_SSL(ssl, risultatiScrutinioXML)==0){
@@ -882,22 +879,14 @@ bool SSLClient::queryRisultatiVoto(uint idProcedura, string &risultatiScrutinioX
             return false;
         }
     }
-    else if (esito == 2){
-        //scrutinio non ancora effettuato
-        cout << "ClientSeggio: scrutinio non ancora eseguito da RP" << endl;
-        return false;
-    }
-
-
 
     return true;
 }
-
 bool SSLClient::queryNextSessione(uint idProcedura, uint &esito)
 {
     esito = 1;
     //richiesta servizio
-    int serviceCod = serviziUrna::tryVoteElettore;
+    int serviceCod = serviziUrna::nextSessione;
     string strCod = to_string(serviceCod);
     const char * charCod = strCod.c_str();
 

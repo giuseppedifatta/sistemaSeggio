@@ -94,10 +94,10 @@ public slots:
     void validatePassKey(QString pass);
     void matricolaState(uint matricola);
     void abortVoting(uint matricola, uint situazione);
-    void risultatiVoto();
 
     void calcolaHTdisattivabili();
     void disattivaHT(string snHTdaDisattivare);
+    void visualizzaRisultatiVoto();
 public:
     Seggio(QObject *parent = 0);
     ~Seggio();

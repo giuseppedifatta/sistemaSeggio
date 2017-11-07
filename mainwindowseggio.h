@@ -61,6 +61,7 @@ public slots:
     void showMessageNextSessione(QDateTime inizioProssimaSessione,QDateTime fineProssimaSessione);
     void showViewAskRisultati();
     void showRisultatiProcedura(vector<RisultatiSeggio> risultatiSeggi);
+    void showMessageNotScrutinio();
 private:
     Ui::MainWindowSeggio *ui;
     Seggio *seggio;

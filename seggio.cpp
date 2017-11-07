@@ -783,7 +783,7 @@ void Seggio::aggiornaPVs(){
             this->pullStatePV(i);
         }
 
-        std::this_thread::sleep_for (std::chrono::seconds(10));
+        std::this_thread::sleep_for (std::chrono::seconds(5));
     }
 
     this->mutex_stdout.lock();
@@ -928,27 +928,7 @@ void Seggio::abortVoting(uint matricola, uint situazione)
     delete seggio_client;
 }
 
-void Seggio::risultatiVoto()
-{
-    vector <RisultatiSeggio> risultatiSeggi;
-    SSLClient * seggio_client = new SSLClient(this);
-    string risultatiVotoXML, encodedSignRP;
-    if(seggio_client->connectTo(ipUrna.c_str())!=nullptr){
-        if (seggio_client->queryRisultatiVoto(this->idProceduraVoto,risultatiVotoXML, encodedSignRP)){
-            int verifica = this->verifySignString_RP(risultatiVotoXML, encodedSignRP,this->publicKeyRP);
-            if(verifica == 0){
-                this->parsingScrutinioXML(risultatiVotoXML, &risultatiSeggi);
-                emit readyRisultatiSeggi(risultatiSeggi);
-            }
-        }
-        else{
-            emit notScrutinio();
-            //scrutinio non ancora eseguito
-        }
-    }
 
-    delete seggio_client;
-}
 
 void Seggio::tryLogout(){
     bool allowLogout = true;
@@ -1413,3 +1393,34 @@ void Seggio::parsingScrutinioXML(string &risultatiVotoXML, vector <RisultatiSegg
         }
     }
 }
+
+void Seggio::visualizzaRisultatiVoto()
+{
+    vector <RisultatiSeggio> risultatiSeggi;
+
+    SSLClient * seggio_client = new SSLClient(this);
+    if(seggio_client->connectTo(ipUrna.c_str())){
+        string risultatiVotoXML,encodedSignRP;
+        if(seggio_client->queryRisultatiVoto(this->idProceduraVoto,risultatiVotoXML,encodedSignRP)){
+
+            //verifica firma di RP sui risultatiRicevuti
+            int verifica = this->verifySignString_RP(risultatiVotoXML+to_string(this->idProceduraVoto),encodedSignRP,publicKeyRP);
+            if(verifica == 0){
+                this->parsingScrutinioXML(risultatiVotoXML, &risultatiSeggi);
+                emit readyRisultatiSeggi(risultatiSeggi);
+            }
+
+        }
+        else{
+            emit notScrutinio();
+        }
+
+    }
+    else{
+        cerr << "collegamento con l'urna non riuscito" << endl;
+        emit urnaNonRaggiungibile();
+    }
+
+    delete seggio_client;
+}
+
